@@ -10,6 +10,7 @@
 #include<unordered_map>
 
 #include"Game.h"
+#include"Graphics.h"
 #include"MoveState.h"
 #include"PathState.h"
 #include"SDL_Helpers.h"
@@ -35,22 +36,10 @@ static const std::vector<TileType> MAP {
 
 class RTS : public Game {
 private:
+	std::unique_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
+
 	std::shared_ptr<Camera> mCamera{ nullptr };
-	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
-	std::shared_ptr<SDL_Renderer> mRenderer{ nullptr };
 	std::shared_ptr<TTF_Font> mFont{ nullptr };
-
-	std::vector<std::shared_ptr<Unit>> mUnits;
-
-	std::shared_ptr<Map> mMap;
-
-	Uint32 mLastUnitGenerated{ 0 };
-
-	std::vector<std::shared_ptr<Tower>> mTowers;
-
-	std::shared_ptr<Flowfield> mField{ nullptr };
-
-	void createUnit();
 
 protected:
 	virtual void setup();
