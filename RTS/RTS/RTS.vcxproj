@@ -81,6 +81,7 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Flowfield.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="Graphics.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MoveState.h" />
     <ClInclude Include="PathState.h" />
@@ -98,9 +99,11 @@
   <ItemGroup>
     <ClCompile Include="Block.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="PathState.cpp" />
+    <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RTS.cpp" />
     <ClCompile Include="MoveState.cpp" />
     <ClCompile Include="ShootState.cpp" />

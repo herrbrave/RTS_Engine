@@ -1,83 +1,88 @@
 #include"Map.h"
 
 
-Map::Map(int width, int height, std::vector<TileType> mapInfo, std::shared_ptr<Camera> camera) {
+Map::Map(int width, int height, TileType* mapInfo, TileFactory* factory) {
 	mMapWidth = width;
 	mMapHeight = height;
+	mTileFactory.reset(factory);
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
-			mMap.push_back(std::shared_ptr<Tile>(new Tile(x, y, mapInfo[getIndex(x, y)], camera)));
+			Tile* tile = mTileFactory->createTile(mapInfo[getIndex(x, y)]);
+			tile->xIndex = x;
+			tile->yIndex = y;
+			vector2f position(x * TILE_WIDTH, y * TILE_HEIGHT);
+
+			tile->getBody()->setPosition(&position);
+
+			mMap.push_back(std::shared_ptr<Tile>(tile));
 		}
 	}
 }
-void Map::draw(std::shared_ptr<SDL_Renderer> renderer) {
-	for (auto tile : mMap) {
-		tile->draw(renderer);
-	}
-}
 
-std::shared_ptr<Tile> Map::getTileAt(int x, int y) {
+Tile* Map::getTileAt(int x, int y) {
 	int index = getIndex(x, y);
 	if (index == -1) {
 		return nullptr;
 	}
 
-	return mMap[index];
+	return mMap[index].get();
 }
 
-std::vector<std::shared_ptr<Tile>> Map::findPath(int startX, int startY, int endX, int endY) {
+Tile** Map::findPath(int startX, int startY, int endX, int endY) {
 	int endIndex = getIndex(endX, endY);
 	if (endIndex == -1) {
 		// return an empty path.
-		return std::vector < std::shared_ptr<Tile> > {};
+		return nullptr;
 	}
 
 	auto endTile = mMap[endIndex];
 
 	// tiles to select.
-	auto comparitor = [endTile](std::shared_ptr<Node> left, std::shared_ptr<Node> right) {
+	auto comparitor = [endTile](Node left, Node right) {
 		// dumb heuristic based on distance.
-		int deltaX = left->tile->mXLoc - endTile->mXLoc;
-		int deltaY = left->tile->mYLoc - endTile->mYLoc;
+		int deltaX = left.tile->xIndex - endTile->xIndex;
+		int deltaY = left.tile->yIndex - endTile->yIndex;
 		float leftDist = sqrt(deltaX * deltaX + deltaY * deltaY);
 
-		deltaX = right->tile->mXLoc - endTile->mXLoc;
-		deltaY = right->tile->mYLoc - endTile->mYLoc;
+		deltaX = right.tile->xIndex - endTile->xIndex;
+		deltaY = right.tile->yIndex - endTile->yIndex;
 		float rightDist = sqrt(deltaX * deltaX + deltaY * deltaY);
 
-		return (leftDist + left->cost) > (rightDist + right->cost);
+		return (leftDist + left.cost) > (rightDist + right.cost);
 	};
 
 	int startIndex = getIndex(startX, startY);
 	auto startTile = mMap[startIndex];
-	std::unordered_set<std::shared_ptr<Tile>> openSetLookup;
-	std::priority_queue < std::shared_ptr<Node>, std::vector<std::shared_ptr<Node>>, decltype(comparitor)> openSet(comparitor);
-	openSet.emplace(std::shared_ptr<Node>(new Node{ startTile, 0 }));
+	std::unordered_set<Tile*> openSetLookup;
+	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
+	openSet.emplace(Node{ startTile.get(), 0 });
 
 	// set of explored tiles.
-	std::unordered_set<std::shared_ptr<Tile>> closedSet;
+	std::unordered_set<Tile*> closedSet;
 	// back path map.
-	std::unordered_map<std::shared_ptr<Tile>, std::shared_ptr<Tile>> pathMap;
+	std::unordered_map<Tile*, Tile*> pathMap;
 
 
 	while (openSet.size() > 0) {
 		auto current = openSet.top();
 		openSet.pop();
-		closedSet.emplace(current->tile);
+		closedSet.emplace(current.tile);
 
-		if (current->tile->mXLoc == endX && current->tile->mYLoc == endY) {
-			std::vector<std::shared_ptr<Tile>> path;
-			auto tile = current->tile;
-			while (tile != startTile) {
+		if (current.tile->xIndex == endX && current.tile->yIndex == endY) {
+			std::vector<Tile*> path;
+			auto tile = current.tile;
+			while (tile != startTile.get()) {
 				path.insert(path.begin(), tile);
 				tile = pathMap[tile];
 			}
 
-			return path;
+			
+
+			return &path[0];
 		}
 
-		int currX = current->tile->mXLoc;
-		int currY = current->tile->mYLoc;
+		int currX = current.tile->xIndex;
+		int currY = current.tile->yIndex;
 		for (int j = -1; j <= 1; j++) {
 			for (int i = -1; i <= 1; i++) {
 				// skip the diagonals.
@@ -90,13 +95,13 @@ std::vector<std::shared_ptr<Tile>> Map::findPath(int startX, int startY, int end
 					continue;
 				}
 
-				auto neighborTile = mMap[index];
+				auto neighborTile = mMap[index].get();
 				if (!neighborTile->canOccupy() || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
 				}
 
-				pathMap[neighborTile] = current->tile;
-				openSet.emplace(std::shared_ptr<Node>(new Node{ neighborTile,  current->cost + 1}));
+				pathMap[neighborTile] = current.tile;
+				openSet.emplace(Node{ neighborTile, current.cost + 1 });
 				openSetLookup.emplace(neighborTile);
 			}
 		}

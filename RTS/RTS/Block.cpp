@@ -5,9 +5,9 @@ const vector2f& Block::getPosition() {
 }
 
 void Block::setPosition(vector2f& position) {
-	mPosition->set(position);
-	m_rect_body->x = round((*mPosition)[0]);
-	m_rect_body->y = round((*mPosition)[1]);
+	mPosition->set(&position);
+	m_rect_body->x = round(mPosition->x);
+	m_rect_body->y = round(mPosition->y);
 }
 
 SDL_Rect Block::getRect(std::shared_ptr<Camera> camera) {

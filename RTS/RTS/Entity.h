@@ -1,38 +1,44 @@
 #ifndef __ENTITY_H__
 #define __ENTITY_H__
 
+#include<atomic>
 #include<vector>
 
-#include"Block.h"
-#include"Camera.h"
+#include"Graphics.h"
 #include "Physics.h"
 #include"State.h"
 #include"vector2f.h"
 
-class Entity : public Body {
+static std::atomic_ulong sEntityId{ 1 };
+
+class Entity {
 public:
-	Entity(int x, int y, int width, int height, Uint8 r, Uint8 g, Uint8 b, std::shared_ptr<Camera> camera);
+	Entity(Body* body, Drawable* drawable);
 
 	virtual void update();
-	virtual void draw(std::shared_ptr<SDL_Renderer> renderer);
-	const vector2f& getLocation();
-	void setLocation(vector2f& location);
+	virtual void onUpdate() = 0;
 	void pushState(std::shared_ptr<State> state);
 
-	std::unique_ptr<Block> mBlock{ nullptr };
+	Body* getBody();
+	Drawable* getDrawable();
 
-	inline int getNumStates() {
-		return mStateQueue.size();
+	inline const unsigned long getId() {
+		return mId;
 	}
+protected:
+	std::vector<std::shared_ptr<State>> mStateQueue;
+	std::shared_ptr<Body> mBody;
+	std::shared_ptr<Drawable> mDrawable;
+	const unsigned long mId = sEntityId.fetch_add(1);
+};
 
-	/* Physics implementation */
-	virtual bool checkPoint(vector2f& point);
-	virtual bool checkCollision(Body& body);
-	virtual Extent getExtent();
+class EntityFactory {
+public:
+	EntityFactory(GraphicsSystem* graphics, PhysicsSystem* physics);
 
 protected:
-	std::shared_ptr<Camera> mCamera{ nullptr };
-	std::vector<std::shared_ptr<State>> mStateQueue{};
+	std::shared_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
+	std::shared_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
 };
 
 #endif // !__ENTITY_H__

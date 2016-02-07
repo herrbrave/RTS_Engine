@@ -1,31 +1,24 @@
 #include"Unit.h"
 
-
-void Unit::setCurrentTile(std::shared_ptr<Tile> currentTile) {
-	mCurrentTile = currentTile;
-}
-
-std::shared_ptr<Tile> Unit::getCurrentTile() {
-	return mCurrentTile;
-}
-
-void Unit::damage(int damage) {
-	mHealthBar->setProgress(mHealthBar->getProgress() - damage);
+void Unit::damage(Uint16 damage) {
+	mHealth -= damage;
 }
 
 bool Unit::isDead() {
-	return mHealthBar->getProgress() == 0;
+	return mHealth <= 0;
 }
 
 /* Parent methods */
-void Unit::update() {
-	Entity::update();
+void Unit::onUpdate() {
 }
 
-void Unit::draw(std::shared_ptr<SDL_Renderer> renderer) {
-	Entity::draw(renderer);
+Unit* UnitFactory::create() {
+	Body* unitBody = new BlockBody(0, 0, TILE_WIDTH, TILE_WIDTH);
+	Drawable* blockDrawable = new BlockDrawable(TILE_WIDTH, TILE_HEIGHT, 255, 0, 0, 255);
 
-	SDL_Rect drawRect = mBlock->getRect(mCamera);
-	mName->draw(renderer.get() , &drawRect);
-	mHealthBar->draw(renderer.get(), &drawRect);
+	Unit* unit = new Unit(unitBody, blockDrawable, 100);
+	mPhysicsSystem->registerBody(unit->getId(), unitBody);
+	mGraphicsSystem->registerDrawable(unit->getId(), blockDrawable);
+
+	return unit;
 }

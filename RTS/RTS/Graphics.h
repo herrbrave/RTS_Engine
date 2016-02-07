@@ -2,10 +2,11 @@
 #define __GRAPHICS_H__
 
 #include"Constants.h"
+#include"Physics.h"
 #include"SDL_Helpers.h"
 
 #include<memory>
-#include<unordered_set>
+#include<unordered_map>
 
 #include<SDL.h>
 #include<SDL_ttf.h>
@@ -13,7 +14,29 @@
 class Graphics;
 class Drawable {
 public:
-	virtual void draw(Graphics* graphicsRef);
+	Drawable(float width, float height) {
+		mWidth = width;
+		mHeight = height;
+	}
+
+	virtual void draw(Graphics* graphicsRef, const vector2f* position) = 0;
+
+protected:
+	float mWidth;
+	float mHeight;
+};
+
+class BlockDrawable : public Drawable {
+public:
+	BlockDrawable(float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) : Drawable(width, height) {
+		mColor.reset(new SDL_Color{r, g, b, a});
+	}
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+private:
+	std::unique_ptr<SDL_Color>
+		mColor;
 };
 
 class Texture {
@@ -76,19 +99,21 @@ private:
 
 class GraphicsSystem {
 public:
-	GraphicsSystem(GraphicsConfig* graphisConfig) {
+	GraphicsSystem(GraphicsConfig* graphisConfig, PhysicsSystem* physicsSystem) {
+		mPhysicsSystem.reset(physicsSystem);
 		mGraphicsConfig.reset(graphisConfig);
 		mGraphics.reset(new SDLGraphics(mGraphicsConfig.get()));
 	}
 
-	void registerDrawable(Drawable* drawable);
-	void deregisterDrawable(Drawable* drawable);
+	void registerDrawable(const unsigned long, Drawable* drawable);
+	void deregisterDrawable(const unsigned long);
 	void draw();
 
 private:
+	std::shared_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
 	std::shared_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
 	std::unique_ptr<Graphics> mGraphics{ nullptr };
-	std::unordered_set<std::shared_ptr<Drawable>> mDrawables;
+	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
 };
 
 #endif // !__GRAPHICS_H__

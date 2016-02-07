@@ -36,10 +36,16 @@ static const std::vector<TileType> MAP {
 
 class RTS : public Game {
 private:
+	std::unique_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
 	std::unique_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
+
+	std::unique_ptr<UnitFactory> mUnitFactory{ nullptr };
+	std::unique_ptr<Unit> mUnit{ nullptr };
 
 	std::shared_ptr<Camera> mCamera{ nullptr };
 	std::shared_ptr<TTF_Font> mFont{ nullptr };
+
+	Uint32 mLastTime{ 0 };
 
 protected:
 	virtual void setup();

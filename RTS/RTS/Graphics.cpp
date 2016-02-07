@@ -57,6 +57,13 @@ GraphicsConfig* GraphicsConfig::maximized() {
 }
 
 
+void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+	float x = position->x;
+	float y = position->y;
+	
+	graphicsRef->drawSquare(x, y, mWidth, mHeight, mColor->r, mColor->g, mColor->b, mColor->a);
+}
+
 SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig) {
 	if (TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
@@ -155,21 +162,20 @@ SDL_Texture* SDLTexture::getTextureInstrument() {
 	return mTexture.get();
 }
 
-void GraphicsSystem::registerDrawable(Drawable* drawable) {
+void GraphicsSystem::registerDrawable(const unsigned long id, Drawable* drawable) {
 	std::shared_ptr<Drawable> drawablePtr{ drawable };
-	mDrawables.emplace(drawablePtr);
+	mDrawables.emplace(id, drawablePtr);
 }
 
-void  GraphicsSystem::deregisterDrawable(Drawable* drawable) {
-	std::shared_ptr<Drawable> drawablePtr{ drawable };
-	mDrawables.erase(mDrawables.find(std::shared_ptr<Drawable>(drawable)));
+void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
+	mDrawables.erase(mDrawables.find(id));
 }
 
 void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
 	for (auto drawable : mDrawables) {
-		drawable->draw(mGraphics.get());
+		drawable.second->draw(mGraphics.get(), mPhysicsSystem->getBody(drawable.first)->getPosition());
 	}
 
 	mGraphics->onAfterDraw();

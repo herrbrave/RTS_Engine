@@ -2,60 +2,66 @@
 #define __VECTOR_H__
 
 #include<cmath>
+#include<memory>
 
 class vector2f {
 public:
 	vector2f(const vector2f& copy) {
-		mX = copy.mX;
-		mY = copy.mY;
+		x = copy.x;
+		y = copy.y;
 	}
 
 	vector2f(float x, float y) {
-		mX = x;
-		mY = y;
+		this->x = x;
+		this->y = y;
 	}
 
-	void set(vector2f& vector) {
-		mX = vector[0];
-		mY = vector[1];
+	void set(vector2f* vector) {
+		x = vector->x;
+		y = vector->y;
+	}
+
+	void set(float x, float y) {
+		x = x;
+		y = y;
 	}
 
 	vector2f operator*(float scalar) const {
-		return vector2f(mX * scalar, mY * scalar);
+		return vector2f(x * scalar, y * scalar);
 	}
 
 	vector2f operator+(const vector2f& other) const {
-		return vector2f(mX + other.mX, mY + other.mY);
+		return vector2f(x + other.x, y + other.y);
 	}
 
 	vector2f operator-(const vector2f& other) const {
-		return vector2f(mX - other.mX, mY - other.mY);
+		return vector2f(x - other.x, y - other.y);
 	}
 
 	vector2f& operator*=(float scalar) {
-		mX *= scalar;
-		mY *= scalar;
+		x *= scalar;
+		y *= scalar;
 		return *this;
 	}
 
 	vector2f& operator+=(const vector2f& other) {
-		mX += other.mX; 
-		mY += other.mY;
+		x += other.x; 
+		y += other.y;
 		return *this;
 	}
 
 	vector2f& operator-=(const vector2f& other) {
-		mX -= other.mX;
-		mY -= other.mY;
+		x -= other.x;
+		y -= other.y;
 		return *this;
 	}
 
 	vector2f dot(const vector2f& other) const {
-		return vector2f(mX * other.mX, mY * other.mY);
+		return vector2f(x * other.x, y * other.y);
 	}
 
 	float magnitude() {
-		return std::sqrt((mX * mX) + (mY * mY));
+		return std::sqrt((x * x) + (y * y));
 	}
 
 	void normalize() {
@@ -63,25 +69,11 @@ public:
 		if (mag == 0) {
 			return;
 		}
-		mX /= mag;
-		mY /= mag;
+		x /= mag;
+		y /= mag;
 	}
 
-	float operator[] (int index) const {
-		if (index == 0) {
-			return mX;
-		}
-		else if(index == 1) {
-			return mY;
-		}
-		else {
-			// throw some exception
-		}
-
-		return 0;
-	}
-private:
-	float mX, mY;
+	float x, y;
 };
 
 typedef std::shared_ptr<vector2f> p_vector2f;

@@ -10,12 +10,17 @@ void RTS::setup() {
 	config.setWindowWidth(1024);
 	config.setWindowHeight(768);
 
-	mGraphicsSystem.reset(new GraphicsSystem(&config));
+	mPhysicsSystem.reset(new PhysicsSystem());
+	mGraphicsSystem.reset(new GraphicsSystem(&config, mPhysicsSystem.get()));
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
 
 	mCamera = std::shared_ptr<Camera>(new Camera{ 0, 0, 800, 600 });
+
+	mUnitFactory.reset(new UnitFactory(mGraphicsSystem.get(), mPhysicsSystem.get()));
+	mUnit.reset(mUnitFactory->create());
+	mUnit->getBody()->setSpeed(10);
 }
 
 void RTS::handleEvents()
@@ -27,16 +32,30 @@ void RTS::handleEvents()
 		}
 		if (event.type == SDL_KEYDOWN) {
 			if (event.key.keysym.sym == SDLK_LEFT) {
-				mCamera->x -= 10;
+				mUnit->getBody()->setVelocity(&vector2f{ -1, 0 });
 			}
 			else if (event.key.keysym.sym == SDLK_RIGHT) {
-				mCamera->x += 10;
+				mUnit->getBody()->setVelocity(&vector2f{ 1, 0 });
 			}
 			else if (event.key.keysym.sym == SDLK_UP) {
-				mCamera->y -= 10;
+				mUnit->getBody()->setVelocity(&vector2f{ 0, -1 });
 			}
 			else if (event.key.keysym.sym == SDLK_DOWN) {
-				mCamera->y += 10;
+				mUnit->getBody()->setVelocity(&vector2f{ 0, 1 });
+			}
+		}
+		else if (event.type == SDL_KEYDOWN) {
+			if (event.key.keysym.sym == SDLK_LEFT) {
+				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+			}
+			else if (event.key.keysym.sym == SDLK_RIGHT) {
+				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+			}
+			else if (event.key.keysym.sym == SDLK_UP) {
+				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+			}
+			else if (event.key.keysym.sym == SDLK_DOWN) {
+				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
 			}
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {
@@ -47,6 +66,9 @@ void RTS::handleEvents()
 }
 
 void RTS::update(){
+	Uint32 lastTime(SDL_GetTicks());
+	mPhysicsSystem->update(lastTime - mLastTime);
+	mLastTime = lastTime;
 }
 
 void RTS::draw(){
