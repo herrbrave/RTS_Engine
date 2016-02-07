@@ -20,7 +20,7 @@ void RTS::setup() {
 
 	mUnitFactory.reset(new UnitFactory(mGraphicsSystem.get(), mPhysicsSystem.get()));
 	mUnit.reset(mUnitFactory->create());
-	mUnit->getBody()->setSpeed(10);
+	mUnit->getBody()->setSpeed(100);
 }
 
 void RTS::handleEvents()
@@ -32,30 +32,57 @@ void RTS::handleEvents()
 		}
 		if (event.type == SDL_KEYDOWN) {
 			if (event.key.keysym.sym == SDLK_LEFT) {
-				mUnit->getBody()->setVelocity(&vector2f{ -1, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.x = -1;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_RIGHT) {
-				mUnit->getBody()->setVelocity(&vector2f{ 1, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.x = 1;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_UP) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, -1 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.y = -1;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_DOWN) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, 1 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.y = 1;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
+			}
+			else if (event.key.keysym.sym == SDLK_ESCAPE) {
+				mIsPlaying = false;
 			}
 		}
-		else if (event.type == SDL_KEYDOWN) {
+		else if (event.type == SDL_KEYUP) {
 			if (event.key.keysym.sym == SDLK_LEFT) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.x = 0;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_RIGHT) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.x = 0;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_UP) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.y = 0;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 			else if (event.key.keysym.sym == SDLK_DOWN) {
-				mUnit->getBody()->setVelocity(&vector2f{ 0, 0 });
+				vector2f velocity(*mUnit->getBody()->getVelocity());
+				velocity.y = 0;
+				velocity.normalize();
+				mUnit->getBody()->setVelocity(&velocity);
 			}
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {

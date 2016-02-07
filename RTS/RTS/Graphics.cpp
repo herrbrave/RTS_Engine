@@ -92,8 +92,8 @@ void SDLGraphics::drawSquare(int x, int y, int width, int height, Uint8 r, Uint8
 	SDL_Rect rect{ 
 		x - (width / 2), 
 		y - (height / 2), 
-		x + (width / 2), 
-		y + (height / 2) 
+		width, 
+		height
 	};
 
 	if (a < 255) {
