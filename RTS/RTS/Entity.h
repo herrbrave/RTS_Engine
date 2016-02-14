@@ -27,8 +27,8 @@ public:
 	}
 protected:
 	std::vector<std::shared_ptr<State>> mStateQueue;
-	std::shared_ptr<Body> mBody;
-	std::shared_ptr<Drawable> mDrawable;
+	Body* mBody;
+	Drawable* mDrawable;
 	const unsigned long mId = sEntityId.fetch_add(1);
 };
 
@@ -37,8 +37,8 @@ public:
 	EntityFactory(GraphicsSystem* graphics, PhysicsSystem* physics);
 
 protected:
-	std::shared_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
-	std::shared_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
+	GraphicsSystem* mGraphicsSystem{ nullptr };
+	PhysicsSystem* mPhysicsSystem{ nullptr };
 };
 
 #endif // !__ENTITY_H__

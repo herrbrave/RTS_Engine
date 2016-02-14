@@ -6,7 +6,6 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig config;
-	config.setTitle("RTS");
 	config.setWindowWidth(1024);
 	config.setWindowHeight(768);
 
@@ -16,11 +15,12 @@ void RTS::setup() {
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
 
-	mCamera = std::shared_ptr<Camera>(new Camera{ 0, 0, 800, 600 });
-
 	mUnitFactory.reset(new UnitFactory(mGraphicsSystem.get(), mPhysicsSystem.get()));
 	mUnit.reset(mUnitFactory->create());
 	mUnit->getBody()->setSpeed(100);
+
+	mGraphicsSystem->getCamera()->position->x = -100;
+	mGraphicsSystem->getCamera()->position->y = -100;
 }
 
 void RTS::handleEvents()

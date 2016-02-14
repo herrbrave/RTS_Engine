@@ -5,6 +5,7 @@
 
 #include<SDL.h>
 #include<unordered_map>
+#include<unordered_set>
 
 struct Extent {
 	float x0, y0, x1, y1;
@@ -60,6 +61,46 @@ public:
 private:
 	float mWidth;
 	float mHeight;
+};
+
+class QuadtreeNode {
+public:
+	QuadtreeNode(float x, float y, float width, float height);
+	std::vector<std::shared_ptr<QuadtreeNode>> children;
+	std::unordered_set<Body*> bodiesContainer;
+
+	void pushChild(QuadtreeNode* node) {
+		children.push_back(std::shared_ptr<QuadtreeNode>(node));
+	}
+
+	bool leaf{ false };
+
+	bool check(Body* body);
+	void add(Body* body);
+	void remove(Body* body);
+	bool contains(Body* body);
+
+	Extent getNodeExtent();
+
+private:
+	std::unique_ptr<Body> mBody{ nullptr };
+};
+
+class Quadtree {
+public:
+	const static int MIN_SIZE{ 100 };
+
+	Quadtree(float x, float y, float width, float height);
+	void addBody(Body* body);
+	void removeBody(Body* body);
+	void getCollidingBodies(Body* body, std::vector<Body*>& bodies);
+
+private:
+	void addHelper(Body* body, QuadtreeNode* node);
+	void removeHelper(Body* body, QuadtreeNode* node);
+	void createTree(QuadtreeNode* parent);
+	std::unique_ptr<QuadtreeNode> mRootNode{ nullptr };
+	std::vector<QuadtreeNode*> mLeaves;
 };
 
 class PhysicsSystem {

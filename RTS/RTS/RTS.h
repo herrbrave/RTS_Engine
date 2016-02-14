@@ -42,7 +42,6 @@ private:
 	std::unique_ptr<UnitFactory> mUnitFactory{ nullptr };
 	std::unique_ptr<Unit> mUnit{ nullptr };
 
-	std::shared_ptr<Camera> mCamera{ nullptr };
 	std::shared_ptr<TTF_Font> mFont{ nullptr };
 
 	Uint32 mLastTime{ 0 };

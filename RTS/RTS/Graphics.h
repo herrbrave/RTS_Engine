@@ -1,6 +1,7 @@
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
+#include"Camera.h"
 #include"Constants.h"
 #include"Physics.h"
 #include"SDL_Helpers.h"
@@ -35,8 +36,7 @@ public:
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
 private:
-	std::unique_ptr<SDL_Color>
-		mColor;
+	std::unique_ptr<SDL_Color> mColor;
 };
 
 class Texture {
@@ -76,9 +76,9 @@ public:
 class Graphics {
 public:
 	virtual void onBeforeDraw() = 0;
-	virtual void renderTexture(Texture* texture, int x, int y) = 0;
-	virtual void drawLine(int x0, int y0, int x1, int y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
-	virtual void drawSquare(int x, int y, int width, int height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderTexture(Texture* texture, float x, float y) = 0;
+	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual Texture* createTexture(std::string path, int x, int y, int w, int h) = 0;
 	virtual void onAfterDraw() = 0;
 };
@@ -87,9 +87,9 @@ class SDLGraphics : public Graphics {
 public:
 	SDLGraphics(GraphicsConfig* graphisConfig);
 	virtual void onBeforeDraw();
-	virtual void renderTexture(Texture* texture, int x, int y);
-	virtual void drawLine(int x0, int y0, int x1, int y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-	virtual void drawSquare(int x, int y, int width, int height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+	virtual void renderTexture(Texture* texture, float x, float y);
+	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	virtual Texture* createTexture(std::string path, int x, int y, int w, int h);
 	virtual void onAfterDraw();
 private:
@@ -103,16 +103,22 @@ public:
 		mPhysicsSystem.reset(physicsSystem);
 		mGraphicsConfig.reset(graphisConfig);
 		mGraphics.reset(new SDLGraphics(mGraphicsConfig.get()));
+		mCamera.reset(new Camera());
+		mCamera->position.reset(new vector2f(0, 0));
+		mCamera->width = mGraphicsConfig->mWidth;
+		mCamera->height = mGraphicsConfig->mHeight;
 	}
 
 	void registerDrawable(const unsigned long, Drawable* drawable);
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
+	Camera* getCamera();
 private:
 	std::shared_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
 	std::shared_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
 	std::unique_ptr<Graphics> mGraphics{ nullptr };
+	std::unique_ptr<Camera> mCamera;
 	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
 };
 

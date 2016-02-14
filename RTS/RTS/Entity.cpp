@@ -1,16 +1,16 @@
 #include"Entity.h"
 
 Entity::Entity(Body* body, Drawable* drawable) {
-	mBody.reset(body);
-	mDrawable.reset(drawable);
+	mBody = body;
+	mDrawable = drawable;
 }
 
 Body* Entity::getBody() {
-	return mBody.get();
+	return mBody;
 }
 
 Drawable* Entity::getDrawable() {
-	return mDrawable.get();
+	return mDrawable;
 }
 
 void Entity::update() {
@@ -44,6 +44,6 @@ void Entity::pushState(std::shared_ptr<State> state) {
 }
 
 EntityFactory::EntityFactory(GraphicsSystem* graphics, PhysicsSystem* physics) {
-	mGraphicsSystem.reset(graphics);
-	mPhysicsSystem.reset(physics);
+	mGraphicsSystem = graphics;
+	mPhysicsSystem = physics;
 }

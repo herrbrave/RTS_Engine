@@ -3,8 +3,6 @@
 
 #include<functional>
 
-#include"Block.h"
-
 class State {
 public:
 	virtual void begin() = 0;

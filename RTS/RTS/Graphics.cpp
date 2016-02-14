@@ -88,7 +88,7 @@ SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig) {
 	);
 }
 
-void SDLGraphics::drawSquare(int x, int y, int width, int height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	SDL_Rect rect{ 
 		x - (width / 2), 
 		y - (height / 2), 
@@ -115,7 +115,7 @@ void SDLGraphics::drawSquare(int x, int y, int width, int height, Uint8 r, Uint8
 	}
 }
 
-void SDLGraphics::drawLine(int x0, int y0, int x1, int y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (a < 255) {
 		SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_BLEND);
 	}
@@ -127,7 +127,7 @@ void SDLGraphics::drawLine(int x0, int y0, int x1, int y1, Uint8 r, Uint8 g, Uin
 	SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphics::renderTexture(Texture* texture, int x, int y) {
+void SDLGraphics::renderTexture(Texture* texture, float x, float y) {
 	SDLTexture* sdlTexture((SDLTexture*)texture);
 	int w(0);
 	int h(0);
@@ -175,8 +175,15 @@ void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
 	for (auto drawable : mDrawables) {
-		drawable.second->draw(mGraphics.get(), mPhysicsSystem->getBody(drawable.first)->getPosition());
+		vector2f position(*mPhysicsSystem->getBody(drawable.first)->getPosition());
+		translateToCamera(&position, mCamera.get());
+
+		drawable.second->draw(mGraphics.get(), &position);
 	}
 
 	mGraphics->onAfterDraw();
+}
+
+Camera* GraphicsSystem::getCamera() {
+	return mCamera.get();
 }
