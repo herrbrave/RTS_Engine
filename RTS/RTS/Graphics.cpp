@@ -61,7 +61,14 @@ void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	float x = position->x;
 	float y = position->y;
 	
-	graphicsRef->drawSquare(x, y, mWidth, mHeight, mColor->r, mColor->g, mColor->b, mColor->a);
+	graphicsRef->drawSquare(x, y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+}
+
+void BlockDrawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	mColor->r = r;
+	mColor->g = g;
+	mColor->b = b;
+	mColor->a = a;
 }
 
 SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig) {
@@ -186,4 +193,13 @@ void  GraphicsSystem::draw() {
 
 Camera* GraphicsSystem::getCamera() {
 	return mCamera.get();
+}
+
+void BlockComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	mDrawable->setColor(r, g, b, a);
+}
+
+void BlockComponent::setSize(float width, float height) {
+	mDrawable->width = width;
+	mDrawable->height = height;
 }

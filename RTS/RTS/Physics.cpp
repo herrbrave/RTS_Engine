@@ -1,5 +1,19 @@
 #include"Physics.h"
 
+float Body::getWidth() {
+	return mWidth;
+}
+float Body::getHeight() {
+	return mHeight;
+}
+
+void Body::setWidth(float width) {
+	mWidth = width;
+}
+void Body::setHeight(float height) {
+	mHeight = height;
+}
+
 BlockBody::BlockBody(float x, float y, float width, float height) : Body() {
 	mPosition->set(x, y);
 	mWidth = width;
@@ -183,4 +197,33 @@ void Quadtree::getCollidingBodies(Body* body, std::vector<Body*>& bodies) {
 			}
 		}
 	}
+}
+
+void PhysicsComponent::setPosition(vector2f* position) {
+	mBody->setPosition(position);
+}
+
+const vector2f* PhysicsComponent::getPosition() {
+	return mBody->getPosition();
+}
+
+void PhysicsComponent::setVelocity(vector2f* velocity) {
+	mBody->setVelocity(velocity);
+}
+
+const vector2f* PhysicsComponent::getVelocity()  {
+	return mBody->getVelocity();
+}
+
+void PhysicsComponent::setSize(float width, float height) {
+	mBody->setWidth(width);
+	mBody->setHeight(height);
+}
+
+float PhysicsComponent::getWidth() {
+	return mBody->getWidth();
+}
+
+float PhysicsComponent::getHeight() {
+	return mBody->getHeight();
 }

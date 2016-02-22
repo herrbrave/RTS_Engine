@@ -15,32 +15,11 @@
 #include"PathState.h"
 #include"SDL_Helpers.h"
 #include"State.h"
-#include"Tower.h"
-
-
-
-static int const MAP_WIDTH = 10;
-static int const MAP_HEIGHT = 10;
-static const std::vector<TileType> MAP {
-	TREES, TREES, TREES, DIRT, GRASS, WATER, WATER, WATER, WATER, WATER,
-	TREES, TREES, DIRT, GRASS, GRASS, GRASS, GRASS, WATER, WATER, WATER,
-	TREES, TREES, DIRT, GRASS, GRASS, GRASS, GRASS, WATER, WATER, WATER,
-	TREES, DIRT, TREES, GRASS, GRASS, GRASS, GRASS, GRASS, WATER, WATER,
-	DIRT, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, WATER,
-	DIRT, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, WATER,
-	GRASS, DIRT, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS,
-	GRASS, GRASS, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS,
-	GRASS, GRASS, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS,
-	GRASS, GRASS, DIRT, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS, GRASS
-};
 
 class RTS : public Game {
 private:
 	std::unique_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
 	std::unique_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
-
-	std::unique_ptr<UnitFactory> mUnitFactory{ nullptr };
-	std::unique_ptr<Unit> mUnit{ nullptr };
 
 	std::shared_ptr<TTF_Font> mFont{ nullptr };
 

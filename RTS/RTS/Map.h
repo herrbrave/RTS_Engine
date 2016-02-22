@@ -6,41 +6,63 @@
 #include<unordered_map>
 #include<unordered_set>
 
-#include"Tile.h"
+#include"Entity.h"
+
+struct MapConfig {
+	int tileWidth;
+	int tileHeight;
+	int mapWidth;
+	int mapHeight;
+	std::vector<int	> tiles;
+};
 
 struct Node {
-	Tile* tile;
+	Entity* tile;
 	int cost;
+};
+
+const static unsigned long TILE_COMPONENT_ID = sComponentId.fetch_add(1);
+class TileComponent : public Component {
+public:
+	int type, x, y;
+	bool canOccupy{ true };
+
+	TileComponent(unsigned long entityId, int x, int y, int type) : Component(entityId, TILE_COMPONENT_ID) {
+		this->x = x;
+		this->y = y;
+		this->type = type;
+	}
 };
 
 class Map {
 public:
-	Map(int width, int height, TileType* mapInfo, TileFactory* factory);
+	Map(MapConfig* config, EntityFactory* factory);
 
-	Tile* getTileAt(int x, int y);
+	Entity* getTileAt(int x, int y);
 
-	Tile** findPath(int startX, int startY, int endX, int endY);
+	Entity** findPath(int startX, int startY, int endX, int endY);
 
-	inline int getMapWidth() {
-		return mMapWidth;
+	int getMapWidth() {
+		return mMapConfig->mapWidth;
 	}
 
-	inline int getMapHeight() {
-		return mMapHeight;
+	int getMapHeight() {
+		return mMapConfig->mapHeight;
 	}
+
+	Entity* tileAtPoint(const vector2f* point);
 
 private:
-	int mMapWidth;
-	int mMapHeight;
-	std::vector<std::shared_ptr<Tile>> mMap;
-	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
+	std::unique_ptr<MapConfig> mMapConfig{ nullptr };
+	std::vector<std::shared_ptr<Entity>> mMap;
+	EntityFactory* mTileFactory{ nullptr };
 
 	inline int getIndex(int x, int y) {
-		if (x < 0 || x >= mMapWidth || y < 0 || y >= mMapHeight) {
+		if (x < 0 || x >= mMapConfig->mapWidth || y < 0 || y >= mMapConfig->mapHeight) {
 			return -1;
 		}
 
-		return (y * mMapWidth) + x;
+		return (y * mMapConfig->mapWidth) + x;
 	}
 };
 

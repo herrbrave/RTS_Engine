@@ -1,8 +1,10 @@
 #ifndef __PHYSICS_H__
 #define __PHYSICS_H__
 
+#include"Component.h"
 #include"vector2f.h"
 
+#include<map>
 #include<SDL.h>
 #include<unordered_map>
 #include<unordered_set>
@@ -44,10 +46,18 @@ public:
 	const vector2f* getVelocity() {
 		return mVelocity.get();
 	}
+
+	float getWidth();
+	float getHeight();
+	void setWidth(float width);
+	void setHeight(float height);
+
 protected:
 	float mSpeed;
 	p_vector2f mPosition{ nullptr };
 	p_vector2f mVelocity{ nullptr };
+	float mWidth;
+	float mHeight;
 };
 
 class BlockBody : public Body {
@@ -57,10 +67,6 @@ public:
 	bool checkPoint(vector2f& point) override;
 	bool checkCollision(Body& body) override;
 	Extent getExtent() override;
-
-private:
-	float mWidth;
-	float mHeight;
 };
 
 class QuadtreeNode {
@@ -105,7 +111,9 @@ private:
 
 class PhysicsSystem {
 public:
+
 	PhysicsSystem(){}
+	~PhysicsSystem() = default;
 
 	Body* getBody(const unsigned long id);
 
@@ -115,7 +123,28 @@ public:
 	void update(Uint32 delta);
 
 private:
-	std::unordered_map<unsigned long, std::shared_ptr<Body>> mBodies;
+	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
+};
+
+static const unsigned long PHYSICS_COMPONENT_TYPE = sComponentId.fetch_add(1);
+
+class PhysicsComponent : public Component {
+public:
+	PhysicsComponent(unsigned long entityId, Body* body) : Component(entityId, PHYSICS_COMPONENT_TYPE) {
+		mBody = body;
+	}
+
+	void setPosition(vector2f* position);
+	const vector2f* getPosition();
+	void setVelocity(vector2f* velocity);
+	const vector2f* getVelocity();
+
+	void setSize(float width, float height);
+	float getWidth();
+	float getHeight();
+
+private:
+	Body* mBody;
 };
 
 #endif // !__PHYSICS_H__

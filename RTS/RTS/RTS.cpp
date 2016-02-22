@@ -5,22 +5,15 @@ void RTS::setup() {
 		throw std::exception("Failed to initialize TTF");
 	}
 
-	GraphicsConfig config;
-	config.setWindowWidth(1024);
-	config.setWindowHeight(768);
+	GraphicsConfig* config = new GraphicsConfig();
+	config->setWindowWidth(1024);
+	config->setWindowHeight(768);
 
 	mPhysicsSystem.reset(new PhysicsSystem());
-	mGraphicsSystem.reset(new GraphicsSystem(&config, mPhysicsSystem.get()));
+	mGraphicsSystem.reset(new GraphicsSystem(config, mPhysicsSystem.get()));
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
-
-	mUnitFactory.reset(new UnitFactory(mGraphicsSystem.get(), mPhysicsSystem.get()));
-	mUnit.reset(mUnitFactory->create());
-	mUnit->getBody()->setSpeed(100);
-
-	mGraphicsSystem->getCamera()->position->x = -100;
-	mGraphicsSystem->getCamera()->position->y = -100;
 }
 
 void RTS::handleEvents()
@@ -31,59 +24,12 @@ void RTS::handleEvents()
 			mIsPlaying = false;
 		}
 		if (event.type == SDL_KEYDOWN) {
-			if (event.key.keysym.sym == SDLK_LEFT) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.x = -1;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_RIGHT) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.x = 1;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_UP) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.y = -1;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_DOWN) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.y = 1;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_ESCAPE) {
+			if (event.key.keysym.sym == SDLK_ESCAPE) {
 				mIsPlaying = false;
 			}
 		}
 		else if (event.type == SDL_KEYUP) {
-			if (event.key.keysym.sym == SDLK_LEFT) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.x = 0;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_RIGHT) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.x = 0;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_UP) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.y = 0;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
-			else if (event.key.keysym.sym == SDLK_DOWN) {
-				vector2f velocity(*mUnit->getBody()->getVelocity());
-				velocity.y = 0;
-				velocity.normalize();
-				mUnit->getBody()->setVelocity(&velocity);
-			}
+
 		}
 		if (event.type == SDL_MOUSEBUTTONUP) {
 			int x, y;

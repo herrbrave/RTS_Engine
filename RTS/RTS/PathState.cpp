@@ -1,9 +1,8 @@
 #include"PathState.h"
 
-PathState::PathState(std::shared_ptr<Unit> unit, std::shared_ptr<Flowfield> flowField, std::vector<std::shared_ptr<Tower>> * towers) {
+PathState::PathState(Entity* unit, Flowfield* flowField) {
 	mUnit = unit;
 	mFlowfield = flowField;
-	mTowers = towers;
 }
 
 void PathState::begin() {
@@ -15,19 +14,20 @@ void PathState::update() {
 		return;
 	}
 
-	auto tile = mFlowfield->tileAtPoint(mUnit->getBody()->getPosition());
+	auto component = reinterpret_cast<PhysicsComponent*>(mUnit->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+	auto tile = mFlowfield->tileAtPoint(component->getPosition());
 	if (tile == nullptr || tile == mFlowfield->mTargetTile) {
 		end();
 		return;
 	}
 
-	auto vector = mFlowfield->getVectorForTile(tile->getId());
+	auto vector = mFlowfield->getVectorForTile(tile->id);
 	if (vector == nullptr) {
 		end();
 		return;
 	}
 
-	mUnit->getBody()->setVelocity(vector);
+	component->setVelocity(vector);
 }
 
 void PathState::end() {

@@ -15,16 +15,15 @@
 class Graphics;
 class Drawable {
 public:
+	float width;
+	float height;
+
 	Drawable(float width, float height) {
-		mWidth = width;
-		mHeight = height;
+		this->width = width;
+		this->height = height;
 	}
 
 	virtual void draw(Graphics* graphicsRef, const vector2f* position) = 0;
-
-protected:
-	float mWidth;
-	float mHeight;
 };
 
 class BlockDrawable : public Drawable {
@@ -34,6 +33,8 @@ public:
 	}
 
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 private:
 	std::unique_ptr<SDL_Color> mColor;
@@ -65,7 +66,10 @@ public:
 	GraphicsConfig* resizable();
 	GraphicsConfig* maximized();
 
-	std::string mTitle = "Game";
+	~GraphicsConfig() {
+	}
+
+	std::string mTitle;
 	int mWindowX = 0;
 	int mWindowY = 0;
 	int mWidth = 800;
@@ -120,6 +124,21 @@ private:
 	std::unique_ptr<Graphics> mGraphics{ nullptr };
 	std::unique_ptr<Camera> mCamera;
 	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
+};
+
+const static unsigned long BLOCK_COMPONENT_TYPE = sComponentId.fetch_add(1);
+
+class BlockComponent : public Component {
+public:
+	BlockComponent(unsigned long entityId, BlockDrawable* drawable) : Component(BLOCK_COMPONENT_TYPE, entityId) {
+		mDrawable = drawable;
+	}
+
+	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+	void setSize(float width, float height);
+
+private:
+	BlockDrawable* mDrawable;
 };
 
 #endif // !__GRAPHICS_H__

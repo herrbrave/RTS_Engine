@@ -5,20 +5,23 @@ void MoveState::begin() {
 }
 
 void MoveState::update() {
-	vector2f unitLocation = *mEntity->getBody()->getPosition();
-	vector2f targetLocation = *mTarget->getBody()->getPosition();
+	auto unitComponent = reinterpret_cast<PhysicsComponent*>(mEntity->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+	auto targetComponent = reinterpret_cast<PhysicsComponent*>(mTarget->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+
+	vector2f unitLocation = *unitComponent->getPosition();
+	vector2f targetLocation = *targetComponent->getPosition();
 	vector2f delta = targetLocation - unitLocation;
 
 	float dist = delta.magnitude();
 	if (dist == 0 || dist <= mSpeed) {
-		mEntity->getBody()->setPosition(&targetLocation);
+		unitComponent->setPosition(&targetLocation);
 		end();
 		return;
 	}
 
 	delta.normalize();
 
-	mEntity->getBody()->setVelocity(&delta);
+	unitComponent->setVelocity(&delta);
 }
 
 void MoveState::end() {

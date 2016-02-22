@@ -2,7 +2,7 @@
 #define __MOVE_STATE_H__
 
 #include"State.h"
-#include"Unit.h"
+#include"Entity.h"
 
 class MoveState : public State {
 public:

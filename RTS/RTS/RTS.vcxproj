@@ -51,6 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -76,8 +77,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Component.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="Flowfield.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Graphics.h" />
@@ -86,17 +89,14 @@
     <ClInclude Include="PathState.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="SDL_Helpers.h" />
-    <ClInclude Include="ShootState.h" />
-    <ClInclude Include="Tile.h" />
-    <ClInclude Include="Tower.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="RTS.h" />
     <ClInclude Include="State.h" />
-    <ClInclude Include="Unit.h" />
     <ClInclude Include="vector2f.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Component.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Graphics.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -105,10 +105,6 @@
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RTS.cpp" />
     <ClCompile Include="MoveState.cpp" />
-    <ClCompile Include="ShootState.cpp" />
-    <ClCompile Include="Tile.cpp" />
-    <ClCompile Include="Tower.cpp" />
-    <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

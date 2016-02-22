@@ -4,37 +4,34 @@
 #include<atomic>
 #include<vector>
 
+#include"Component.h"
 #include"Graphics.h"
 #include "Physics.h"
 #include"State.h"
 #include"vector2f.h"
 
 static std::atomic_ulong sEntityId{ 1 };
+static std::atomic_ulong sEntityFactoryId{ 1 };
 
 class Entity {
 public:
-	Entity(Body* body, Drawable* drawable);
+	Entity();
+
+	const unsigned long id = sEntityId.fetch_add(1);
+	Uint8 type;
+	std::unique_ptr<ComponentContainer> componentContainer;
 
 	virtual void update();
-	virtual void onUpdate() = 0;
 	void pushState(std::shared_ptr<State> state);
-
-	Body* getBody();
-	Drawable* getDrawable();
-
-	inline const unsigned long getId() {
-		return mId;
-	}
 protected:
 	std::vector<std::shared_ptr<State>> mStateQueue;
-	Body* mBody;
-	Drawable* mDrawable;
-	const unsigned long mId = sEntityId.fetch_add(1);
 };
 
 class EntityFactory {
 public:
 	EntityFactory(GraphicsSystem* graphics, PhysicsSystem* physics);
+
+	Entity* create();
 
 protected:
 	GraphicsSystem* mGraphicsSystem{ nullptr };
