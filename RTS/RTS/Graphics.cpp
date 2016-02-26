@@ -56,6 +56,12 @@ GraphicsConfig* GraphicsConfig::maximized() {
 	return this;
 }
 
+void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	mColor->r = r;
+	mColor->g = g;
+	mColor->b = b;
+	mColor->a = a;
+}
 
 void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	float x = position->x;
@@ -64,11 +70,8 @@ void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	graphicsRef->drawSquare(x, y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
-void BlockDrawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	mColor->r = r;
-	mColor->g = g;
-	mColor->b = b;
-	mColor->a = a;
+void TextureDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+	graphicsRef->renderTexture(mTexture.get(), position->x, position->y, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfig) : Graphics(assetSystem) {
@@ -134,14 +137,30 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 	SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphics::renderTexture(Texture* texture, float x, float y) {
+void SDLGraphics::renderTexture(Texture* texture, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+
 	Asset* asset = mAssetSystem->getAsset(texture->assetTag);
 	SDL_Texture* sdlTexture = reinterpret_cast<SDL_Texture*>(asset->getAsset());
-	int w(0);
-	int h(0);
-	SDL_QueryTexture(sdlTexture, nullptr, nullptr, &w, &h);
-	SDL_Rect dest{ x - (w / 2), y - (h / 2), 0, 0 };
-	SDL_RenderCopy(mRenderer.get(), sdlTexture, nullptr, &dest);
+	if (a < 255) {
+		SDL_SetTextureAlphaMod(sdlTexture, a);
+	}
+	SDL_SetRenderDrawColor(mRenderer.get(), r, g, b, a);
+
+	SDL_Rect src{ texture->x, texture->y, texture->w, texture->h };
+	SDL_Rect dest{ x - (texture->w / 2), y - (texture->h / 2), texture->w, texture->h };
+	SDL_RenderCopy(mRenderer.get(), sdlTexture, &src, &dest);
+
+	if (a < 255) {
+		SDL_SetTextureAlphaMod(sdlTexture, 255);
+	}
+
+	if (DEBUG) {
+		SDL_SetRenderDrawColor(mRenderer.get(), 0, 0, 0, 255);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x, dest.y, dest.x + dest.w, dest.y);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x + dest.w, dest.y, dest.x + dest.w, dest.y + dest.h);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x + dest.w, dest.y + dest.h, dest.x, dest.y + dest.h);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x, dest.y + dest.h, dest.x, dest.y);
+	}
 }
 
 void SDLGraphics::onBeforeDraw() {
@@ -155,6 +174,16 @@ void SDLGraphics::onAfterDraw() {
 
 SDL_Renderer* SDLGraphics::getRenderer() {
 	return mRenderer.get();
+}
+
+Asset* SDLGraphics::createTexture(const std::string& path, const std::string& assetTag) {
+	SDL_Texture* texture = IMG_LoadTexture(mRenderer.get(), path.c_str());
+	if (texture == nullptr) {
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load texture at: " + *path.c_str());
+	}
+
+	Asset* asset = new Asset(texture, assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+	return asset;
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, Drawable* drawable) {
@@ -183,22 +212,19 @@ Camera* GraphicsSystem::getCamera() {
 	return mCamera.get();
 }
 
-void BlockComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
+	if (mAssetSystem->contains(assetTag)) {
+		SDL_Log("Asset already loaded.");
+	}
+
+	mAssetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
+}
+
+void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mDrawable->setColor(r, g, b, a);
 }
 
-void BlockComponent::setSize(float width, float height) {
+void DrawableComponent::setSize(float width, float height) {
 	mDrawable->width = width;
 	mDrawable->height = height;
-}
-
-
-Asset* createSDLTexture(SDLGraphics* graphics, const std::string& path, const std::string& tag) {
-	SDL_Texture* texture = IMG_LoadTexture(graphics->getRenderer(), path.c_str());
-	if (texture == nullptr) {
-		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load texture at: " + *path.c_str());
-	}
-
-	Asset* asset = new Asset(texture, tag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
-	return asset;
 }

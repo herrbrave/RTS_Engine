@@ -15,7 +15,7 @@ Map::Map(MapConfig* config, EntityFactory* factory) {
 			physicsComponent->setPosition(&position);
 			physicsComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
 
-			BlockComponent* blockComponent = reinterpret_cast<BlockComponent*>(tile->componentContainer->getComponentByType(BLOCK_COMPONENT_TYPE));
+			DrawableComponent* blockComponent = reinterpret_cast<DrawableComponent*>(tile->componentContainer->getComponentByType(DRAWABLE_COMPONENT_TYPE));
 			blockComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
 
 			mMap.push_back(std::shared_ptr<Entity>(tile));

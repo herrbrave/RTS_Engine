@@ -24,26 +24,15 @@ public:
 	Drawable(float width, float height) {
 		this->width = width;
 		this->height = height;
+		mColor.reset(new SDL_Color{ 255, 255, 255, 255 });
 	}
 
 	virtual void draw(Graphics* graphicsRef, const vector2f* position) = 0;
-};
-
-class BlockDrawable : public Drawable {
-public:
-	BlockDrawable(float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) : Drawable(width, height) {
-		mColor.reset(new SDL_Color{r, g, b, a});
-	}
-
-	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-	void serialize(Serializer& serializer) const {
+	virtual void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
-
-		serializer.writer.String("drawableType");
-		serializer.writer.String("BlockDrawable");
 
 		serializer.writer.String("width");
 		serializer.writer.Uint(width);
@@ -63,11 +52,55 @@ public:
 		serializer.writer.String("a");
 		serializer.writer.Uint(mColor->a);
 
+		onSerialize(serializer);
+
 		serializer.writer.EndObject();
 	}
 
-private:
+protected:
 	std::unique_ptr<SDL_Color> mColor;
+	virtual void onSerialize(Serializer& serializer) const = 0;
+};
+
+class BlockDrawable : public Drawable {
+public:
+	BlockDrawable(float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) : Drawable(width, height) {
+		mColor->r = r;
+		mColor->g = g;
+		mColor->b = b;
+		mColor->a = a;
+	}
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+protected:
+
+	virtual void onSerialize(Serializer& serializer) const {
+		serializer.writer.String("drawableType");
+		serializer.writer.String("BlockDrawable");
+	}
+};
+
+class TextureDrawable : public Drawable {
+public:
+	TextureDrawable(Texture* texture) : Drawable(texture->w, texture->h) {
+		mTexture.reset(texture);
+	}
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+protected:
+	virtual void onSerialize(Serializer& serializer) const {
+		serializer.writer.String("drawableType");
+		serializer.writer.String("TextureDrawable");
+
+		serializer.writer.String("mTexture");
+		mTexture->serialize(serializer);
+	}
+
+private:
+	std::unique_ptr<Texture> mTexture{ nullptr };
 };
 
 class GraphicsConfig {
@@ -101,10 +134,12 @@ public:
 	}
 
 	virtual void onBeforeDraw() = 0;
-	virtual void renderTexture(Texture* texture, float x, float y) = 0;
+	virtual void renderTexture(Texture* texture, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
+
+	virtual Asset* createTexture(const std::string& path, const std::string& assetTag) = 0;
 
 protected:
 	AssetSystem* mAssetSystem;
@@ -114,12 +149,13 @@ class SDLGraphics : public Graphics {
 public:
 	SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphisConfig);
 	void onBeforeDraw() override;
-	void renderTexture(Texture* texture, float x, float y) override;
+	void renderTexture(Texture* texture, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
 
 	SDL_Renderer* getRenderer();
+	Asset* createTexture(const std::string& path, const std::string& assetTag) override;
 private:
 
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
@@ -144,6 +180,8 @@ public:
 	void draw();
 
 	Camera* getCamera();
+
+	void addTexture(const std::string& path, const std::string& assetTag);
 private:
 	AssetSystem* mAssetSystem{ nullptr };
 	PhysicsSystem* mPhysicsSystem{ nullptr };
@@ -153,11 +191,11 @@ private:
 	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
 };
 
-const static unsigned long BLOCK_COMPONENT_TYPE = sComponentId++;
+const static unsigned long DRAWABLE_COMPONENT_TYPE = sComponentId++;
 
-class BlockComponent : public Component {
+class DrawableComponent : public Component {
 public:
-	BlockComponent(unsigned long entityId, BlockDrawable* drawable) : Component(entityId, BLOCK_COMPONENT_TYPE) {
+	DrawableComponent(unsigned long entityId, Drawable* drawable) : Component(entityId, DRAWABLE_COMPONENT_TYPE) {
 		mDrawable = drawable;
 	}
 
@@ -168,17 +206,14 @@ public:
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint64(BLOCK_COMPONENT_TYPE);
-		serializer.writer.String("BlockDrawable");
+		serializer.writer.Uint64(DRAWABLE_COMPONENT_TYPE);
+		serializer.writer.String("mDrawable");
 		mDrawable->serialize(serializer);
 
 		serializer.writer.EndObject();
 	}
 private:
-	BlockDrawable* mDrawable;
+	Drawable* mDrawable;
 };
-
-
-Asset* createSDLTexture(SDLGraphics* graphics, std::string path, std::string tag);
 
 #endif // !__GRAPHICS_H__

@@ -58,6 +58,8 @@ public:
 
 	Entity* create_default();
 
+	Entity* create_textured_entity(std::string assetTag);
+
 	Entity* createFromSerialization(std::string path);
 
 protected:

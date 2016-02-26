@@ -8,8 +8,6 @@
 
 class RTS : public Game {
 private:
-	std::unique_ptr<Map> mMap{ nullptr };
-
 	std::unique_ptr<AssetSystem> mAssetSystem{ nullptr };
 	std::unique_ptr<EntitySystem> mEntitySystem{ nullptr };
 	std::unique_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };

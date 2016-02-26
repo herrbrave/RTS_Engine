@@ -49,12 +49,32 @@ Entity* EntityFactory::create_default() {
 	mPhysicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
 
-	BlockDrawable* blockDrawable = new BlockDrawable(32, 32, 255, 0, 0, 255);
+	Drawable* blockDrawable = new BlockDrawable(32, 32, 255, 0, 0, 255);
 	mGraphicsSystem->registerDrawable(entity->id, blockDrawable);
-	BlockComponent* blockComponent = new BlockComponent(entity->id, blockDrawable);
+	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, blockDrawable);
 
 	entity->componentContainer->registerComponent(physicsComponent);
-	entity->componentContainer->registerComponent(blockComponent);
+	entity->componentContainer->registerComponent(drawableComponent);
+
+	return entity;
+}
+
+Entity* EntityFactory::create_textured_entity(std::string assetTag) {
+	// TODO: Make the create method take a json blob config so I can create from serialization.
+	Entity* entity = new Entity();
+	mEntitySystem->registerEntity(entity);
+
+	Body* blockBody = new BlockBody(0, 0, 32, 32);
+	mPhysicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+
+	Texture* texture = new Texture(assetTag, 0, 0, 32, 32);
+	Drawable* textureDrawable = new TextureDrawable(texture);
+	mGraphicsSystem->registerDrawable(entity->id, textureDrawable);
+	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
+
+	entity->componentContainer->registerComponent(physicsComponent);
+	entity->componentContainer->registerComponent(drawableComponent);
 
 	return entity;
 }

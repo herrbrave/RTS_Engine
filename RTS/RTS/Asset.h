@@ -10,9 +10,9 @@ class Asset {
 public:
 	std::string tag;
 
-	Asset(void* asset, std::string tag, std::function<void(void*)> assetDeleter) {
+	Asset(void* asset, const std::string& tag, std::function<void(void*)> assetDeleter) {
 		mAsset = asset;
-		tag = std::move(tag);
+		this->tag = std::move(tag);
 	}
 	
 	~Asset() {
@@ -34,12 +34,16 @@ public:
 		mAssets.emplace(asset->tag, asset);
 	}
 
-	void deregisterAsset(std::string tag) {
-		mAssets.erase(mAssets.find(tag));
+	void deregisterAsset(const std::string& assetTag) {
+		mAssets.erase(mAssets.find(assetTag));
 	}
 
-	Asset* getAsset(std::string tag) {
-		return mAssets.at(tag);
+	Asset* getAsset(const std::string& assetTag) {
+		return mAssets[assetTag];
+	}
+
+	bool contains(const std::string& assetTag) {
+		return (mAssets.find(assetTag) != mAssets.end());
 	}
 
 private:
