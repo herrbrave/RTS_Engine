@@ -52,6 +52,30 @@ public:
 	void setWidth(float width);
 	void setHeight(float height);
 
+	virtual void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("BodyType");
+		serializer.writer.String("BlockBody");
+
+		serializer.writer.String("mSpeed");
+		serializer.writer.Double(mSpeed);
+
+		serializer.writer.String("mPosition");
+		mPosition->serialize(serializer);
+
+		serializer.writer.String("mVelocity");
+		mVelocity->serialize(serializer);
+
+		serializer.writer.String("mWidth");
+		serializer.writer.Double(mWidth);
+
+		serializer.writer.String("mHeight");
+		serializer.writer.Double(mHeight);
+
+		serializer.writer.EndObject();
+	}
+
 protected:
 	float mSpeed;
 	p_vector2f mPosition{ nullptr };
@@ -67,6 +91,30 @@ public:
 	bool checkPoint(vector2f& point) override;
 	bool checkCollision(Body& body) override;
 	Extent getExtent() override;
+
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("BodyType");
+		serializer.writer.String("BlockBody");
+
+		serializer.writer.String("mSpeed");
+		serializer.writer.Double(mSpeed);
+
+		serializer.writer.String("mPosition");
+		mPosition->serialize(serializer);
+
+		serializer.writer.String("mVelocity");
+		mVelocity->serialize(serializer);
+
+		serializer.writer.String("mWidth");
+		serializer.writer.Double(mWidth);
+
+		serializer.writer.String("mHeight");
+		serializer.writer.Double(mHeight);
+
+		serializer.writer.EndObject();
+	}
 };
 
 class QuadtreeNode {
@@ -126,7 +174,7 @@ private:
 	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
 };
 
-static const unsigned long PHYSICS_COMPONENT_TYPE = sComponentId.fetch_add(1);
+static const unsigned long PHYSICS_COMPONENT_TYPE = sComponentId++;
 
 class PhysicsComponent : public Component {
 public:
@@ -142,6 +190,18 @@ public:
 	void setSize(float width, float height);
 	float getWidth();
 	float getHeight();
+
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("componentId");
+		serializer.writer.Uint64(componentId);
+
+		serializer.writer.String("mBody");
+		mBody->serialize(serializer);
+
+		serializer.writer.EndObject();
+	}
 
 private:
 	Body* mBody;

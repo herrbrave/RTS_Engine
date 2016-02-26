@@ -1,6 +1,8 @@
 #ifndef __COMPONENT_H__
 #define __COMPONENT_H__
 
+#include"Serializer.h"
+
 #include<algorithm>
 #include<atomic>
 #include<memory>
@@ -18,6 +20,8 @@ public:
 		this->entityId = entityId;
 		this->componentId = componentId;
 	}
+
+	virtual void serialize(Serializer& serializer) const = 0;
 };
 
 class ComponentContainer {
@@ -27,8 +31,18 @@ public:
 
 	Component* getComponentByType(unsigned long type);
 
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartArray();
+
+		for (auto component : mComponents) {
+			component.second->serialize(serializer);
+		}
+
+		serializer.writer.EndArray();
+	}
+
 private:
-	std::unordered_map<unsigned long, std::shared_ptr<Component>> mComponents;
+	std::unordered_map<unsigned long, Component*> mComponents;
 };
 
 #endif // !__COMPONENT_H__

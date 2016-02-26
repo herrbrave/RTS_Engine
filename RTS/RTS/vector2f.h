@@ -1,6 +1,8 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
+#include"Serializer.h"
+
 #include<cmath>
 #include<memory>
 
@@ -74,6 +76,15 @@ public:
 	}
 
 	float x, y;
+
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+		serializer.writer.String("x");
+		serializer.writer.Double(x);
+		serializer.writer.String("y");
+		serializer.writer.Double(y);
+		serializer.writer.EndObject();
+	}
 };
 
 typedef std::shared_ptr<vector2f> p_vector2f;

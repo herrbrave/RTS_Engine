@@ -7,7 +7,7 @@ void ComponentContainer::registerComponent(Component* component) {
 		throw std::exception("Component type already registered.");
 	}
 
-	mComponents.emplace(id, std::shared_ptr<Component>(component));
+	mComponents.emplace(id, component);
 }
 
 void ComponentContainer::deregisterComponent(unsigned long id) {
@@ -19,5 +19,5 @@ void ComponentContainer::deregisterComponent(unsigned long id) {
 }
 
 Component* ComponentContainer::getComponentByType(unsigned long type) {
-	return mComponents.at(type).get();
+	return mComponents.at(type);
 }

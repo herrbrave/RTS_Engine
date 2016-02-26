@@ -71,7 +71,7 @@ void BlockDrawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mColor->a = a;
 }
 
-SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig) {
+SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfig) : Graphics(assetSystem) {
 	if (TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
 	}
@@ -135,21 +135,13 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 }
 
 void SDLGraphics::renderTexture(Texture* texture, float x, float y) {
-	SDLTexture* sdlTexture((SDLTexture*)texture);
+	Asset* asset = mAssetSystem->getAsset(texture->assetTag);
+	SDL_Texture* sdlTexture = reinterpret_cast<SDL_Texture*>(asset->getAsset());
 	int w(0);
 	int h(0);
-	SDL_QueryTexture(sdlTexture->getTextureInstrument(), nullptr, nullptr, &w, &h);
+	SDL_QueryTexture(sdlTexture, nullptr, nullptr, &w, &h);
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), 0, 0 };
-	SDL_RenderCopy(mRenderer.get(), sdlTexture->getTextureInstrument(), nullptr, &dest);
-}
-
-
-Texture* SDLGraphics::createTexture(std::string path, int x, int y, int w, int h) {
-	SDL_Surface* surface = SDL_LoadBMP(path.c_str());
-	SDL_Texture* texture = SDL_CreateTextureFromSurface(mRenderer.get(), surface);
-	SDL_FreeSurface(surface);
-
-	return new SDLTexture(texture);
+	SDL_RenderCopy(mRenderer.get(), sdlTexture, nullptr, &dest);
 }
 
 void SDLGraphics::onBeforeDraw() {
@@ -161,12 +153,8 @@ void SDLGraphics::onAfterDraw() {
 	SDL_RenderPresent(mRenderer.get());
 }
 
-SDLTexture::SDLTexture(SDL_Texture* sdlTexture) {
-	mTexture.reset(sdlTexture);
-}
-
-SDL_Texture* SDLTexture::getTextureInstrument() {
-	return mTexture.get();
+SDL_Renderer* SDLGraphics::getRenderer() {
+	return mRenderer.get();
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, Drawable* drawable) {
@@ -202,4 +190,15 @@ void BlockComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 void BlockComponent::setSize(float width, float height) {
 	mDrawable->width = width;
 	mDrawable->height = height;
+}
+
+
+Asset* createSDLTexture(SDLGraphics* graphics, const std::string& path, const std::string& tag) {
+	SDL_Texture* texture = IMG_LoadTexture(graphics->getRenderer(), path.c_str());
+	if (texture == nullptr) {
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load texture at: " + *path.c_str());
+	}
+
+	Asset* asset = new Asset(texture, tag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+	return asset;
 }

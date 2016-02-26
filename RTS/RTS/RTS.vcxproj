@@ -39,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\SDL\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\rapid_json\rapidjson-master\include;C:\SDL\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\SDL\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -55,7 +55,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_image.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -76,6 +76,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Asset.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Constants.h" />
@@ -89,6 +90,8 @@
     <ClInclude Include="PathState.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="SDL_Helpers.h" />
+    <ClInclude Include="Serializer.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="RTS.h" />
     <ClInclude Include="State.h" />
@@ -105,6 +108,7 @@
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RTS.cpp" />
     <ClCompile Include="MoveState.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

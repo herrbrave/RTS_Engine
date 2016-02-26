@@ -9,11 +9,27 @@ void RTS::setup() {
 	config->setWindowWidth(1024);
 	config->setWindowHeight(768);
 
+	mAssetSystem.reset(new AssetSystem());
+	mEntitySystem.reset(new EntitySystem());
 	mPhysicsSystem.reset(new PhysicsSystem());
-	mGraphicsSystem.reset(new GraphicsSystem(config, mPhysicsSystem.get()));
+	mGraphicsSystem.reset(new GraphicsSystem(mAssetSystem.get(), config, mPhysicsSystem.get()));
+
+	mEntityFactory.reset(new EntityFactory(mEntitySystem.get(), mGraphicsSystem.get(), mPhysicsSystem.get()));
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
+
+	MapConfig* mapConfig = new MapConfig();
+	mapConfig->mapWidth = 2;
+	mapConfig->mapHeight = 2;
+	mapConfig->tileWidth = 64;
+	mapConfig->tileHeight = 64;
+	mapConfig->tiles.push_back(0);
+	mapConfig->tiles.push_back(0);
+	mapConfig->tiles.push_back(0);
+	mapConfig->tiles.push_back(0);
+
+	mMap.reset(new Map(mapConfig, mEntityFactory.get()));
 }
 
 void RTS::handleEvents()

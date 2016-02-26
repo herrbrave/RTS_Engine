@@ -1,16 +1,19 @@
 #ifndef __GRAPHICS_H__
 #define __GRAPHICS_H__
 
+#include"Asset.h"
 #include"Camera.h"
 #include"Constants.h"
 #include"Physics.h"
 #include"SDL_Helpers.h"
+#include"Texture.h"
 
 #include<memory>
 #include<unordered_map>
 
 #include<SDL.h>
 #include<SDL_ttf.h>
+#include<SDL_image.h>
 
 class Graphics;
 class Drawable {
@@ -36,21 +39,35 @@ public:
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("drawableType");
+		serializer.writer.String("BlockDrawable");
+
+		serializer.writer.String("width");
+		serializer.writer.Uint(width);
+
+		serializer.writer.String("height");
+		serializer.writer.Uint(height);
+
+		serializer.writer.String("r");
+		serializer.writer.Uint(mColor->r);
+
+		serializer.writer.String("g");
+		serializer.writer.Uint(mColor->g);
+
+		serializer.writer.String("b");
+		serializer.writer.Uint(mColor->b);
+
+		serializer.writer.String("a");
+		serializer.writer.Uint(mColor->a);
+
+		serializer.writer.EndObject();
+	}
+
 private:
 	std::unique_ptr<SDL_Color> mColor;
-};
-
-class Texture {
-};
-
-class SDLTexture : public Texture {
-public:
-	SDLTexture(SDL_Texture* sdlTexture);
-
-	SDL_Texture* getTextureInstrument();
-
-private:
-	std::shared_ptr<SDL_Texture> mTexture;
 };
 
 class GraphicsConfig {
@@ -79,34 +96,43 @@ public:
 
 class Graphics {
 public:
+	Graphics(AssetSystem* assetSystem) {
+		mAssetSystem = assetSystem;
+	}
+
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(Texture* texture, float x, float y) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
-	virtual Texture* createTexture(std::string path, int x, int y, int w, int h) = 0;
 	virtual void onAfterDraw() = 0;
+
+protected:
+	AssetSystem* mAssetSystem;
 };
 
 class SDLGraphics : public Graphics {
 public:
-	SDLGraphics(GraphicsConfig* graphisConfig);
-	virtual void onBeforeDraw();
-	virtual void renderTexture(Texture* texture, float x, float y);
-	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-	virtual Texture* createTexture(std::string path, int x, int y, int w, int h);
-	virtual void onAfterDraw();
+	SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphisConfig);
+	void onBeforeDraw() override;
+	void renderTexture(Texture* texture, float x, float y) override;
+	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void onAfterDraw() override;
+
+	SDL_Renderer* getRenderer();
 private:
+
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 	std::unique_ptr<SDL_Renderer, SDL_DELETERS> mRenderer{ nullptr };
 };
 
 class GraphicsSystem {
 public:
-	GraphicsSystem(GraphicsConfig* graphisConfig, PhysicsSystem* physicsSystem) {
-		mPhysicsSystem.reset(physicsSystem);
-		mGraphicsConfig.reset(graphisConfig);
-		mGraphics.reset(new SDLGraphics(mGraphicsConfig.get()));
+	GraphicsSystem(AssetSystem* assetSystem, GraphicsConfig* graphisConfig, PhysicsSystem* physicsSystem) {
+		mAssetSystem = assetSystem;
+		mPhysicsSystem = physicsSystem;
+		mGraphicsConfig.reset(std::move(graphisConfig));
+		mGraphics.reset(new SDLGraphics(mAssetSystem, mGraphicsConfig.get()));
 		mCamera.reset(new Camera());
 		mCamera->position.reset(new vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;
@@ -119,26 +145,40 @@ public:
 
 	Camera* getCamera();
 private:
-	std::shared_ptr<PhysicsSystem> mPhysicsSystem{ nullptr };
-	std::shared_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
+	AssetSystem* mAssetSystem{ nullptr };
+	PhysicsSystem* mPhysicsSystem{ nullptr };
+	std::unique_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
 	std::unique_ptr<Graphics> mGraphics{ nullptr };
 	std::unique_ptr<Camera> mCamera;
 	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
 };
 
-const static unsigned long BLOCK_COMPONENT_TYPE = sComponentId.fetch_add(1);
+const static unsigned long BLOCK_COMPONENT_TYPE = sComponentId++;
 
 class BlockComponent : public Component {
 public:
-	BlockComponent(unsigned long entityId, BlockDrawable* drawable) : Component(BLOCK_COMPONENT_TYPE, entityId) {
+	BlockComponent(unsigned long entityId, BlockDrawable* drawable) : Component(entityId, BLOCK_COMPONENT_TYPE) {
 		mDrawable = drawable;
 	}
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void setSize(float width, float height);
 
+	void serialize(Serializer& serializer) const override {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("componentId");
+		serializer.writer.Uint64(BLOCK_COMPONENT_TYPE);
+		serializer.writer.String("BlockDrawable");
+		mDrawable->serialize(serializer);
+
+		serializer.writer.EndObject();
+	}
 private:
 	BlockDrawable* mDrawable;
 };
+
+
+Asset* createSDLTexture(SDLGraphics* graphics, std::string path, std::string tag);
 
 #endif // !__GRAPHICS_H__

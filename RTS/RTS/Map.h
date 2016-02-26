@@ -21,7 +21,7 @@ struct Node {
 	int cost;
 };
 
-const static unsigned long TILE_COMPONENT_ID = sComponentId.fetch_add(1);
+const static unsigned long TILE_COMPONENT_ID = sComponentId++;
 class TileComponent : public Component {
 public:
 	int type, x, y;
@@ -31,6 +31,27 @@ public:
 		this->x = x;
 		this->y = y;
 		this->type = type;
+	}
+
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("componentId");
+		serializer.writer.Uint64(componentId);
+
+		serializer.writer.String("type");
+		serializer.writer.Uint(type);
+
+		serializer.writer.String("x");
+		serializer.writer.Uint(x);
+
+		serializer.writer.String("y");
+		serializer.writer.Uint(y);
+
+		serializer.writer.String("canOccupy");
+		serializer.writer.Bool(canOccupy);
+
+		serializer.writer.EndObject();
 	}
 };
 

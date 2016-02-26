@@ -6,7 +6,7 @@ Map::Map(MapConfig* config, EntityFactory* factory) {
 
 	for (int y = 0; y < mMapConfig->mapHeight; y++) {
 		for (int x = 0; x < mMapConfig->mapWidth; x++) {
-			Entity* tile = mTileFactory->create();
+			Entity* tile = mTileFactory->create_default();
 			TileComponent* tileComponent = new TileComponent(tile->id, x, y, mMapConfig->tiles[getIndex(x, y)]);
 			tile->componentContainer->registerComponent(tileComponent);
 
@@ -14,6 +14,9 @@ Map::Map(MapConfig* config, EntityFactory* factory) {
 			PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(tile->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
 			physicsComponent->setPosition(&position);
 			physicsComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
+
+			BlockComponent* blockComponent = reinterpret_cast<BlockComponent*>(tile->componentContainer->getComponentByType(BLOCK_COMPONENT_TYPE));
+			blockComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
 
 			mMap.push_back(std::shared_ptr<Entity>(tile));
 		}
