@@ -14,6 +14,7 @@ private:
 	std::unique_ptr<GraphicsSystem> mGraphicsSystem{ nullptr };
 
 	std::unique_ptr<EntityFactory> mEntityFactory{ nullptr };
+	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
 
 	std::shared_ptr<TTF_Font> mFont{ nullptr };
 

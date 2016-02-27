@@ -27,10 +27,9 @@ public:
 	int type, x, y;
 	bool canOccupy{ true };
 
-	TileComponent(unsigned long entityId, int x, int y, int type) : Component(entityId, TILE_COMPONENT_ID) {
+	TileComponent(unsigned long entityId, int x, int y) : Component(entityId, TILE_COMPONENT_ID) {
 		this->x = x;
 		this->y = y;
-		this->type = type;
 	}
 
 	void serialize(Serializer& serializer) const {
@@ -57,7 +56,7 @@ public:
 
 class Map {
 public:
-	Map(MapConfig* config, EntityFactory* factory);
+	Map(MapConfig* config, EntitySystem* entitySystem);
 
 	Entity* getTileAt(int x, int y);
 
@@ -74,9 +73,8 @@ public:
 	Entity* tileAtPoint(const vector2f* point);
 
 private:
+	EntitySystem* mEntitySystem{ nullptr };
 	std::unique_ptr<MapConfig> mMapConfig{ nullptr };
-	std::vector<std::shared_ptr<Entity>> mMap;
-	EntityFactory* mTileFactory{ nullptr };
 
 	inline int getIndex(int x, int y) {
 		if (x < 0 || x >= mMapConfig->mapWidth || y < 0 || y >= mMapConfig->mapHeight) {
@@ -87,5 +85,23 @@ private:
 	}
 };
 
+class TileFactory : public EntityFactory {
+public:
+	TileFactory(EntitySystem* entitySystem, GraphicsSystem* graphics, PhysicsSystem* physics) : EntityFactory(entitySystem, graphics, physics) {}
+
+	Entity* createTile(const std::string& assetTag, int xIndex, int yIndex, vector2f* position, float tx, float ty, float width, float height);
+};
+
+class MapFactory {
+public:
+	MapFactory(TileFactory* tileFactory, EntitySystem* entitySystem, GraphicsSystem* graphicsSystem);
+
+	Map* createMap(const std::string pathToMap);
+
+private:
+	GraphicsSystem* mGraphicsSystem{ nullptr };
+	EntitySystem* mEntitySystem{ nullptr };
+	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
+};
 
 #endif // !__MAP_H__

@@ -40,7 +40,7 @@ EntityFactory::EntityFactory(EntitySystem* entity, GraphicsSystem* graphics, Phy
 	mPhysicsSystem = physics;
 }
 
-Entity* EntityFactory::create_default() {
+Entity* EntityFactory::createDefault() {
 	// TODO: Make the create method take a json blob config so I can create from serialization.
 	Entity* entity = new Entity();
 	mEntitySystem->registerEntity(entity);
@@ -59,16 +59,16 @@ Entity* EntityFactory::create_default() {
 	return entity;
 }
 
-Entity* EntityFactory::create_textured_entity(std::string assetTag) {
+Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h) {
 	// TODO: Make the create method take a json blob config so I can create from serialization.
 	Entity* entity = new Entity();
 	mEntitySystem->registerEntity(entity);
 
-	Body* blockBody = new BlockBody(0, 0, 32, 32);
+	Body* blockBody = new BlockBody(0, 0, w, h);
 	mPhysicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
 
-	Texture* texture = new Texture(assetTag, 0, 0, 32, 32);
+	Texture* texture = new Texture(assetTag, tx, ty, w, h);
 	Drawable* textureDrawable = new TextureDrawable(texture);
 	mGraphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);

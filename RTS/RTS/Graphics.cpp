@@ -63,6 +63,11 @@ void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mColor->a = a;
 }
 
+void Drawable::setSize(float width, float height) {
+	this->width = width;
+	this->height = height;
+}
+
 void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	float x = position->x;
 	float y = position->y;
@@ -72,6 +77,12 @@ void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 
 void TextureDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	graphicsRef->renderTexture(mTexture.get(), position->x, position->y, mColor->r, mColor->g, mColor->b, mColor->a);
+}
+
+void TextureDrawable::setSize(float width, float height) {
+	Drawable::setSize(width, height);
+	mTexture->w = width;
+	mTexture->h = height;
 }
 
 SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfig) : Graphics(assetSystem) {
@@ -225,6 +236,5 @@ void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 }
 
 void DrawableComponent::setSize(float width, float height) {
-	mDrawable->width = width;
-	mDrawable->height = height;
+	mDrawable->setSize(width, height);
 }

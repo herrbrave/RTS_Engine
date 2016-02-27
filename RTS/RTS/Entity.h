@@ -56,9 +56,9 @@ class EntityFactory {
 public:
 	EntityFactory(EntitySystem* entitySystem, GraphicsSystem* graphics, PhysicsSystem* physics);
 
-	Entity* create_default();
+	Entity* createDefault();
 
-	Entity* create_textured_entity(std::string assetTag);
+	Entity* createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h);
 
 	Entity* createFromSerialization(std::string path);
 

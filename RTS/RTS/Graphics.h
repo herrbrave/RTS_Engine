@@ -31,6 +31,8 @@ public:
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
+	virtual void setSize(float width, float height);
+
 	virtual void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
@@ -89,6 +91,8 @@ public:
 	}
 
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+	void setSize(float width, float height) override;
 
 protected:
 	virtual void onSerialize(Serializer& serializer) const {

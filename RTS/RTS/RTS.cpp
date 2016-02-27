@@ -17,6 +17,7 @@ void RTS::setup() {
 	mGraphicsSystem.reset(new GraphicsSystem(mAssetSystem.get(), config, mPhysicsSystem.get()));
 
 	mEntityFactory.reset(new EntityFactory(mEntitySystem.get(), mGraphicsSystem.get(), mPhysicsSystem.get()));
+	mTileFactory.reset(new TileFactory(mEntitySystem.get(), mGraphicsSystem.get(), mPhysicsSystem.get()));
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });

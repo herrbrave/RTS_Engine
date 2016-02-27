@@ -1,26 +1,8 @@
 #include"Map.h"
 
-Map::Map(MapConfig* config, EntityFactory* factory) {
+Map::Map(MapConfig* config, EntitySystem* entitySystem) {
 	mMapConfig.reset(config);
-	mTileFactory = factory;
-
-	for (int y = 0; y < mMapConfig->mapHeight; y++) {
-		for (int x = 0; x < mMapConfig->mapWidth; x++) {
-			Entity* tile = mTileFactory->create_default();
-			TileComponent* tileComponent = new TileComponent(tile->id, x, y, mMapConfig->tiles[getIndex(x, y)]);
-			tile->componentContainer->registerComponent(tileComponent);
-
-			vector2f position(x * mMapConfig->tileWidth, y * mMapConfig->tileHeight);
-			PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(tile->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
-			physicsComponent->setPosition(&position);
-			physicsComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
-
-			DrawableComponent* blockComponent = reinterpret_cast<DrawableComponent*>(tile->componentContainer->getComponentByType(DRAWABLE_COMPONENT_TYPE));
-			blockComponent->setSize(mMapConfig->tileWidth, mMapConfig->tileHeight);
-
-			mMap.push_back(std::shared_ptr<Entity>(tile));
-		}
-	}
+	mEntitySystem = entitySystem;
 }
 
 Entity* Map::getTileAt(int x, int y) {
@@ -29,7 +11,7 @@ Entity* Map::getTileAt(int x, int y) {
 		return nullptr;
 	}
 
-	return mMap[index].get();
+	return mEntitySystem->getEntityById(mMapConfig->tiles[index]);
 }
 
 Entity* Map::tileAtPoint(const vector2f* point) {
@@ -46,7 +28,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 		return nullptr;
 	}
 
-	auto endTile = mMap[endIndex];
+	auto endTile = mEntitySystem->getEntityById(mMapConfig->tiles[endIndex]);
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
@@ -67,10 +49,10 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 	};
 
 	int startIndex = getIndex(startX, startY);
-	auto startTile = mMap[startIndex];
+	auto startTile = mEntitySystem->getEntityById(mMapConfig->tiles[startIndex]);
 	std::unordered_set<Entity*> openSetLookup;
 	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
-	openSet.emplace(Node{ startTile.get(), 0 });
+	openSet.emplace(Node{ startTile, 0 });
 
 	// set of explored tiles.
 	std::unordered_set<Entity*> closedSet;
@@ -87,7 +69,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 		if (component->x == endX && component->y == endY) {
 			std::vector<Entity*> path;
 			auto tile = current.tile;
-			while (tile != startTile.get()) {
+			while (tile != startTile) {
 				path.insert(path.begin(), tile);
 				tile = pathMap[tile];
 			}
@@ -111,7 +93,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 					continue;
 				}
 
-				auto neighborTile = mMap[index].get();
+				auto neighborTile = mEntitySystem->getEntityById(mMapConfig->tiles[index]);
 				TileComponent*  component = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(TILE_COMPONENT_ID));
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
@@ -123,4 +105,69 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 			}
 		}
 	}
+}
+
+Entity* TileFactory::createTile(const std::string& assetTag, int xIndex, int yIndex, vector2f* position, float tx, float ty, float width, float height) {
+	Entity* entity = createTexturedEntity(assetTag, tx, ty, width, height);
+
+	TileComponent* tileComponent = new TileComponent(entity->id, xIndex, yIndex);
+	entity->componentContainer->registerComponent(tileComponent);
+
+	PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+	physicsComponent->setPosition(position);
+
+	return entity;
+}
+
+
+MapFactory::MapFactory(TileFactory* tileFactory, EntitySystem* entitySystem, GraphicsSystem* graphicsSystem) {
+	mTileFactory.reset(std::move(tileFactory));
+	mGraphicsSystem = graphicsSystem;
+	mEntitySystem = entitySystem;
+}
+
+Map* MapFactory::createMap(const std::string pathToMap) {
+	std::ifstream file(pathToMap);
+	std::string line;
+	std::string builder;
+	while (std::getline(file, line)) {
+		builder.append(line);
+	}
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(builder.c_str());
+
+	int offset(doc["tilesets"][0]["firstgid"].GetInt());
+	int width(doc["width"].GetInt());
+	int height(doc["height"].GetInt());
+	float tileWidth(doc["tilewidth"].GetInt());
+	float tileHeight(doc["tileheight"].GetInt());
+	std::string imagePath(doc["tilesets"][0]["image"].GetString());
+	std::string assetTag(doc["tilesets"][0]["name"].GetString()); 
+	int columns(doc["tilesets"][0]["columns"].GetInt());
+
+	mGraphicsSystem->addTexture(imagePath, assetTag);
+
+	MapConfig* mapConfig = new MapConfig();
+	mapConfig->mapWidth = width;
+	mapConfig->mapHeight = height;
+	mapConfig->tileWidth = tileWidth;
+	mapConfig->tileHeight = tileHeight;
+
+	auto data = doc["layers"][0]["data"].GetArray();
+	for (int index = 0; index < data.Size(); index++) {
+		int tileVal(data[index].GetInt() - offset);
+		int x = (index % width);
+		int y = (index / height);
+		int tx = tileWidth * (tileVal % columns);
+		int ty = tileHeight * (tileVal / columns);
+
+		Entity* tile = mTileFactory->createTile(assetTag, x, y, new vector2f(x * tileWidth, y * tileHeight), tx, ty, tileWidth, tileHeight);
+		mapConfig->tiles.push_back(tile->id);
+	}
+
+	Map* map = new Map(mapConfig, mEntitySystem);
+
+	return map;
 }
