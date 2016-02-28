@@ -17,10 +17,6 @@ void RTS::setup() {
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
-
-	mSystemManager->graphicsSystem->addTexture("dg_humans32.gif", "dg_humans32");
-
-	mEntityFactory->createFromSerialization("serialization.json");
 }
 
 void RTS::handleEvents()
