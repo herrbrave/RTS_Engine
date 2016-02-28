@@ -21,6 +21,14 @@ public:
 		mVelocity.reset(new vector2f(0, 0));
 	}
 
+	Body(const rapidjson::Value& root) {
+		mSpeed = root["mSpeed"].GetDouble();
+		mPosition.reset(new vector2f(root["mPosition"]));
+		mVelocity.reset(new vector2f(root["mVelocity"]));
+		mWidth = root["mWidth"].GetDouble();
+		mHeight = root["mHeight"].GetDouble();
+	}
+
 	virtual bool checkPoint(vector2f& point) = 0;
 	virtual bool checkCollision(Body& body) = 0;
 	virtual Extent getExtent() = 0;
@@ -55,8 +63,7 @@ public:
 	virtual void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
-		serializer.writer.String("BodyType");
-		serializer.writer.String("BlockBody");
+		onSerialization(serializer);
 
 		serializer.writer.String("mSpeed");
 		serializer.writer.Double(mSpeed);
@@ -77,6 +84,8 @@ public:
 	}
 
 protected:
+	virtual void onSerialization(Serializer& serializer) const = 0;
+
 	float mSpeed;
 	p_vector2f mPosition{ nullptr };
 	p_vector2f mVelocity{ nullptr };
@@ -88,33 +97,14 @@ class BlockBody : public Body {
 public:
 	BlockBody(float x, float y, float width, float height);
 
+	BlockBody(const rapidjson::Value& root) : Body(root) {}
+
 	bool checkPoint(vector2f& point) override;
 	bool checkCollision(Body& body) override;
 	Extent getExtent() override;
 
-	void serialize(Serializer& serializer) const {
-		serializer.writer.StartObject();
-
-		serializer.writer.String("BodyType");
-		serializer.writer.String("BlockBody");
-
-		serializer.writer.String("mSpeed");
-		serializer.writer.Double(mSpeed);
-
-		serializer.writer.String("mPosition");
-		mPosition->serialize(serializer);
-
-		serializer.writer.String("mVelocity");
-		mVelocity->serialize(serializer);
-
-		serializer.writer.String("mWidth");
-		serializer.writer.Double(mWidth);
-
-		serializer.writer.String("mHeight");
-		serializer.writer.Double(mHeight);
-
-		serializer.writer.EndObject();
-	}
+protected:
+	void onSerialization(Serializer& serializer) const override;
 };
 
 class QuadtreeNode {
@@ -174,12 +164,21 @@ private:
 	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
 };
 
-static const unsigned long PHYSICS_COMPONENT_TYPE = sComponentId++;
-
 class PhysicsComponent : public Component {
 public:
-	PhysicsComponent(unsigned long entityId, Body* body) : Component(entityId, PHYSICS_COMPONENT_TYPE) {
+	PhysicsComponent(unsigned long entityId, Body* body) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		mBody = body;
+	}
+
+	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+		const rapidjson::Value& body = root["mBody"];
+		std::string bodyType = body["BodyType"].GetString();
+		if (bodyType == "BlockBody") {
+			mBody = new BlockBody(body);
+		}
+		else {
+			assert(false);
+		}
 	}
 
 	void setPosition(vector2f* position);
@@ -190,12 +189,15 @@ public:
 	void setSize(float width, float height);
 	float getWidth();
 	float getHeight();
+	Body* getBody() {
+		return mBody;
+	}
 
 	void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint64(componentId);
+		serializer.writer.Uint(componentId);
 
 		serializer.writer.String("mBody");
 		mBody->serialize(serializer);

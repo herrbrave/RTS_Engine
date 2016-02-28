@@ -19,7 +19,7 @@ public:
 	}
 
 	void recalculate() {
-		auto tileComponent = reinterpret_cast<TileComponent*>(mTargetTile->componentContainer->getComponentByType(TILE_COMPONENT_ID));
+		auto tileComponent = reinterpret_cast<TileComponent*>(mTargetTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
 		int targetX = tileComponent->x;
 		int targetY = tileComponent->y;
 		
@@ -30,7 +30,7 @@ public:
 
 		while (openList.size() > 0) {
 			auto currentTile = openList.front();
-			tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(TILE_COMPONENT_ID));
+			tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
 			openList.pop_front();
 			closedList.emplace(currentTile);
 			int currentCost = mCostMap[currentTile->id];
@@ -44,7 +44,7 @@ public:
 						continue;
 					}
 					auto neighborTile = mMap->getTileAt(x, y);
-					auto neighborTileComponent = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(TILE_COMPONENT_ID));
+					auto neighborTileComponent = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
 
 					if (closedList.find(neighborTile) != closedList.end() || std::find(openList.begin(), openList.end(), neighborTile) != openList.end()) {
 						if (!neighborTileComponent->canOccupy) {
@@ -73,7 +73,7 @@ public:
 		for (int y = 0; y < mMap->getMapHeight(); y++) {
 			for (int x = 0; x < mMap->getMapWidth(); x++) {
 				auto currentTile = mMap->getTileAt(x, y);
-				tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(TILE_COMPONENT_ID));
+				tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
 				int costValue = mCostMap[currentTile->id];
 				std::string cost = std::to_string(costValue);
 

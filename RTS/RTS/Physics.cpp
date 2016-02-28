@@ -51,6 +51,11 @@ Extent BlockBody::getExtent() {
 	};
 }
 
+void BlockBody::onSerialization(Serializer& serializer) const {
+	serializer.writer.String("BodyType");
+	serializer.writer.String("BlockBody");
+}
+
 void PhysicsSystem::registerBody(const unsigned long id, Body* body) {
 	mBodies.emplace(id, std::shared_ptr<Body>(body));
 }

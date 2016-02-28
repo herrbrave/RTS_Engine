@@ -11,16 +11,16 @@ void RTS::setup() {
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 
-	mAssetSystem.reset(new AssetSystem());
-	mEntitySystem.reset(new EntitySystem());
-	mPhysicsSystem.reset(new PhysicsSystem());
-	mGraphicsSystem.reset(new GraphicsSystem(mAssetSystem.get(), config, mPhysicsSystem.get()));
+	mSystemManager.reset(new SystemManager(config));
 
-	mEntityFactory.reset(new EntityFactory(mEntitySystem.get(), mGraphicsSystem.get(), mPhysicsSystem.get()));
-	mTileFactory.reset(new TileFactory(mEntitySystem.get(), mGraphicsSystem.get(), mPhysicsSystem.get()));
+	mEntityFactory.reset(new EntityFactory(mSystemManager.get()));
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
+
+	mSystemManager->graphicsSystem->addTexture("dg_humans32.gif", "dg_humans32");
+
+	mEntityFactory->createFromSerialization("serialization.json");
 }
 
 void RTS::handleEvents()
@@ -47,12 +47,12 @@ void RTS::handleEvents()
 
 void RTS::update(){
 	Uint32 lastTime(SDL_GetTicks());
-	mPhysicsSystem->update(lastTime - mLastTime);
+	mSystemManager->physicsSystem->update(lastTime - mLastTime);
 	mLastTime = lastTime;
 }
 
 void RTS::draw(){
-	mGraphicsSystem->draw();
+	mSystemManager->graphicsSystem->draw();
 }
 void RTS::delay(Uint32 frameTime){
 	if (frameTime < 33) {

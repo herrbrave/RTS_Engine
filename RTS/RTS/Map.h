@@ -6,7 +6,7 @@
 #include<unordered_map>
 #include<unordered_set>
 
-#include"Entity.h"
+#include"EntityFactory.h"
 
 struct MapConfig {
 	int tileWidth;
@@ -21,25 +21,27 @@ struct Node {
 	int cost;
 };
 
-const static unsigned long TILE_COMPONENT_ID = sComponentId++;
 class TileComponent : public Component {
 public:
-	int type, x, y;
+	int x, y;
 	bool canOccupy{ true };
 
-	TileComponent(unsigned long entityId, int x, int y) : Component(entityId, TILE_COMPONENT_ID) {
+	TileComponent(unsigned long entityId, int x, int y) : Component(entityId, ComponentType::TILE_COMPONENT) {
 		this->x = x;
 		this->y = y;
+	}
+
+	TileComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::TILE_COMPONENT) {
+		x = root["x"].GetInt();
+		y = root["y"].GetInt(); 
+		canOccupy = root["canOccupy"].GetBool();
 	}
 
 	void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint64(componentId);
-
-		serializer.writer.String("type");
-		serializer.writer.Uint(type);
+		serializer.writer.Uint(componentId);
 
 		serializer.writer.String("x");
 		serializer.writer.Uint(x);
@@ -83,25 +85,6 @@ private:
 
 		return (y * mMapConfig->mapWidth) + x;
 	}
-};
-
-class TileFactory : public EntityFactory {
-public:
-	TileFactory(EntitySystem* entitySystem, GraphicsSystem* graphics, PhysicsSystem* physics) : EntityFactory(entitySystem, graphics, physics) {}
-
-	Entity* createTile(const std::string& assetTag, int xIndex, int yIndex, vector2f* position, float tx, float ty, float width, float height);
-};
-
-class MapFactory {
-public:
-	MapFactory(TileFactory* tileFactory, EntitySystem* entitySystem, GraphicsSystem* graphicsSystem);
-
-	Map* createMap(const std::string pathToMap);
-
-private:
-	GraphicsSystem* mGraphicsSystem{ nullptr };
-	EntitySystem* mEntitySystem{ nullptr };
-	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
 };
 
 #endif // !__MAP_H__

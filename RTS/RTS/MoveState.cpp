@@ -5,8 +5,8 @@ void MoveState::begin() {
 }
 
 void MoveState::update() {
-	auto unitComponent = reinterpret_cast<PhysicsComponent*>(mEntity->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
-	auto targetComponent = reinterpret_cast<PhysicsComponent*>(mTarget->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+	auto unitComponent = reinterpret_cast<PhysicsComponent*>(mEntity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
+	auto targetComponent = reinterpret_cast<PhysicsComponent*>(mTarget->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
 
 	vector2f unitLocation = *unitComponent->getPosition();
 	vector2f targetLocation = *targetComponent->getPosition();

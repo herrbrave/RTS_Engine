@@ -2,6 +2,7 @@
 #define	__SERIALIZER_H__
 
 #include<rapidjson\prettywriter.h>
+#include<rapidjson\document.h>
 
 class Serializer {
 public:

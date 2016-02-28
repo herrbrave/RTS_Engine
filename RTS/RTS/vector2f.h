@@ -18,6 +18,11 @@ public:
 		this->y = y;
 	}
 
+	vector2f(const rapidjson::Value& root) {
+		x = root["x"].GetDouble();
+		y = root["y"].GetDouble();
+	}
+
 	void set(vector2f* vector) {
 		x = vector->x;
 		y = vector->y;

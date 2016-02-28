@@ -10,8 +10,6 @@
 #include<rapidjson\prettywriter.h>
 
 #include"Component.h"
-#include"Graphics.h"
-#include "Physics.h"
 #include"State.h"
 #include"vector2f.h"
 
@@ -50,22 +48,6 @@ public:
 
 private:
 	std::unordered_map<unsigned long, Entity*> mEntityMap;
-};
-
-class EntityFactory {
-public:
-	EntityFactory(EntitySystem* entitySystem, GraphicsSystem* graphics, PhysicsSystem* physics);
-
-	Entity* createDefault();
-
-	Entity* createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h);
-
-	Entity* createFromSerialization(std::string path);
-
-protected:
-	EntitySystem* mEntitySystem{ nullptr };
-	GraphicsSystem* mGraphicsSystem{ nullptr };
-	PhysicsSystem* mPhysicsSystem{ nullptr };
 };
 
 #endif // !__ENTITY_H__

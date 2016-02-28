@@ -27,6 +27,17 @@ public:
 		mColor.reset(new SDL_Color{ 255, 255, 255, 255 });
 	}
 
+	Drawable(const rapidjson::Value& root) {
+		width = root["width"].GetDouble();
+		height = root["height"].GetDouble();
+		mColor.reset(new SDL_Color{ 
+			root["r"].GetUint(), 
+			root["g"].GetUint(),
+			root["b"].GetUint(),
+			root["a"].GetUint()
+		});
+	}
+
 	virtual void draw(Graphics* graphicsRef, const vector2f* position) = 0;
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
@@ -73,14 +84,30 @@ public:
 		mColor->a = a;
 	}
 
-	void draw(Graphics* graphicsRef, const vector2f* position) override;
+	BlockDrawable(const rapidjson::Value& root) : Drawable(root) {}
 
-	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
 protected:
 
 	virtual void onSerialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
 		serializer.writer.String("drawableType");
 		serializer.writer.String("BlockDrawable");
+
+		serializer.writer.String("r");
+		serializer.writer.Uint(mColor->r);
+
+		serializer.writer.String("g");
+		serializer.writer.Uint(mColor->g);
+
+		serializer.writer.String("b");
+		serializer.writer.Uint(mColor->b);
+
+		serializer.writer.String("a");
+		serializer.writer.Uint(mColor->a);
+
+		serializer.writer.EndObject();
 	}
 };
 
@@ -90,17 +117,26 @@ public:
 		mTexture.reset(texture);
 	}
 
+	TextureDrawable(const rapidjson::Value& root) : Drawable(0, 0) {
+		const rapidjson::Value& texture = root["mTexture"];
+		mTexture.reset(new Texture(texture));
+	}
+
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
 	void setSize(float width, float height) override;
 
 protected:
 	virtual void onSerialize(Serializer& serializer) const {
+		serializer.writer.StartObject(); 
+
 		serializer.writer.String("drawableType");
 		serializer.writer.String("TextureDrawable");
 
 		serializer.writer.String("mTexture");
 		mTexture->serialize(serializer);
+
+		serializer.writer.EndObject();
 	}
 
 private:
@@ -195,22 +231,37 @@ private:
 	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
 };
 
-const static unsigned long DRAWABLE_COMPONENT_TYPE = sComponentId++;
-
 class DrawableComponent : public Component {
 public:
-	DrawableComponent(unsigned long entityId, Drawable* drawable) : Component(entityId, DRAWABLE_COMPONENT_TYPE) {
+	DrawableComponent(unsigned long entityId, Drawable* drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
 		mDrawable = drawable;
+	}
+
+	DrawableComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
+		const rapidjson::Value& drawable = root["mDrawable"];
+		std::string drawableType = drawable["drawableType"].GetString();
+		if (drawableType == "BlockDrawable") {
+			mDrawable = new BlockDrawable(drawable);
+		}
+		else if (drawableType == "TextureDrawable") {
+			mDrawable = new TextureDrawable(drawable);
+		}
+		else {
+			assert(false);
+		}
 	}
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void setSize(float width, float height);
+	Drawable* getDrawable() {
+		return mDrawable;
+	}
 
 	void serialize(Serializer& serializer) const override {
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint64(DRAWABLE_COMPONENT_TYPE);
+		serializer.writer.Uint(componentId);
 		serializer.writer.String("mDrawable");
 		mDrawable->serialize(serializer);
 

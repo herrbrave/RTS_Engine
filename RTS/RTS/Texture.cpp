@@ -8,6 +8,13 @@ Texture::Texture(std::string tag, float tx, float ty, float width, float height)
 	assetTag = tag;
 }
 
+Texture::Texture(const rapidjson::Value& root) {
+	x = root["x"].GetDouble();
+	y = root["y"].GetDouble();
+	w = root["w"].GetDouble();
+	h = root["h"].GetDouble();
+	assetTag = root["assetTag"].GetString();
+}
 
 void Texture::serialize(Serializer& serializer) const {
 	serializer.writer.StartObject();
@@ -26,19 +33,6 @@ void Texture::serialize(Serializer& serializer) const {
 
 	serializer.writer.String("assetTag");
 	serializer.writer.String(assetTag.c_str());
-
-	serializer.writer.EndObject();
-}
-
-Texture* TextureComponent::getTexture() {
-	return mTexture;
-}
-
-void TextureComponent::serialize(Serializer& serializer) const {
-	serializer.writer.StartObject();
-
-	serializer.writer.String("mTexture");
-	mTexture->serialize(serializer);
 
 	serializer.writer.EndObject();
 }

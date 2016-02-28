@@ -5,6 +5,7 @@
 #include"Component.h"
 #include"Serializer.h"
 
+#include<rapidjson\document.h>
 #include<string>
 
 class Texture {
@@ -17,23 +18,9 @@ public:
 
 	Texture(std::string tag, float tx, float ty, float width, float height);
 
+	Texture(const rapidjson::Value& root);
+
 	void serialize(Serializer& serializer) const;
-};
-
-static const unsigned long TEXTURE_COMPONENT_TYPE = sComponentId++;
-
-class TextureComponent : public Component {
-public:
-	TextureComponent(unsigned long entityId, Texture* texture) : Component(entityId, TEXTURE_COMPONENT_TYPE)  {
-		mTexture = texture;
-	}
-
-	Texture* getTexture();
-
-	void serialize(Serializer& serializer) const override;
-
-private:
-	Texture* mTexture{ nullptr };
 };
 
 #endif // !__TEXTURE_H__

@@ -9,14 +9,18 @@
 #include<SDL.h>
 #include<unordered_map>
 
-static std::atomic_ulong sComponentId{ 1 };
+struct ComponentType {
+	static const Uint8 DRAWABLE_COMPONENT = 1;
+	static const Uint8 PHYSICS_COMPONENT = 2;
+	static const Uint8 TILE_COMPONENT = 3;
+};
 
 class Component {
 public:
 	unsigned int entityId;
-	unsigned long componentId;
+	Uint8 componentId;
 
-	Component(unsigned long entityId, unsigned long componentId) {
+	Component(unsigned long entityId, Uint8 componentId) {
 		this->entityId = entityId;
 		this->componentId = componentId;
 	}
@@ -26,10 +30,12 @@ public:
 
 class ComponentContainer {
 public:
-	void registerComponent(Component* component);
-	void deregisterComponent(unsigned long id);
+	ComponentContainer() {}
 
-	Component* getComponentByType(unsigned long type);
+	void registerComponent(Component* component);
+	void deregisterComponent(Uint8 id);
+
+	Component* getComponentByType(Uint8 type);
 
 	void serialize(Serializer& serializer) const {
 		serializer.writer.StartArray();
@@ -42,7 +48,7 @@ public:
 	}
 
 private:
-	std::unordered_map<unsigned long, Component*> mComponents;
+	std::unordered_map<Uint8, Component*> mComponents;
 };
 
 #endif // !__COMPONENT_H__

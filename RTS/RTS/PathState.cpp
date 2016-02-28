@@ -14,7 +14,7 @@ void PathState::update() {
 		return;
 	}
 
-	auto component = reinterpret_cast<PhysicsComponent*>(mUnit->componentContainer->getComponentByType(PHYSICS_COMPONENT_TYPE));
+	auto component = reinterpret_cast<PhysicsComponent*>(mUnit->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
 	auto tile = mFlowfield->tileAtPoint(component->getPosition());
 	if (tile == nullptr || tile == mFlowfield->mTargetTile) {
 		end();
