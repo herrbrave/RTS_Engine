@@ -3,13 +3,14 @@
 
 #include"vector2f.h"
 
-enum MouseButton {
+enum class MouseButton {
 	LEFT = 0,
 	RIGHT = 1,
-	MIDDLE = 2
+	MIDDLE = 2,
+	NONE = 3
 };
 
-enum MouseAction {
+enum class MouseAction {
 	MOVE = 0,
 	CLICK_DOWN = 1,
 	CLICK_UP = 2

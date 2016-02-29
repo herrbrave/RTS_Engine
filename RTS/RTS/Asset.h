@@ -8,9 +8,10 @@
 
 class Asset {
 public:
+	std::string path;
 	std::string tag;
 
-	Asset(void* asset, const std::string& tag, std::function<void(void*)> assetDeleter) {
+	Asset(void* asset, const std::string& path, const std::string& tag, std::function<void(void*)> assetDeleter) {
 		mAsset = asset;
 		this->tag = std::move(tag);
 	}

@@ -15,10 +15,12 @@ struct Extent {
 
 class Body {
 public:
-	Body() {
+	Body(float x, float y, float width, float height) {
 		mSpeed = 0;
-		mPosition.reset(new vector2f(0, 0));
+		mPosition.reset(new vector2f(x, y));
 		mVelocity.reset(new vector2f(0, 0));
+		mWidth = width;
+		mHeight = height;
 	}
 
 	Body(const rapidjson::Value& root) {

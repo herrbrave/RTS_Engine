@@ -17,6 +17,10 @@ void RTS::setup() {
 
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
+
+	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", mSystemManager.get()));
+	std::function<void()> func([=](){ mEntities.push_back(mEntityFactory->createDefault()); });
+	mButton.reset(mWidgetFactory->createButton(func, 500, 500, 100, 40));
 }
 
 void RTS::handleEvents()
@@ -37,6 +41,38 @@ void RTS::handleEvents()
 		if (event.type == SDL_MOUSEBUTTONUP) {
 			int x, y;
 			SDL_GetMouseState(&x, &y);
+			MouseEvent evt;
+			evt.action = MouseAction::CLICK_UP;
+			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
+			evt.position->x = x;
+			evt.position->y = y;
+
+			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
+			comp->onMouseEvent(evt, mSystemManager.get());
+		}
+		else if (event.type == SDL_MOUSEBUTTONDOWN) {
+			int x, y;
+			SDL_GetMouseState(&x, &y);
+			MouseEvent evt;
+			evt.action = MouseAction::CLICK_DOWN;
+			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
+			evt.position->x = x;
+			evt.position->y = y;
+
+			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
+			comp->onMouseEvent(evt, mSystemManager.get());
+		}
+		else if (event.type == SDL_MOUSEMOTION) {
+			int x, y;
+			SDL_GetMouseState(&x, &y);
+			MouseEvent evt;
+			evt.action = MouseAction::MOVE;
+			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
+			evt.position->x = x;
+			evt.position->y = y;
+
+			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
+			comp->onMouseEvent(evt, mSystemManager.get());
 		}
 	}
 }

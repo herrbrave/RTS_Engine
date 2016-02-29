@@ -13,6 +13,7 @@ struct ComponentType {
 	static const Uint8 DRAWABLE_COMPONENT = 1;
 	static const Uint8 PHYSICS_COMPONENT = 2;
 	static const Uint8 TILE_COMPONENT = 3;
+	static const Uint8 BUTTON_COMPONENT = 4;
 };
 
 class Component {

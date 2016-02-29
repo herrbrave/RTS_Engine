@@ -174,7 +174,7 @@ public:
 	}
 
 	virtual void onBeforeDraw() = 0;
-	virtual void renderTexture(Texture* texture, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
@@ -189,7 +189,7 @@ class SDLGraphics : public Graphics {
 public:
 	SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphisConfig);
 	void onBeforeDraw() override;
-	void renderTexture(Texture* texture, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
@@ -219,6 +219,8 @@ public:
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
+	Drawable* getDrawableById(unsigned long entityId);
+
 	Camera* getCamera();
 
 	void addTexture(const std::string& path, const std::string& assetTag);
@@ -228,7 +230,7 @@ private:
 	std::unique_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
 	std::unique_ptr<Graphics> mGraphics{ nullptr };
 	std::unique_ptr<Camera> mCamera;
-	std::unordered_map<unsigned long, std::shared_ptr<Drawable>> mDrawables;
+	std::unordered_map<unsigned long, Drawable*> mDrawables;
 };
 
 class DrawableComponent : public Component {

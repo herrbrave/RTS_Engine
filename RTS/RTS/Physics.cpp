@@ -14,11 +14,7 @@ void Body::setHeight(float height) {
 	mHeight = height;
 }
 
-BlockBody::BlockBody(float x, float y, float width, float height) : Body() {
-	mPosition->set(x, y);
-	mWidth = width;
-	mHeight = height;
-}
+BlockBody::BlockBody(float x, float y, float width, float height) : Body(x, y, width, height) {}
 
 bool BlockBody::checkPoint(vector2f& point) {
 	Extent extent(getExtent());

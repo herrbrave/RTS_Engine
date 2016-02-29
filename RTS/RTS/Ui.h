@@ -2,12 +2,20 @@
 #define __UI_H__
 
 #include<algorithm>
+#include<fstream>
+#include<iostream>
 #include<memory>
 #include<SDL.h>
 #include<SDL_ttf.h>
 #include<string>
+#include<unordered_map>
 
+#include"Event.h"
+#include"EntityFactory.h"
 #include"SDL_Helpers.h"
+#include"Serializer.h"
+#include"SystemManager.h"
+#include"Texture.h"
 
 enum Location {
 	MIDDLE,
@@ -142,6 +150,76 @@ public:
 
 		SDL_RenderCopy(renderer, mTexture.get(), nullptr, &drawLocation);
 	}
+};
+
+class ButtonConfig {
+public:
+	int sectionWidth;
+	int sectionHeight;
+	std::unordered_map<std::string, Texture*> buttonUp;
+	std::unordered_map<std::string, Texture*> buttonOver;
+	std::unordered_map<std::string, Texture*> buttonDown;
+};
+
+ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemManager);
+void parseButtonState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap);
+
+enum class ButtonState {
+	UP,
+	OVER,
+	DOWN
+};
+
+class ButtonSectionDrawable : Drawable {
+public:
+	ButtonSectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture);
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
+
+private:
+	Texture* mTexture;
+	std::unique_ptr<vector2f> mPosOffset;
+};
+
+class ButtonDrawable : public Drawable {
+public:
+	ButtonState state;
+	ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig);
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
+
+private:
+	std::unique_ptr<ButtonConfig> mButtonConfig{ nullptr };
+	std::unordered_map<ButtonState, std::vector<ButtonSectionDrawable*>> mSections;
+};
+
+class ButtonComponent : public Component {
+public:
+	ButtonComponent(unsigned long entityId) : Component(entityId, ComponentType::BUTTON_COMPONENT){}
+
+	void onMouseEvent(const MouseEvent& mouseEvent, SystemManager* systemManager);
+
+	void setCallback(const std::function<void()>& callback);
+
+	void serialize(Serializer& serializer) const override {/* no op */}
+private:
+	std::function<void()> mCallback;
+};
+
+class WidgetFactory : public EntityFactory {
+public:
+	WidgetFactory(std::string buttonConfigPath, SystemManager* systemManager);
+
+	Entity* createButton(std::function<void()> callback, float x, float y, float width, float height);
+
+private:
+	std::unique_ptr<ButtonConfig> mButtonConfig{ nullptr };
 };
 
 #endif
