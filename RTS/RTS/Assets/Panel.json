@@ -1,0 +1,69 @@
+{
+	"panel" : {
+		"image" : "Assets/Panel.bmp",
+		"section_width" : 7,
+		"section_height" : 7,
+		"sections" : {
+			"upper_left" : {
+				"x" : 0,
+				"y" : 0,
+				"w" : 7,
+				"h" : 7
+			},
+			"upper_middle" : {
+				"x" : 8,
+				"y" : 0,
+				"w" : 7,
+				"h" : 7
+			},
+			"upper_left" : {
+				"x" : 0,
+				"y" : 0,
+				"w" : 7,
+				"h" : 7
+			},
+			"upper_right" : {
+				"x" : 17,
+				"y" : 0,
+				"w" : 7,
+				"h" : 7
+			},
+			"middle_left" : {
+				"x" : 0,
+				"y" : 8,
+				"w" : 7,
+				"h" : 7
+			},
+			"middle_right" : {
+				"x" : 17,
+				"y" : 8,
+				"w" : 7,
+				"h" : 7
+			},
+			"bottom_left" : {
+				"x" : 0,
+				"y" : 17,
+				"w" : 7,
+				"h" : 7
+			},
+			"bottom_middle" : {
+				"x" : 8,
+				"y" : 17,
+				"w" : 7,
+				"h" : 7
+			},
+			"bottom_right" : {
+				"x" : 17,
+				"y" : 17,
+				"w" : 7,
+				"h" : 7
+			},
+			"middle" : {
+				"x" : 8,
+				"y" : 8,
+				"w" : 7,
+				"h" : 7
+			}
+		}
+	}
+}

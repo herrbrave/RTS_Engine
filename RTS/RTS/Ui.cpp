@@ -21,14 +21,40 @@ ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemM
 	buttonConfig->sectionWidth = parsedButton["section_width"].GetInt();
 	buttonConfig->sectionHeight = parsedButton["section_height"].GetInt();
 
-	parseButtonState(image, parsedButton["button_up"], buttonConfig->buttonUp);
-	parseButtonState(image, parsedButton["button_over"], buttonConfig->buttonOver);
-	parseButtonState(image, parsedButton["button_down"], buttonConfig->buttonDown);
+	parseState(image, parsedButton["button_up"], buttonConfig->buttonUp);
+	parseState(image, parsedButton["button_over"], buttonConfig->buttonOver);
+	parseState(image, parsedButton["button_down"], buttonConfig->buttonDown);
 	
 	return buttonConfig;
 }
 
-void parseButtonState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap) {
+PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemManager) {
+	std::ifstream file;
+	file.open(path);
+	std::string builder;
+	std::string line;
+	while (std::getline(file, line)) {
+		builder.append(line);
+	}
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(builder.c_str());
+
+	const rapidjson::Value& parsedPanel = doc["panel"];
+	std::string image = parsedPanel["image"].GetString();
+	systemManager->graphicsSystem->addTexture(image, image);
+
+	PanelConfig* panelConfig = new PanelConfig();
+	panelConfig->sectionWidth = parsedPanel["section_width"].GetInt();
+	panelConfig->sectionHeight = parsedPanel["section_height"].GetInt();
+
+	parseState(image, parsedPanel["sections"], panelConfig->panelSections);
+
+	return panelConfig;
+}
+
+void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap) {
 	for (auto it = button.MemberBegin(); it != button.MemberEnd(); it++) {
 		std::string name = it->name.GetString();
 		const rapidjson::Value& value = it->value;
@@ -38,21 +64,21 @@ void parseButtonState(const std::string& tag, const rapidjson::Value& button, st
 }
 
 
-ButtonSectionDrawable::ButtonSectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture) : Drawable(width, height) {
+SectionDrawable::SectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture) : Drawable(width, height) {
 	mPosOffset.reset(positionOffset);
 	mTexture = texture;
 }
 
-void ButtonSectionDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+void SectionDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	vector2f translated = *position + *mPosOffset.get();
 	graphicsRef->renderTexture(mTexture, translated.x, translated.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) : Drawable(width, height) {
 	state = ButtonState::UP;
-	mSections[ButtonState::UP] = std::vector<ButtonSectionDrawable*>();
-	mSections[ButtonState::OVER] = std::vector<ButtonSectionDrawable*>();
-	mSections[ButtonState::DOWN] = std::vector<ButtonSectionDrawable*>();
+	mSections[ButtonState::UP] = std::vector<SectionDrawable*>();
+	mSections[ButtonState::OVER] = std::vector<SectionDrawable*>();
+	mSections[ButtonState::DOWN] = std::vector<SectionDrawable*>();
 
 	float sectionWidth = buttonConfig.sectionWidth;
 	float sectionHeight = buttonConfig.sectionHeight;
@@ -76,12 +102,12 @@ ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& bu
 	int count = 0;
 	for (int yDir : dirs) {
 		for (int xDir : dirs) {
-			vector2f* posOffset = new vector2f((halfWidth - sectionWidth) * xDir, (halfHeight - sectionHeight) * yDir);
+			vector2f* posOffset = new vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight - (sectionHeight / 2)) * yDir);
 			std::string name = names[count];
 
-			ButtonSectionDrawable* upDrawable = new ButtonSectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonUp.at(name));
-			ButtonSectionDrawable* overDrawable = new ButtonSectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonOver.at(name));
-			ButtonSectionDrawable* downDrawable = new ButtonSectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonDown.at(name));
+			SectionDrawable* upDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonUp.at(name));
+			SectionDrawable* overDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonOver.at(name));
+			SectionDrawable* downDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonDown.at(name));
 			mSections.at(ButtonState::UP).push_back(upDrawable);
 			mSections.at(ButtonState::OVER).push_back(overDrawable);
 			mSections.at(ButtonState::DOWN).push_back(downDrawable);
@@ -128,8 +154,50 @@ void ButtonComponent::setCallback(const std::function<void()>& callback) {
 }
 
 
-WidgetFactory::WidgetFactory(std::string buttonConfigPath, SystemManager* systemManager) : EntityFactory(systemManager) {
+PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {
+	float sectionWidth = panelConfig.sectionWidth;
+	float sectionHeight = panelConfig.sectionHeight;
+	float doubleWidth = (sectionWidth * 2);
+	float doubleHeight = (sectionHeight * 2);
+	float halfWidth = width / 2;
+	float halfHeight = height / 2;
+
+	int dirs[] = { -1, 0, 1 };
+	std::string names[9] = { "upper_left", "upper_middle", "upper_right", "middle_left", "middle", "middle_right", "bottom_left", "bottom_middle", "bottom_right" };
+	float size[9][2] = {
+		{ sectionWidth, sectionHeight },
+		{ width - doubleWidth, sectionHeight },
+		{ sectionWidth, sectionHeight },
+		{ sectionWidth, height - doubleHeight },
+		{ width - doubleWidth, height - doubleHeight },
+		{ sectionWidth, height - doubleHeight },
+		{ sectionWidth, sectionHeight },
+		{ width - doubleWidth, sectionHeight },
+		{ sectionWidth, sectionHeight }
+	};
+
+	int count = 0;
+	for (int yDir : dirs) {
+		for (int xDir : dirs) {
+			vector2f* posOffset = new vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight -(sectionHeight / 2)) * yDir);
+			std::string name = names[count];
+
+			SectionDrawable* sectionDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, panelConfig.panelSections.at(name));
+			mSections.push_back(sectionDrawable);
+			count++;
+		}
+	}
+}
+
+void PanelDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+	for (auto drawable : mSections) {
+		drawable->draw(graphicsRef, position);
+	}
+}
+
+WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManager* systemManager) : EntityFactory(systemManager) {
 	mButtonConfig.reset(createButtonConfig(buttonConfigPath, systemManager));
+	mPanelConfig.reset(createPanelConfig(panelConfigPath, systemManager));
 }
 
 Entity* WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
@@ -150,6 +218,24 @@ Entity* WidgetFactory::createButton(std::function<void()> callback, float x, flo
 	entity->componentContainer->registerComponent(physicsComponent);
 	entity->componentContainer->registerComponent(drawableComponent);
 	entity->componentContainer->registerComponent(buttonComponent);
+
+	return entity;
+}
+
+Entity* WidgetFactory::createPanel(float x, float y, float width, float height) {
+	Entity* entity = new Entity();
+	mSystemManager->entitySystem->registerEntity(entity);
+
+	Body* blockBody = new BlockBody(x, y, width, height);
+	mSystemManager->physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+
+	Drawable* textureDrawable = new PanelDrawable(width, height, *mPanelConfig.get());
+	mSystemManager->graphicsSystem->registerDrawable(entity->id, textureDrawable);
+	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
+
+	entity->componentContainer->registerComponent(physicsComponent);
+	entity->componentContainer->registerComponent(drawableComponent);
 
 	return entity;
 }

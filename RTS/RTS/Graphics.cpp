@@ -229,6 +229,7 @@ Drawable* GraphicsSystem::getDrawableById(unsigned long entityId) {
 void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
 	if (mAssetSystem->contains(assetTag)) {
 		SDL_Log("Asset already loaded.");
+		return;
 	}
 
 	mAssetSystem->registerAsset(mGraphics->createTexture(path, assetTag));

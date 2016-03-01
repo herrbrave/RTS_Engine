@@ -162,7 +162,7 @@ public:
 };
 
 ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemManager);
-void parseButtonState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap);
+void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap);
 
 enum class ButtonState {
 	UP,
@@ -170,9 +170,9 @@ enum class ButtonState {
 	DOWN
 };
 
-class ButtonSectionDrawable : Drawable {
+class SectionDrawable : Drawable {
 public:
-	ButtonSectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture);
+	SectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture);
 
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
@@ -196,7 +196,7 @@ protected:
 
 private:
 	std::unique_ptr<ButtonConfig> mButtonConfig{ nullptr };
-	std::unordered_map<ButtonState, std::vector<ButtonSectionDrawable*>> mSections;
+	std::unordered_map<ButtonState, std::vector<SectionDrawable*>> mSections;
 };
 
 class ButtonComponent : public Component {
@@ -212,14 +212,38 @@ private:
 	std::function<void()> mCallback;
 };
 
+class PanelConfig {
+public:
+	int sectionWidth;
+	int sectionHeight;
+	std::unordered_map<std::string, Texture*> panelSections;
+};
+PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemManager);
+
+class PanelDrawable : public Drawable {
+public:
+	PanelDrawable(float width, float height, const PanelConfig& panelConfig);
+
+	void draw(Graphics* graphicsRef, const vector2f* position) override;
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
+
+private:
+	std::unique_ptr<PanelConfig> mPanelConfig{ nullptr };
+	std::vector<SectionDrawable*> mSections;
+};
+
 class WidgetFactory : public EntityFactory {
 public:
-	WidgetFactory(std::string buttonConfigPath, SystemManager* systemManager);
+	WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManager* systemManager);
 
 	Entity* createButton(std::function<void()> callback, float x, float y, float width, float height);
+	Entity* createPanel(float x, float y, float width, float height);
 
 private:
 	std::unique_ptr<ButtonConfig> mButtonConfig{ nullptr };
+	std::unique_ptr<PanelConfig> mPanelConfig{ nullptr };
 };
 
 #endif

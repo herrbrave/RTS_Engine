@@ -18,9 +18,10 @@ void RTS::setup() {
 	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
 	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
 
-	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", mSystemManager.get()));
+	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager.get()));
 	std::function<void()> func([=](){ mEntities.push_back(mEntityFactory->createDefault()); });
 	mButton.reset(mWidgetFactory->createButton(func, 500, 500, 100, 40));
+	mPanel.reset(mWidgetFactory->createPanel(200, 200, 150, 150));
 }
 
 void RTS::handleEvents()
