@@ -120,6 +120,15 @@ void ButtonDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 	for (auto drawable : mSections[state]) {
 		drawable->draw(graphicsRef, position);
 	}
+
+	if (mButtonTexture != nullptr) {
+		graphicsRef->renderTexture(mButtonTexture.get(), position->x, position->y, -1, -1, 255, 255, 255, 255);
+	}
+}
+
+
+void ButtonDrawable::setButtonTexture(Texture* texture) {
+	mButtonTexture.reset(texture);
 }
 
 void ButtonComponent::onMouseEvent(const MouseEvent& mouseEvent, SystemManager* systemManager) {
@@ -153,6 +162,35 @@ void ButtonComponent::setCallback(const std::function<void()>& callback) {
 	mCallback = std::move(callback);
 }
 
+void ButtonComponent::setText(const std::string& text, SystemManager* systemManager) {
+	systemManager->graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
+	Texture* textTexture = new Texture(text);
+	mText = text;
+
+	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+	drawable->setButtonTexture(textTexture);
+}
+
+std::string& ButtonComponent::getText() {
+	return mText;
+}
+
+void ButtonComponent::setIcon(Texture* texture, SystemManager* systemManager) {
+	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+	drawable->setButtonTexture(texture);
+}
+
+void setButtonText(Entity* entity, const std::string& text, SystemManager* systemManager) {
+	ButtonComponent* buttonComponent = reinterpret_cast<ButtonComponent*>(entity->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
+	buttonComponent->setText(text, systemManager);
+}
+
+void setIcon(Entity* entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManager* systemManager) {
+	Texture* texture = new Texture(assetTag, tx, ty, tw, th);
+
+	ButtonComponent* buttonComponent = reinterpret_cast<ButtonComponent*>(entity->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
+	buttonComponent->setIcon(texture, systemManager);
+}
 
 PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {
 	float sectionWidth = panelConfig.sectionWidth;

@@ -155,15 +155,19 @@ public:
 	GraphicsConfig* borderless();
 	GraphicsConfig* resizable();
 	GraphicsConfig* maximized();
+	GraphicsConfig* setFont(const std::string& fontPath);
+	GraphicsConfig* setFontSize(int fontSize);
 
 	~GraphicsConfig() {
 	}
 
 	std::string mTitle;
+	std::string mFontPath;
 	int mWindowX = 0;
 	int mWindowY = 0;
 	int mWidth = 800;
 	int mHeight = 600;
+	int mFontSize = 12;
 	Uint32 mFlags{ SDL_WINDOW_SHOWN };
 };
 
@@ -180,6 +184,7 @@ public:
 	virtual void onAfterDraw() = 0;
 
 	virtual Asset* createTexture(const std::string& path, const std::string& assetTag) = 0;
+	virtual Asset* createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 
 protected:
 	AssetSystem* mAssetSystem;
@@ -196,10 +201,12 @@ public:
 
 	SDL_Renderer* getRenderer();
 	Asset* createTexture(const std::string& path, const std::string& assetTag) override;
+	Asset* createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 private:
 
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 	std::unique_ptr<SDL_Renderer, SDL_DELETERS> mRenderer{ nullptr };
+	std::unique_ptr<TTF_Font, SDL_DELETERS> mFont{ nullptr };
 };
 
 class GraphicsSystem {
@@ -224,6 +231,8 @@ public:
 	Camera* getCamera();
 
 	void addTexture(const std::string& path, const std::string& assetTag);
+
+	void createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 private:
 	AssetSystem* mAssetSystem{ nullptr };
 	PhysicsSystem* mPhysicsSystem{ nullptr };

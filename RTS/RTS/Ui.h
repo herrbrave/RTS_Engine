@@ -91,7 +91,6 @@ public:
 	}
 };
 
-
 class Label {
 private:
 	std::unique_ptr<SDL_Texture, SDL_DELETERS> mTexture;
@@ -191,12 +190,15 @@ public:
 
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
+	void setButtonTexture(Texture*);
+
 protected:
 	void onSerialize(Serializer& serializer) const override {}
 
 private:
 	std::unique_ptr<ButtonConfig> mButtonConfig{ nullptr };
 	std::unordered_map<ButtonState, std::vector<SectionDrawable*>> mSections;
+	std::unique_ptr<Texture> mButtonTexture{ nullptr };
 };
 
 class ButtonComponent : public Component {
@@ -208,9 +210,20 @@ public:
 	void setCallback(const std::function<void()>& callback);
 
 	void serialize(Serializer& serializer) const override {/* no op */}
+
+	void setText(const std::string& text, SystemManager* systemManager);
+
+	std::string& getText();
+
+	void setIcon(Texture* texture, SystemManager* systemManager);
+
 private:
 	std::function<void()> mCallback;
+	std::string mText;
 };
+
+void setButtonText(Entity* entity, const std::string& text, SystemManager* systemManager);
+void setIcon(Entity* entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManager* systemManager);
 
 class PanelConfig {
 public:

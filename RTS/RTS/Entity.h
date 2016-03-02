@@ -18,6 +18,9 @@ static std::atomic_ulong sEntityFactoryId{ 1 };
 
 class Entity {
 public:
+	unsigned long parent = -1;
+	std::vector<unsigned long> children;
+
 	Entity();
 
 	const unsigned long id = sEntityId++;

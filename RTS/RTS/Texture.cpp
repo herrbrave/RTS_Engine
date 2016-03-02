@@ -8,6 +8,14 @@ Texture::Texture(std::string tag, float tx, float ty, float width, float height)
 	assetTag = tag;
 }
 
+Texture::Texture(std::string tag) {
+	x = 0;
+	y = 0;
+	w = -1;
+	h = -1;
+	assetTag = tag;
+}
+
 Texture::Texture(const rapidjson::Value& root) {
 	x = root["x"].GetDouble();
 	y = root["y"].GetDouble();

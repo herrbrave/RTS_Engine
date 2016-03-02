@@ -18,6 +18,8 @@ public:
 
 	Texture(std::string tag, float tx, float ty, float width, float height);
 
+	Texture(std::string tag);
+
 	Texture(const rapidjson::Value& root);
 
 	void serialize(Serializer& serializer) const;

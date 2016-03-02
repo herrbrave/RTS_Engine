@@ -56,6 +56,16 @@ GraphicsConfig* GraphicsConfig::maximized() {
 	return this;
 }
 
+GraphicsConfig* GraphicsConfig::setFont(const std::string& fontPath) {
+	mFontPath = fontPath;
+	return this;
+}
+
+GraphicsConfig* GraphicsConfig::setFontSize(int fontSize) {
+	mFontSize = fontSize;
+	return this;
+}
+
 void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mColor->r = r;
 	mColor->g = g;
@@ -86,7 +96,7 @@ void TextureDrawable::setSize(float width, float height) {
 }
 
 SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfig) : Graphics(assetSystem) {
-	if (TTF_Init() < 0) {
+	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
 	}
 
@@ -107,6 +117,13 @@ SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfi
 	mRenderer.reset(
 		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED)
 	);
+
+	if (graphicsConfig->mFontPath.length() == 0) {
+		return;
+	}
+
+	TTF_Font* font(TTF_OpenFont(graphicsConfig->mFontPath.c_str(), graphicsConfig->mFontSize));
+	mFont.reset(font);
 }
 
 void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
@@ -159,6 +176,17 @@ void SDLGraphics::renderTexture(Texture* texture, float x, float y, float w, flo
 
 	SDL_Rect src{ texture->x, texture->y, texture->w, texture->h };
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };
+	// if no size is specified
+	if (src.w == -1 || src.h == -1) {
+		SDL_QueryTexture(sdlTexture, nullptr, nullptr, &src.w, &src.h);
+	}
+	if (dest.w == -1 || dest.h == -1) {
+		dest.x = (x - src.w / 2);
+		dest.y = (y - src.h / 2);
+		dest.w = src.w;
+		dest.h = src.h;
+	}
+
 	SDL_RenderCopy(mRenderer.get(), sdlTexture, &src, &dest);
 
 	if (a < 255) {
@@ -194,6 +222,17 @@ Asset* SDLGraphics::createTexture(const std::string& path, const std::string& as
 	}
 
 	Asset* asset = new Asset(texture, path, assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+	return asset;
+}
+
+Asset* SDLGraphics::createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	SDL_Color textColor{ r, g, b, a };
+	SDL_Surface* surface = TTF_RenderText_Solid(mFont.get(), text.c_str(), textColor);
+	SDL_Texture* sdlTexture = SDL_CreateTextureFromSurface(mRenderer.get(), surface);
+	SDL_FreeSurface(surface);
+
+	Asset* asset = new Asset(sdlTexture, "", assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+
 	return asset;
 }
 
@@ -233,6 +272,15 @@ void GraphicsSystem::addTexture(const std::string& path, const std::string& asse
 	}
 
 	mAssetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
+}
+
+void GraphicsSystem::createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	if (mAssetSystem->contains(assetTag)) {
+		SDL_Log("Text already added.");
+		return;
+	}
+
+	mAssetSystem->registerAsset(mGraphics->createTextAsset(text, assetTag, r, g, b, a));
 }
 
 void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {

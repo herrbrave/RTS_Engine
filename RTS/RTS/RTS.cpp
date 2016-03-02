@@ -10,18 +10,13 @@ void RTS::setup() {
 	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
+	config->setFont("Digital_tech.otf");
 
 	mSystemManager.reset(new SystemManager(config));
 
 	mEntityFactory.reset(new EntityFactory(mSystemManager.get()));
 
-	TTF_Font* font(TTF_OpenFont("Digital_tech.otf", 11));
-	mFont.reset(font, [](TTF_Font* font) { TTF_CloseFont(font); });
-
 	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager.get()));
-	std::function<void()> func([=](){ mEntities.push_back(mEntityFactory->createDefault()); });
-	mButton.reset(mWidgetFactory->createButton(func, 500, 500, 100, 40));
-	mPanel.reset(mWidgetFactory->createPanel(200, 200, 150, 150));
 }
 
 void RTS::handleEvents()
@@ -47,9 +42,6 @@ void RTS::handleEvents()
 			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
 			evt.position->x = x;
 			evt.position->y = y;
-
-			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
-			comp->onMouseEvent(evt, mSystemManager.get());
 		}
 		else if (event.type == SDL_MOUSEBUTTONDOWN) {
 			int x, y;
@@ -59,9 +51,6 @@ void RTS::handleEvents()
 			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
 			evt.position->x = x;
 			evt.position->y = y;
-
-			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
-			comp->onMouseEvent(evt, mSystemManager.get());
 		}
 		else if (event.type == SDL_MOUSEMOTION) {
 			int x, y;
@@ -71,9 +60,6 @@ void RTS::handleEvents()
 			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
 			evt.position->x = x;
 			evt.position->y = y;
-
-			ButtonComponent* comp = reinterpret_cast<ButtonComponent*>(mButton->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
-			comp->onMouseEvent(evt, mSystemManager.get());
 		}
 	}
 }

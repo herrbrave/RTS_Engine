@@ -20,11 +20,6 @@ private:
 	std::unique_ptr<Map> mMap{ nullptr };
 
 	std::unique_ptr<WidgetFactory> mWidgetFactory{ nullptr };
-	std::unique_ptr<Entity> mButton;
-	std::unique_ptr<Entity> mPanel;
-	std::vector<Entity*> mEntities;
-
-	std::shared_ptr<TTF_Font> mFont{ nullptr };
 
 	Uint32 mLastTime{ 0 };
 
