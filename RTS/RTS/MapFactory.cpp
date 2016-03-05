@@ -60,7 +60,7 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 		mapConfig->tiles.push_back(tile->id);
 	}
 
-	Map* map = new Map(mapConfig, mEntitySystem);
+	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(mEntitySystem));
 
 	return map;
 }

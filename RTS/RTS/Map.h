@@ -58,7 +58,7 @@ public:
 
 class Map {
 public:
-	Map(MapConfig* config, EntitySystem* entitySystem);
+	Map(MapConfig* config, EntityVendor* entityVendor);
 
 	Entity* getTileAt(int x, int y);
 
@@ -75,7 +75,7 @@ public:
 	Entity* tileAtPoint(const vector2f* point);
 
 private:
-	EntitySystem* mEntitySystem{ nullptr };
+	EntityVendor* mEntityVendor{ nullptr };
 	std::unique_ptr<MapConfig> mMapConfig{ nullptr };
 
 	inline int getIndex(int x, int y) {

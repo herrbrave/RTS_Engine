@@ -2,7 +2,8 @@
 #define __MAP_FACTORY_H__
 
 #include"EntityFactory.h"
-#include"SystemManager.h"
+#include"Map.h"
+#include"System.h"
 
 class TileFactory : public EntityFactory {
 public:

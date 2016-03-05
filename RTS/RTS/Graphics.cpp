@@ -95,7 +95,7 @@ void TextureDrawable::setSize(float width, float height) {
 	mTexture->h = height;
 }
 
-SDLGraphics::SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphicsConfig) : Graphics(assetSystem) {
+SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig, AssetVendor* assetVendor) : Graphics(assetVendor) {
 	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
 	}
@@ -167,7 +167,7 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 
 void SDLGraphics::renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
-	Asset* asset = mAssetSystem->getAsset(texture->assetTag);
+	Asset* asset = mAssetVendor->getAsset(texture->assetTag);
 	SDL_Texture* sdlTexture = reinterpret_cast<SDL_Texture*>(asset->getAsset());
 	if (a < 255) {
 		SDL_SetTextureAlphaMod(sdlTexture, a);
@@ -234,53 +234,6 @@ Asset* SDLGraphics::createTextAsset(const std::string& text, const std::string& 
 	Asset* asset = new Asset(sdlTexture, "", assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
 
 	return asset;
-}
-
-void GraphicsSystem::registerDrawable(const unsigned long id, Drawable* drawable) {
-	mDrawables.emplace(id, drawable);
-}
-
-void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
-	mDrawables.erase(mDrawables.find(id));
-}
-
-void  GraphicsSystem::draw() {
-	mGraphics->onBeforeDraw();
-
-	for (auto drawable : mDrawables) {
-		vector2f position(*mPhysicsSystem->getBody(drawable.first)->getPosition());
-		translateToCamera(&position, mCamera.get());
-
-		drawable.second->draw(mGraphics.get(), &position);
-	}
-
-	mGraphics->onAfterDraw();
-}
-
-Camera* GraphicsSystem::getCamera() {
-	return mCamera.get();
-}
-
-Drawable* GraphicsSystem::getDrawableById(unsigned long entityId) {
-	return mDrawables.at(entityId);
-}
-
-void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
-	if (mAssetSystem->contains(assetTag)) {
-		SDL_Log("Asset already loaded.");
-		return;
-	}
-
-	mAssetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
-}
-
-void GraphicsSystem::createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	if (mAssetSystem->contains(assetTag)) {
-		SDL_Log("Text already added.");
-		return;
-	}
-
-	mAssetSystem->registerAsset(mGraphics->createTextAsset(text, assetTag, r, g, b, a));
 }
 
 void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {

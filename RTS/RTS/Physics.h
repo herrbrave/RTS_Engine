@@ -149,23 +149,6 @@ private:
 	std::vector<QuadtreeNode*> mLeaves;
 };
 
-class PhysicsSystem {
-public:
-
-	PhysicsSystem(){}
-	~PhysicsSystem() = default;
-
-	Body* getBody(const unsigned long id);
-
-	void registerBody(const unsigned long id, Body* body);
-	void deregisterBody(const unsigned long id);
-
-	void update(Uint32 delta);
-
-private:
-	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
-};
-
 class PhysicsComponent : public Component {
 public:
 	PhysicsComponent(unsigned long entityId, Body* body) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {

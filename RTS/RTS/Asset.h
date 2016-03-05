@@ -29,26 +29,9 @@ private:
 	std::function<void(void*)> mDeleter;
 };
 
-class AssetSystem {
+class AssetVendor {
 public:
-	void registerAsset(Asset* asset) {
-		mAssets.emplace(asset->tag, asset);
-	}
-
-	void deregisterAsset(const std::string& assetTag) {
-		mAssets.erase(mAssets.find(assetTag));
-	}
-
-	Asset* getAsset(const std::string& assetTag) {
-		return mAssets[assetTag];
-	}
-
-	bool contains(const std::string& assetTag) {
-		return (mAssets.find(assetTag) != mAssets.end());
-	}
-
-private:
-	std::unordered_map<std::string, Asset*> mAssets;
+	virtual Asset* getAsset(const std::string& tag) = 0;
 };
 
 #endif // !__ASSET_H__

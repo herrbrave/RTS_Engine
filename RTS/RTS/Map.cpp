@@ -1,8 +1,8 @@
 #include"Map.h"
 
-Map::Map(MapConfig* config, EntitySystem* entitySystem) {
+Map::Map(MapConfig* config, EntityVendor* entityVendor) {
 	mMapConfig.reset(config);
-	mEntitySystem = entitySystem;
+	mEntityVendor = entityVendor;
 }
 
 Entity* Map::getTileAt(int x, int y) {
@@ -11,7 +11,7 @@ Entity* Map::getTileAt(int x, int y) {
 		return nullptr;
 	}
 
-	return mEntitySystem->getEntityById(mMapConfig->tiles[index]);
+	return mEntityVendor->getEntityById(mMapConfig->tiles[index]);
 }
 
 Entity* Map::tileAtPoint(const vector2f* point) {
@@ -28,7 +28,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 		return nullptr;
 	}
 
-	auto endTile = mEntitySystem->getEntityById(mMapConfig->tiles[endIndex]);
+	auto endTile = mEntityVendor->getEntityById(mMapConfig->tiles[endIndex]);
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
@@ -49,7 +49,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 	};
 
 	int startIndex = getIndex(startX, startY);
-	auto startTile = mEntitySystem->getEntityById(mMapConfig->tiles[startIndex]);
+	auto startTile = mEntityVendor->getEntityById(mMapConfig->tiles[startIndex]);
 	std::unordered_set<Entity*> openSetLookup;
 	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
 	openSet.emplace(Node{ startTile, 0 });
@@ -93,7 +93,7 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 					continue;
 				}
 
-				auto neighborTile = mEntitySystem->getEntityById(mMapConfig->tiles[index]);
+				auto neighborTile = mEntityVendor->getEntityById(mMapConfig->tiles[index]);
 				TileComponent*  component = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;

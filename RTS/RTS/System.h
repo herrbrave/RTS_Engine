@@ -1,0 +1,168 @@
+#ifndef __SYSTEM_H__
+#define __SYSTEM_H__
+
+#include<functional>
+#include<memory>
+#include<string>
+#include<unordered_map>
+
+#include"Asset.h"
+#include"Entity.h"
+#include"Graphics.h"
+#include"Physics.h"
+
+enum class SystemType {
+	ASSET = 1,
+	ENTITY = 2,
+	GRAPHICS = 3,
+	PHYSICS = 4
+};
+
+class System;
+class SystemManager {
+public:
+	std::unordered_map<SystemType, System*> systems;
+
+	SystemManager(GraphicsConfig* graphicsConfig);
+};
+
+class System {
+public:
+	SystemType type;
+	System(SystemType type, SystemManager* systemManager) { 
+		this->type = type; 
+		this->mSystemManager = systemManager;
+	}
+
+	virtual void clear() = 0;
+
+protected:
+	SystemManager* mSystemManager;
+};
+
+class AssetSystem : public System {
+public:
+	AssetSystem(SystemManager* systemManager) : System(SystemType::ASSET, systemManager) {}
+
+	void registerAsset(Asset* asset) {
+		mAssets.emplace(asset->tag, asset);
+	}
+
+	void deregisterAsset(const std::string& assetTag) {
+		mAssets.erase(mAssets.find(assetTag));
+	}
+
+	Asset* getAsset(const std::string& assetTag) {
+		return mAssets[assetTag];
+	}
+
+	bool contains(const std::string& assetTag) {
+		return (mAssets.find(assetTag) != mAssets.end());
+	}
+
+	void clear() override;
+
+	class DefaultAssetVendor : public AssetVendor {
+	public:
+		DefaultAssetVendor(AssetSystem* assetSystem) {
+			mAssetSystem = assetSystem;
+		}
+		Asset* getAsset(const std::string& tag) override;
+	private:
+		AssetSystem* mAssetSystem;
+	};
+
+private:
+	std::unordered_map<std::string, Asset*> mAssets;
+};
+
+class GraphicsSystem : public System {
+public:
+	GraphicsSystem(GraphicsConfig* graphisConfig, SystemManager* systemManager) : System(SystemType::GRAPHICS, systemManager) {
+		mGraphicsConfig.reset(std::move(graphisConfig));
+		mGraphics.reset(new SDLGraphics(mGraphicsConfig.get(), new AssetSystem::DefaultAssetVendor(reinterpret_cast<AssetSystem*>(systemManager->systems.at(SystemType::ASSET)))));
+		mCamera.reset(new Camera());
+		mCamera->position.reset(new vector2f(0, 0));
+		mCamera->width = mGraphicsConfig->mWidth;
+		mCamera->height = mGraphicsConfig->mHeight;
+	}
+
+	void registerDrawable(const unsigned long, Drawable* drawable);
+	void deregisterDrawable(const unsigned long);
+	void draw();
+
+	Drawable* getDrawableById(unsigned long entityId);
+
+	Camera* getCamera();
+
+	void addTexture(const std::string& path, const std::string& assetTag);
+
+	void createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
+	void clear() override;
+private:
+	std::unique_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
+	std::unique_ptr<Graphics> mGraphics{ nullptr };
+	std::unique_ptr<Camera> mCamera;
+	std::unordered_map<unsigned long, Drawable*> mDrawables;
+};
+
+class EntitySystem : public System {
+public:
+	EntitySystem(SystemManager* systemManager) : System(SystemType::ENTITY, systemManager) {}
+
+	void registerEntity(Entity* entity);
+	Entity* getEntityById(unsigned long id);
+	void deregisterEntity(unsigned long id);
+
+	void clear() override;
+
+	class DefaultEntityVendor : public EntityVendor {
+	public:
+		DefaultEntityVendor(EntitySystem* entitySystem) { mEntitySystem = entitySystem; }
+		Entity* getEntityById(unsigned long entityId) override;
+	private:
+		EntitySystem* mEntitySystem;
+	};
+
+private:
+	std::unordered_map<unsigned long, Entity*> mEntityMap;
+};
+
+class PhysicsSystem : public System {
+public:
+
+	PhysicsSystem(SystemManager* systemManager) : System(SystemType::PHYSICS, systemManager) {}
+	~PhysicsSystem() = default;
+
+	Body* getBody(const unsigned long id);
+
+	void registerBody(const unsigned long id, Body* body);
+	void deregisterBody(const unsigned long id);
+
+	void update(Uint32 delta);
+
+	void clear() override;
+
+private:
+	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
+};
+
+
+void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager);
+
+Entity* getEntityById(unsigned long entityId, SystemManager* systemManager);
+
+bool assetExists(const std::string& assetTag, SystemManager* systemManager);
+
+Asset* getAsset(const std::string& assetTag, SystemManager* systemManager);
+
+void updatePhysicsSystem(Uint32 ticks, SystemManager* systemManager);
+
+void drawGraphicsSystem(SystemManager* systemManager);
+
+Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager);
+
+Body* getBodyById(unsigned long bodyId, SystemManager* systemManager); 
+
+#endif // !__SYSTEM_H__

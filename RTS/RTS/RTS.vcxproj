@@ -93,7 +93,7 @@
     <ClInclude Include="Physics.h" />
     <ClInclude Include="SDL_Helpers.h" />
     <ClInclude Include="Serializer.h" />
-    <ClInclude Include="SystemManager.h" />
+    <ClInclude Include="System.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="RTS.h" />
@@ -113,6 +113,7 @@
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RTS.cpp" />
     <ClCompile Include="MoveState.cpp" />
+    <ClCompile Include="System.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Ui.cpp" />
   </ItemGroup>

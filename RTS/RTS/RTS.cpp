@@ -66,12 +66,12 @@ void RTS::handleEvents()
 
 void RTS::update(){
 	Uint32 lastTime(SDL_GetTicks());
-	mSystemManager->physicsSystem->update(lastTime - mLastTime);
+	updatePhysicsSystem(lastTime - mLastTime, mSystemManager.get());
 	mLastTime = lastTime;
 }
 
 void RTS::draw(){
-	mSystemManager->graphicsSystem->draw();
+	drawGraphicsSystem(mSystemManager.get());
 }
 void RTS::delay(Uint32 frameTime){
 	if (frameTime < 33) {

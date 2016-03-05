@@ -4,7 +4,7 @@
 #include"Entity.h"
 #include"Map.h"
 #include"Serializer.h"
-#include"SystemManager.h"
+#include"System.h"
 
 
 class EntityFactory {

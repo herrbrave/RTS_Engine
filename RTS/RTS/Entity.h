@@ -18,7 +18,7 @@ static std::atomic_ulong sEntityFactoryId{ 1 };
 
 class Entity {
 public:
-	unsigned long parent = -1;
+	unsigned long parent{ -1 };
 	std::vector<unsigned long> children;
 
 	Entity();
@@ -43,14 +43,9 @@ protected:
 	std::vector<std::shared_ptr<State>> mStateQueue;
 };
 
-class EntitySystem {
+class EntityVendor {
 public:
-	void registerEntity(Entity* entity);
-	Entity* getEntityById(unsigned long id);
-	void deregisterEntity(unsigned long id);
-
-private:
-	std::unordered_map<unsigned long, Entity*> mEntityMap;
+	virtual Entity* getEntityById(unsigned long entityId) = 0;
 };
 
 #endif // !__ENTITY_H__

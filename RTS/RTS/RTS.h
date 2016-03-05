@@ -6,7 +6,7 @@
 #include"EntityFactory.h"
 #include"Game.h"
 #include"MapFactory.h"
-#include"SystemManager.h"
+#include"System.h"
 #include"Ui.h"
 
 class RTS : public Game {

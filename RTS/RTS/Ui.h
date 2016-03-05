@@ -14,7 +14,7 @@
 #include"EntityFactory.h"
 #include"SDL_Helpers.h"
 #include"Serializer.h"
-#include"SystemManager.h"
+#include"System.h"
 #include"Texture.h"
 
 enum Location {

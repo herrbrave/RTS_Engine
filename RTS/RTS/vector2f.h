@@ -8,6 +8,7 @@
 
 class vector2f {
 public:
+	vector2f() : x(0), y(0) {}
 	vector2f(const vector2f& copy) {
 		x = copy.x;
 		y = copy.y;
@@ -29,8 +30,8 @@ public:
 	}
 
 	void set(float x, float y) {
-		x = x;
-		y = y;
+		this->x = x;
+		this->y = y;
 	}
 
 	vector2f operator*(float scalar) const {

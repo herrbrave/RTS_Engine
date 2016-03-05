@@ -15,7 +15,8 @@ ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemM
 
 	const rapidjson::Value& parsedButton = doc["button"];
 	std::string image = parsedButton["image"].GetString();
-	systemManager->graphicsSystem->addTexture(image, image);
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->addTexture(image, image);
 
 	ButtonConfig* buttonConfig = new ButtonConfig();
 	buttonConfig->sectionWidth = parsedButton["section_width"].GetInt();
@@ -43,7 +44,8 @@ PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemMan
 
 	const rapidjson::Value& parsedPanel = doc["panel"];
 	std::string image = parsedPanel["image"].GetString();
-	systemManager->graphicsSystem->addTexture(image, image);
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->addTexture(image, image);
 
 	PanelConfig* panelConfig = new PanelConfig();
 	panelConfig->sectionWidth = parsedPanel["section_width"].GetInt();
@@ -75,6 +77,7 @@ void SectionDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
 }
 
 ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) : Drawable(width, height) {
+	isUi = true;
 	state = ButtonState::UP;
 	mSections[ButtonState::UP] = std::vector<SectionDrawable*>();
 	mSections[ButtonState::OVER] = std::vector<SectionDrawable*>();
@@ -133,24 +136,24 @@ void ButtonDrawable::setButtonTexture(Texture* texture) {
 
 void ButtonComponent::onMouseEvent(const MouseEvent& mouseEvent, SystemManager* systemManager) {
 	if (mouseEvent.action == MouseAction::MOVE) {
-		Body* body = systemManager->physicsSystem->getBody(entityId);
+		Body* body = getBodyById(entityId, systemManager);
 		if (body->checkPoint(*mouseEvent.position)) {
-			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 			drawable->state = ButtonState::OVER;
 		}
 		else {
-			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 			drawable->state = ButtonState::UP;
 		}
 	}
 	else if (mouseEvent.action == MouseAction::CLICK_DOWN) {
-		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 		if (drawable->state == ButtonState::OVER) {
 			drawable->state = ButtonState::DOWN;
 		}
 	}
 	else {
-		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 		if (drawable->state == ButtonState::DOWN) {
 			drawable->state = ButtonState::OVER;
 			mCallback();
@@ -163,11 +166,12 @@ void ButtonComponent::setCallback(const std::function<void()>& callback) {
 }
 
 void ButtonComponent::setText(const std::string& text, SystemManager* systemManager) {
-	systemManager->graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
 	Texture* textTexture = new Texture(text);
 	mText = text;
 
-	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 	drawable->setButtonTexture(textTexture);
 }
 
@@ -176,7 +180,7 @@ std::string& ButtonComponent::getText() {
 }
 
 void ButtonComponent::setIcon(Texture* texture, SystemManager* systemManager) {
-	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(systemManager->graphicsSystem->getDrawableById(entityId));
+	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
 	drawable->setButtonTexture(texture);
 }
 
@@ -193,6 +197,7 @@ void setIcon(Entity* entity, const std::string& assetTag, float tx, float ty, fl
 }
 
 PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {
+	isUi = true;
 	float sectionWidth = panelConfig.sectionWidth;
 	float sectionHeight = panelConfig.sectionHeight;
 	float doubleWidth = (sectionWidth * 2);
@@ -239,15 +244,18 @@ WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConf
 }
 
 Entity* WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
-	mSystemManager->entitySystem->registerEntity(entity);
+	entitySystem->registerEntity(entity);
 
 	Body* blockBody = new BlockBody(x, y, width, height);
-	mSystemManager->physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
 
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new ButtonDrawable(width, height, *mButtonConfig.get());
-	mSystemManager->graphicsSystem->registerDrawable(entity->id, textureDrawable);
+	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
 
 	ButtonComponent* buttonComponent = new ButtonComponent(entity->id);
@@ -261,15 +269,18 @@ Entity* WidgetFactory::createButton(std::function<void()> callback, float x, flo
 }
 
 Entity* WidgetFactory::createPanel(float x, float y, float width, float height) {
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
-	mSystemManager->entitySystem->registerEntity(entity);
+	entitySystem->registerEntity(entity);
 
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new BlockBody(x, y, width, height);
-	mSystemManager->physicsSystem->registerBody(entity->id, blockBody);
+	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
 
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new PanelDrawable(width, height, *mPanelConfig.get());
-	mSystemManager->graphicsSystem->registerDrawable(entity->id, textureDrawable);
+	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
 
 	entity->componentContainer->registerComponent(physicsComponent);

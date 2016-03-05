@@ -33,15 +33,3 @@ void Entity::update() {
 void Entity::pushState(std::shared_ptr<State> state) {
 	mStateQueue.push_back(state);
 }
-
-void EntitySystem::registerEntity(Entity* entity) {
-	mEntityMap.emplace(entity->id, entity);
-}
-
-Entity* EntitySystem::getEntityById(unsigned long id) {
-	return mEntityMap.at(id);
-}
-
-void EntitySystem::deregisterEntity(unsigned long id) {
-	mEntityMap.erase(mEntityMap.find(id));
-}

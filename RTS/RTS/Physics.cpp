@@ -52,40 +52,6 @@ void BlockBody::onSerialization(Serializer& serializer) const {
 	serializer.writer.String("BlockBody");
 }
 
-void PhysicsSystem::registerBody(const unsigned long id, Body* body) {
-	mBodies.emplace(id, std::shared_ptr<Body>(body));
-}
-
-void PhysicsSystem::deregisterBody(const unsigned long id) {
-	mBodies.erase(mBodies.find(id));
-}
-
-
-Body* PhysicsSystem::getBody(const unsigned long id) {
-	return mBodies.at(id).get();
-}
-
-void PhysicsSystem::update(Uint32 delta) {
-	float step(float(delta) / float(1000));
-
-
-	// TODO: add steering later.
-	for (auto element : mBodies) {
-		vector2f velocityCopy(*element.second->getVelocity());
-		if (velocityCopy.x == 0 && velocityCopy.y == 0) {
-			continue;
-		}
-
-		velocityCopy *= element.second->getSpeed();
-		velocityCopy *= step;
-
-		vector2f positionCopy(*element.second->getPosition());
-		positionCopy += velocityCopy;
-
-		element.second->setPosition(&positionCopy);
-	}
-}
-
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
 	mBody.reset(new BlockBody(x, y, width, height));
 }

@@ -20,6 +20,7 @@ class Drawable {
 public:
 	float width;
 	float height;
+	bool isUi{ false };
 
 	Drawable(float width, float height) {
 		this->width = width;
@@ -128,7 +129,7 @@ public:
 
 protected:
 	virtual void onSerialize(Serializer& serializer) const {
-		serializer.writer.StartObject(); 
+		serializer.writer.StartObject();
 
 		serializer.writer.String("drawableType");
 		serializer.writer.String("TextureDrawable");
@@ -142,6 +143,7 @@ protected:
 private:
 	std::unique_ptr<Texture> mTexture{ nullptr };
 };
+
 
 class GraphicsConfig {
 public:
@@ -173,10 +175,7 @@ public:
 
 class Graphics {
 public:
-	Graphics(AssetSystem* assetSystem) {
-		mAssetSystem = assetSystem;
-	}
-
+	Graphics(AssetVendor* assetVendor) { mAssetVendor.reset(assetVendor); }
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
@@ -185,14 +184,13 @@ public:
 
 	virtual Asset* createTexture(const std::string& path, const std::string& assetTag) = 0;
 	virtual Asset* createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
-
 protected:
-	AssetSystem* mAssetSystem;
+	std::unique_ptr<AssetVendor> mAssetVendor{ nullptr };
 };
 
 class SDLGraphics : public Graphics {
 public:
-	SDLGraphics(AssetSystem* assetSystem, GraphicsConfig* graphisConfig);
+	SDLGraphics(GraphicsConfig* graphisConfig, AssetVendor* assetVendor);
 	void onBeforeDraw() override;
 	void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
@@ -207,39 +205,6 @@ private:
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 	std::unique_ptr<SDL_Renderer, SDL_DELETERS> mRenderer{ nullptr };
 	std::unique_ptr<TTF_Font, SDL_DELETERS> mFont{ nullptr };
-};
-
-class GraphicsSystem {
-public:
-	GraphicsSystem(AssetSystem* assetSystem, GraphicsConfig* graphisConfig, PhysicsSystem* physicsSystem) {
-		mAssetSystem = assetSystem;
-		mPhysicsSystem = physicsSystem;
-		mGraphicsConfig.reset(std::move(graphisConfig));
-		mGraphics.reset(new SDLGraphics(mAssetSystem, mGraphicsConfig.get()));
-		mCamera.reset(new Camera());
-		mCamera->position.reset(new vector2f(0, 0));
-		mCamera->width = mGraphicsConfig->mWidth;
-		mCamera->height = mGraphicsConfig->mHeight;
-	}
-
-	void registerDrawable(const unsigned long, Drawable* drawable);
-	void deregisterDrawable(const unsigned long);
-	void draw();
-
-	Drawable* getDrawableById(unsigned long entityId);
-
-	Camera* getCamera();
-
-	void addTexture(const std::string& path, const std::string& assetTag);
-
-	void createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-private:
-	AssetSystem* mAssetSystem{ nullptr };
-	PhysicsSystem* mPhysicsSystem{ nullptr };
-	std::unique_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
-	std::unique_ptr<Graphics> mGraphics{ nullptr };
-	std::unique_ptr<Camera> mCamera;
-	std::unordered_map<unsigned long, Drawable*> mDrawables;
 };
 
 class DrawableComponent : public Component {
