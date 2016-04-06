@@ -14,6 +14,7 @@ struct ComponentType {
 	static const Uint8 PHYSICS_COMPONENT = 2;
 	static const Uint8 TILE_COMPONENT = 3;
 	static const Uint8 BUTTON_COMPONENT = 4;
+	static const Uint8 INPUT_COMPONENT = 5;
 };
 
 class Component {
@@ -48,7 +49,6 @@ public:
 		serializer.writer.EndArray();
 	}
 
-private:
 	std::unordered_map<Uint8, Component*> mComponents;
 };
 

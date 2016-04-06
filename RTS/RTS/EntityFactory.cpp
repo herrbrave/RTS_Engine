@@ -20,8 +20,14 @@ Entity* EntityFactory::createDefault() {
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, blockDrawable);
 
+	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputListener* inputListener = new InputListener(entity->id);
+	inputSystem->registerEventListener(inputListener);
+	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
+
 	entity->componentContainer->registerComponent(physicsComponent);
 	entity->componentContainer->registerComponent(drawableComponent);
+	entity->componentContainer->registerComponent(inputComponent);
 
 	return entity;
 }
@@ -43,8 +49,14 @@ Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, floa
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
 
+	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputListener* inputListener = new InputListener(entity->id);
+	inputSystem->registerEventListener(inputListener);
+	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
+
 	entity->componentContainer->registerComponent(physicsComponent);
 	entity->componentContainer->registerComponent(drawableComponent);
+	entity->componentContainer->registerComponent(inputComponent);
 
 	return entity;
 }

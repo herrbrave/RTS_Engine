@@ -5,6 +5,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::ENTITY, new EntitySystem(this));
 	systems.emplace(SystemType::PHYSICS, new PhysicsSystem(this));
 	systems.emplace(SystemType::GRAPHICS, new GraphicsSystem(graphicsConfig, this));
+	systems.emplace(SystemType::INPUT, new InputSystem(this));
 }
 
 
@@ -85,6 +86,12 @@ Entity* EntitySystem::DefaultEntityVendor::getEntityById(unsigned long entityId)
 	return mEntitySystem->getEntityById(entityId);
 }
 
+void EntitySystem::getAllEntities(std::vector<Entity*>& entities) {
+	for (auto entry : mEntityMap) {
+		entities.push_back(entry.second);
+	}
+}
+
 void EntitySystem::deregisterEntity(unsigned long id) {
 	mEntityMap.erase(mEntityMap.find(id));
 }
@@ -131,6 +138,71 @@ void PhysicsSystem::clear() {
 	mBodies.clear();
 }
 
+void InputSystem::registerEventListener(InputListener* inputListener) {
+	mListeners.emplace(inputListener->id, inputListener);
+}
+
+void InputSystem::deregisterEventListener(unsigned long id) {
+	mListeners.erase(id);
+}
+
+void InputSystem::handleEvent(const SDL_Event& evt) {
+	int x, y;
+	SDL_GetMouseState(&x, &y);
+	vector2f mousePosition(x, y);
+	MouseEvent mouseEvent;
+	mouseEvent.button = ((evt.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
+	mouseEvent.position->x = x;
+	mouseEvent.position->y = y;
+
+	KeyboardEvent keyEvent;
+	keyEvent.key = evt.key.keysym.sym;
+	keyEvent.ctrlDown = (evt.key.keysym.mod & KMOD_CTRL);
+	keyEvent.shiftDown = (evt.key.keysym.mod & KMOD_SHIFT);
+
+	Event inputEvent;
+	inputEvent.keyEvent = &keyEvent;
+	inputEvent.mouseEvent = &mouseEvent;
+
+	EventType type = EventType::NONE;
+	switch (evt.type) {
+	case SDL_KEYDOWN:
+		type = EventType::KEY_DOWN;
+		break;
+	case SDL_KEYUP:
+		type = EventType::KEY_UP;
+		break;
+	case SDL_MOUSEBUTTONDOWN:
+		type = EventType::MOUSE_BUTTON_DOWN;
+		break;
+	case SDL_MOUSEBUTTONUP:
+		type = EventType::MOUSE_BUTTON_UP;
+		break;
+	case SDL_MOUSEMOTION:
+		type = EventType::MOUSE_MOVE;
+		break;
+
+	}
+	if (type == EventType::NONE) {
+		return;
+	}
+
+	for (auto listener : mListeners) {
+		if (listener.second->onEvent(type, &inputEvent, mMouseMovementHandler.get())) {
+			return;
+		}
+	}
+}
+
+void InputSystem::clear() {
+	mListeners.clear();
+}
+
+bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const vector2f& position) {
+	Body* body = getBodyById(id, mSystemManager);
+	return body->checkPoint(position);
+}
+
 void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager) {
 	PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
 	vector->set(physicsComponent->getPosition()->x, physicsComponent->getPosition()->y);
@@ -171,6 +243,11 @@ void drawGraphicsSystem(SystemManager* systemManager) {
 	graphicsSystem->draw();
 }
 
+void handleInput(const SDL_Event& event, SystemManager* systemManager) {
+	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(systemManager->systems.at(SystemType::INPUT));
+	inputSystem->handleEvent(event);
+}
+
 Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager) {
 	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
 	return graphicsSystem->getDrawableById(drawableId);
@@ -179,4 +256,38 @@ Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager
 Body* getBodyById(unsigned long bodyId, SystemManager* systemManager) {
 	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
 	return physicsSystem->getBody(bodyId);
+}
+
+void destroyEntity(unsigned long entityId, SystemManager* systemManager) {
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	Entity* entity = entitySystem->getEntityById(entityId);
+
+	for (auto component : entity->componentContainer->mComponents) {
+		if (component.first == ComponentType::DRAWABLE_COMPONENT) {
+			GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+			graphicsSystem->deregisterDrawable(entityId);
+		}
+		else if (component.first == ComponentType::INPUT_COMPONENT) {
+			InputSystem* inputSystem = reinterpret_cast<InputSystem*>(systemManager->systems.at(SystemType::INPUT));
+			inputSystem->deregisterEventListener(entityId);
+		}
+		else if (component.first == ComponentType::PHYSICS_COMPONENT) {
+			PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+			physicsSystem->deregisterBody(entityId);
+		}
+		else if (component.first == ComponentType::TILE_COMPONENT) {
+		}
+	}
+
+	entitySystem->deregisterEntity(entityId);
+}
+
+void destroyAllEntities(SystemManager* systemManager) {
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	std::vector<Entity*> entities;
+	entitySystem->getAllEntities(entities);
+
+	for (auto entity : entities) {
+		destroyEntity(entity->id, systemManager);
+	}
 }

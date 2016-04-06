@@ -8,14 +8,16 @@
 
 #include"Asset.h"
 #include"Entity.h"
+#include"Input.h"
 #include"Graphics.h"
 #include"Physics.h"
 
 enum class SystemType {
 	ASSET = 1,
 	ENTITY = 2,
-	GRAPHICS = 3,
-	PHYSICS = 4
+	INPUT = 3,
+	GRAPHICS = 4,
+	PHYSICS = 5
 };
 
 class System;
@@ -114,6 +116,7 @@ public:
 	void registerEntity(Entity* entity);
 	Entity* getEntityById(unsigned long id);
 	void deregisterEntity(unsigned long id);
+	void getAllEntities(std::vector<Entity*>& entity);
 
 	void clear() override;
 
@@ -148,6 +151,36 @@ private:
 	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
 };
 
+class DefaultMouseMovementHandler : public MouseMovementHandler {
+public:
+	DefaultMouseMovementHandler(SystemManager* systemManager) {
+		mSystemManager = systemManager;
+	}
+
+	bool checkForMouseOver(unsigned long id, const vector2f& position) override;
+
+private:
+	SystemManager* mSystemManager;
+};
+
+class InputSystem : public System {
+public:
+	InputSystem(SystemManager* systemManager) : System(SystemType::INPUT, systemManager) {
+		mMouseMovementHandler.reset(new DefaultMouseMovementHandler(systemManager));
+	}
+
+	void registerEventListener(InputListener* inputListener);
+	void deregisterEventListener(unsigned long id);
+
+	void handleEvent(const SDL_Event& evt);
+
+	void clear() override;
+
+private:
+	std::unordered_map<unsigned long, InputListener*> mListeners;
+	std::unique_ptr<MouseMovementHandler> mMouseMovementHandler{ nullptr };
+};
+
 
 void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager);
 
@@ -161,8 +194,14 @@ void updatePhysicsSystem(Uint32 ticks, SystemManager* systemManager);
 
 void drawGraphicsSystem(SystemManager* systemManager);
 
+void handleInput(const SDL_Event& event, SystemManager* systemManager);
+
 Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager);
 
 Body* getBodyById(unsigned long bodyId, SystemManager* systemManager); 
+
+void destroyEntity(unsigned long entityId, SystemManager* systemManager);
+
+void destroyAllEntities(SystemManager* systemManager);
 
 #endif // !__SYSTEM_H__

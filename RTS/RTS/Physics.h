@@ -31,7 +31,7 @@ public:
 		mHeight = root["mHeight"].GetDouble();
 	}
 
-	virtual bool checkPoint(vector2f& point) = 0;
+	virtual bool checkPoint(const vector2f& point) = 0;
 	virtual bool checkCollision(Body& body) = 0;
 	virtual Extent getExtent() = 0;
 
@@ -101,7 +101,7 @@ public:
 
 	BlockBody(const rapidjson::Value& root) : Body(root) {}
 
-	bool checkPoint(vector2f& point) override;
+	bool checkPoint(const vector2f& point) override;
 	bool checkCollision(Body& body) override;
 	Extent getExtent() override;
 
@@ -170,6 +170,9 @@ public:
 	const vector2f* getPosition();
 	void setVelocity(vector2f* velocity);
 	const vector2f* getVelocity();
+
+	void setSpeed(float speed);
+	float getSpeed();
 
 	void setSize(float width, float height);
 	float getWidth();

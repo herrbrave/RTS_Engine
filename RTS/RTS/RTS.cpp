@@ -31,36 +31,8 @@ void RTS::handleEvents()
 				mIsPlaying = false;
 			}
 		}
-		else if (event.type == SDL_KEYUP) {
 
-		}
-		if (event.type == SDL_MOUSEBUTTONUP) {
-			int x, y;
-			SDL_GetMouseState(&x, &y);
-			MouseEvent evt;
-			evt.action = MouseAction::CLICK_UP;
-			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
-			evt.position->x = x;
-			evt.position->y = y;
-		}
-		else if (event.type == SDL_MOUSEBUTTONDOWN) {
-			int x, y;
-			SDL_GetMouseState(&x, &y);
-			MouseEvent evt;
-			evt.action = MouseAction::CLICK_DOWN;
-			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
-			evt.position->x = x;
-			evt.position->y = y;
-		}
-		else if (event.type == SDL_MOUSEMOTION) {
-			int x, y;
-			SDL_GetMouseState(&x, &y);
-			MouseEvent evt;
-			evt.action = MouseAction::MOVE;
-			evt.button = ((event.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
-			evt.position->x = x;
-			evt.position->y = y;
-		}
+		handleInput(event, mSystemManager.get());
 	}
 }
 

@@ -10,8 +10,8 @@
 #include<string>
 #include<unordered_map>
 
-#include"Event.h"
 #include"EntityFactory.h"
+#include"Input.h"
 #include"SDL_Helpers.h"
 #include"Serializer.h"
 #include"System.h"

@@ -16,7 +16,7 @@ void Body::setHeight(float height) {
 
 BlockBody::BlockBody(float x, float y, float width, float height) : Body(x, y, width, height) {}
 
-bool BlockBody::checkPoint(vector2f& point) {
+bool BlockBody::checkPoint(const vector2f& point) {
 	Extent extent(getExtent());
 	return (extent.x0 <= point.x
 		&& point.x <= extent.x1
@@ -180,6 +180,14 @@ void PhysicsComponent::setVelocity(vector2f* velocity) {
 
 const vector2f* PhysicsComponent::getVelocity()  {
 	return mBody->getVelocity();
+}
+
+void PhysicsComponent::setSpeed(float speed) {
+	mBody->setSpeed(speed);
+}
+
+float PhysicsComponent::getSpeed() {
+	return mBody->getSpeed();
 }
 
 void PhysicsComponent::setSize(float width, float height) {
