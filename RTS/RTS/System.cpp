@@ -131,11 +131,45 @@ void PhysicsSystem::update(Uint32 delta) {
 		positionCopy += velocityCopy;
 
 		element.second->setPosition(&positionCopy);
+		for (auto body : mBodies) {
+			if (body.second == element.second) {
+				continue;
+			}
+
+			if (element.second->checkCollision(*body.second.get())) {
+				element.second->onCollision(body.second.get());
+				body.second->onCollision(element.second.get());
+				handleCollision(element.second.get(), body.second.get());
+			}
+		}
 	}
 }
 
 void PhysicsSystem::clear() {
 	mBodies.clear();
+}
+
+void PhysicsSystem::handleCollision(Body* incidentBody, Body* otherBody) {
+	const vector2f& incidentPosition = *incidentBody->getPosition();
+	const vector2f& otherPosition = *otherBody->getPosition();
+
+	vector2f diff(otherPosition - incidentPosition);
+	
+	float width = ((incidentBody->getWidth() / 2) + (otherBody->getWidth() / 2));
+	float height = ((incidentBody->getHeight() / 2) + (otherBody->getHeight() / 2));
+
+	if (std::abs(diff.x) > std::abs(diff.y)) {
+		diff.x = ((diff.x > 0) ? (width - std::abs(diff.x)) : -(width - std::abs(diff.x)));
+		diff.y = 0;
+	}
+	else {
+		diff.x = 0;
+		diff.y = ((diff.y > 0) ? (height - std::abs(diff.y)) : -(height - std::abs(diff.y)));
+	}
+
+	vector2f position(*incidentBody->getPosition());
+	position -= diff;
+	incidentBody->setPosition(&position);
 }
 
 void InputSystem::registerEventListener(InputListener* inputListener) {

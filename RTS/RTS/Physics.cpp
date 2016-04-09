@@ -14,6 +14,26 @@ void Body::setHeight(float height) {
 	mHeight = height;
 }
 
+void Body::setUserDate(void* userData) {
+	mUserData.reset(userData);
+}
+
+void* Body::getUserData() {
+	return mUserData.get();
+}
+
+void Body::setCollisionCallback(std::function<void(Body*)> onCollisionCallback) {
+	mOnCollisionCallback = std::move(onCollisionCallback);
+}
+
+void Body::onCollision(Body* body) {
+	if (mOnCollisionCallback == nullptr) {
+		return;
+	}
+
+	mOnCollisionCallback(body);
+}
+
 BlockBody::BlockBody(float x, float y, float width, float height) : Body(x, y, width, height) {}
 
 bool BlockBody::checkPoint(const vector2f& point) {

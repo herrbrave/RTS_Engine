@@ -4,6 +4,7 @@
 #include"Component.h"
 #include"vector2f.h"
 
+#include<functional>
 #include<map>
 #include<SDL.h>
 #include<unordered_map>
@@ -62,6 +63,12 @@ public:
 	void setWidth(float width);
 	void setHeight(float height);
 
+	void setUserDate(void* userData);
+	void* getUserData();
+
+	void setCollisionCallback(std::function<void(Body*)> onCollisionCallback);
+	void onCollision(Body* body);
+
 	virtual void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
@@ -88,6 +95,8 @@ public:
 protected:
 	virtual void onSerialization(Serializer& serializer) const = 0;
 
+	std::function<void(Body*)> mOnCollisionCallback;
+	std::shared_ptr<void> mUserData{ nullptr };
 	float mSpeed;
 	p_vector2f mPosition{ nullptr };
 	p_vector2f mVelocity{ nullptr };

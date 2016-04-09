@@ -149,6 +149,7 @@ public:
 
 private:
 	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
+	void handleCollision(Body* incidentBody, Body* otherBody);
 };
 
 class DefaultMouseMovementHandler : public MouseMovementHandler {
