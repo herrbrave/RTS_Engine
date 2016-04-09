@@ -14,14 +14,13 @@ public:
 
 class MapFactory {
 public:
-	MapFactory(TileFactory* tileFactory, EntitySystem* entitySystem, GraphicsSystem* graphicsSystem);
+	MapFactory(TileFactory* tileFactory, SystemManager* systemManager);
 
 	Map* createMap(const std::string pathToMap);
 
 private:
-	GraphicsSystem* mGraphicsSystem{ nullptr };
-	EntitySystem* mEntitySystem{ nullptr };
-	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
+	SystemManager* mSystemManager{ nullptr };
+	TileFactory* mTileFactory{ nullptr };
 };
 
 #endif // !__MAP_FACTORY_H__

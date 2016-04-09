@@ -13,10 +13,11 @@ void RTS::setup() {
 	config->setFont("Digital_tech.otf");
 
 	mSystemManager.reset(new SystemManager(config));
-
 	mEntityFactory.reset(new EntityFactory(mSystemManager.get()));
-
 	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager.get()));
+
+	mTileFactory.reset(new TileFactory(mSystemManager.get()));
+	mMapFactory.reset(new MapFactory(mTileFactory.get(), mSystemManager.get()));
 }
 
 void RTS::handleEvents()

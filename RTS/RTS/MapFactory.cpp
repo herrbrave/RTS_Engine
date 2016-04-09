@@ -13,10 +13,9 @@ Entity* TileFactory::createTile(const std::string& assetTag, int xIndex, int yIn
 }
 
 
-MapFactory::MapFactory(TileFactory* tileFactory, EntitySystem* entitySystem, GraphicsSystem* graphicsSystem) {
-	mTileFactory.reset(std::move(tileFactory));
-	mGraphicsSystem = graphicsSystem;
-	mEntitySystem = entitySystem;
+MapFactory::MapFactory(TileFactory* tileFactory, SystemManager* systemManager) {
+	mTileFactory = tileFactory;
+	mSystemManager = systemManager;
 }
 
 Map* MapFactory::createMap(const std::string pathToMap) {
@@ -40,7 +39,8 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 	std::string assetTag(doc["tilesets"][0]["name"].GetString());
 	int columns(doc["tilesets"][0]["columns"].GetInt());
 
-	mGraphicsSystem->addTexture(imagePath, assetTag);
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->addTexture(imagePath, assetTag);
 
 	MapConfig* mapConfig = new MapConfig();
 	mapConfig->mapWidth = width;
@@ -60,7 +60,9 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 		mapConfig->tiles.push_back(tile->id);
 	}
 
-	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(mEntitySystem));
+	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem));
 
 	return map;
 }
