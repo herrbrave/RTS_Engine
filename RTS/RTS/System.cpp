@@ -29,9 +29,8 @@ void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
 	for (auto drawable : mDrawables) {
-		Entity* entity = getEntityById(drawable.first, mSystemManager);
-		vector2f position;
-		getEntityPosition(&position, entity, mSystemManager);
+		vector2f position(0, 0);
+		getPositionById(&position, drawable.first, *mSystemManager);
 		if (!drawable.second->isUi) {
 			translateToCamera(&position, mCamera.get());
 		}
@@ -100,17 +99,37 @@ void EntitySystem::clear() {
 	mEntityMap.clear();
 }
 
+
+void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	Body* body = physicsSystem->getBody(id);
+	physicsSystem->quadTree->removeBody(body);
+	if (body->collider != nullptr) {
+		physicsSystem->quadTree->addBody(body);
+	}
+}
+
+void DefaultPhysicsNotifier::notifyColliderUpdate(unsigned long id) {
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	Body* body = physicsSystem->getBody(id);
+	physicsSystem->quadTree->removeBody(body);
+	if (body->collider != nullptr) {
+		physicsSystem->quadTree->addBody(body);
+	}
+}
+
 void PhysicsSystem::registerBody(const unsigned long id, Body* body) {
-	mBodies.emplace(id, std::shared_ptr<Body>(body));
+	mBodies.emplace(id, body);
 }
 
 void PhysicsSystem::deregisterBody(const unsigned long id) {
+	quadTree->removeBody(mBodies.at(id));
 	mBodies.erase(mBodies.find(id));
 }
 
 
 Body* PhysicsSystem::getBody(const unsigned long id) {
-	return mBodies.at(id).get();
+	return mBodies.at(id);
 }
 
 void PhysicsSystem::update(Uint32 delta) {
@@ -131,18 +150,25 @@ void PhysicsSystem::update(Uint32 delta) {
 		positionCopy += velocityCopy;
 
 		element.second->setPosition(&positionCopy);
-		for (auto body : mBodies) {
-			if (body.second == element.second) {
-				continue;
-			}
+		if (!element.second->isCollidable()) {
+			continue;
+		}
 
-			if (element.second->checkCollision(*body.second.get())) {
-				element.second->onCollision(body.second.get());
-				body.second->onCollision(element.second.get());
-				handleCollision(element.second.get(), body.second.get());
-			}
+		// update the bodies location in the tree.
+		quadTree->removeBody(element.second);
+		quadTree->addBody(element.second);
+
+		std::vector<Body*> collidingBodies;
+		quadTree->getCollidingBodies(element.second, collidingBodies);
+
+		for (Body* collidingBody : collidingBodies) {
+			collidingBody->collider->onCollision(*element.second->collider);
+			element.second->collider->onCollision(*collidingBody->collider);
+			handleCollision(element.second, collidingBody);
 		}
 	}
+
+	//sweepDirtyBodies();
 }
 
 void PhysicsSystem::clear() {
@@ -250,6 +276,12 @@ void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemMa
 		*vector += *physicsComponent->getPosition();
 		parentId = parent->parent;
 	}
+}
+
+void getPositionById(vector2f* vector, unsigned long id, SystemManager& systemManager) {
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager.systems.at(SystemType::PHYSICS));
+	vector2f position(*physicsSystem->getBody(id)->getPosition());
+	vector->set(&position);
 }
 
 Entity* getEntityById(unsigned long entityId, SystemManager* systemManager) {

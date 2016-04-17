@@ -58,6 +58,9 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 
 		Entity* tile = mTileFactory->createTile(assetTag, x, y, new vector2f(x * tileWidth, y * tileHeight), tx, ty, tileWidth, tileHeight);
 		mapConfig->tiles.push_back(tile->id);
+
+		TileComponent* tileComponent = reinterpret_cast<TileComponent*>(tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		tileComponent->canOccupy = tileVal == 1;
 	}
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.

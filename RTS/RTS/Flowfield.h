@@ -101,7 +101,7 @@ public:
 					int cost = mCostMap[tileAt->id];
 					if (cost < shortest) {
 						shortest = cost;
-						nextDir = dir;
+						nextDir.set(&dir);
 					}
 				}
 
@@ -111,11 +111,24 @@ public:
 		}
 	}
 
+	void guideEntity(Entity* entity) {
+		PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
+		Entity* tileAt = tileAtPoint(physicsComponent->getPosition());
+		vector2f* velocity = getVectorForTile(tileAt->id);
+		if (velocity == nullptr) {
+			return;
+		}
+		physicsComponent->setVelocity(velocity);
+	}
+
 	Entity* tileAtPoint(const vector2f* point) {
 		return mMap->tileAtPoint(point);
 	}
 
 	vector2f* getVectorForTile(unsigned const long tileId) const {
+		if (mVectorMap.find(tileId) == mVectorMap.end()) {
+			return nullptr;
+		}
 		return mVectorMap.at(tileId).get();
 	}
 

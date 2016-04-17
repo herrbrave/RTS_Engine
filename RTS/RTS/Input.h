@@ -56,7 +56,6 @@ enum class EventType {
 };
 
 enum class InputEvent {
-	ON_MOUSE_MOVE = 0,
 	ON_MOUSE_ENTER = 1,
 	ON_MOUSE_EXIT = 2,
 	ON_CLICK = 3,

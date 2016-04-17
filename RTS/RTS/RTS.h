@@ -2,8 +2,10 @@
 #define __RTS__
 
 #include<memory>
+#include<vector>
 
 #include"EntityFactory.h"
+#include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
 #include"System.h"

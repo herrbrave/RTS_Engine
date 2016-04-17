@@ -7,6 +7,7 @@
 #include<functional>
 #include<map>
 #include<SDL.h>
+#include<stack>
 #include<unordered_map>
 #include<unordered_set>
 
@@ -14,118 +15,97 @@ struct Extent {
 	float x0, y0, x1, y1;
 };
 
+class PhysicsNotifier {
+public:
+	virtual void notifyPositionSet(unsigned long id) = 0;
+	virtual void notifyColliderUpdate(unsigned long id) = 0;
+};
+
+class Collider {
+public:
+	float width;
+	float height;
+	p_vector2f position{ nullptr };
+
+	Collider(float x, float y, float width, float height);
+
+	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
+
+	bool checkCollision(const Collider& collider) const;
+
+	void onCollision(const Collider& collider) const;
+
+	void getExtent(Extent& extent) const;
+
+private:
+	std::function<void(const Collider&)> onCollisionCallback;
+};
+
 class Body {
 public:
-	Body(float x, float y, float width, float height) {
-		mSpeed = 0;
-		mPosition.reset(new vector2f(x, y));
-		mVelocity.reset(new vector2f(0, 0));
-		mWidth = width;
-		mHeight = height;
-	}
 
-	Body(const rapidjson::Value& root) {
-		mSpeed = root["mSpeed"].GetDouble();
-		mPosition.reset(new vector2f(root["mPosition"]));
-		mVelocity.reset(new vector2f(root["mVelocity"]));
-		mWidth = root["mWidth"].GetDouble();
-		mHeight = root["mHeight"].GetDouble();
-	}
+	float speed;
+	p_vector2f position{ nullptr };
+	p_vector2f velocity{ nullptr };
+	float width;
+	float height;
+	std::unique_ptr<Collider> collider;
 
-	virtual bool checkPoint(const vector2f& point) = 0;
-	virtual bool checkCollision(Body& body) = 0;
-	virtual Extent getExtent() = 0;
+	Body(float x, float y, float width, float height);
 
-	void setSpeed(float speed) {
-		mSpeed = speed;
-	}
+	Body(const rapidjson::Value& root);
 
-	float getSpeed() {
-		return mSpeed;
-	}
+	bool checkPoint(const vector2f& point);
 
-	void setPosition(vector2f* position) {
-		mPosition->set(position);
-	}
-	const vector2f* getPosition() {
-		return mPosition.get();
-	}
+	void setSpeed(float speed);
 
-	void setVelocity(vector2f* vector) {
-		mVelocity->set(vector);
-	}
-	const vector2f* getVelocity() {
-		return mVelocity.get();
-	}
+	float getSpeed();
+
+	void setPosition(vector2f* position);
+	const vector2f* getPosition();
+
+	void setVelocity(vector2f* vector);
+	const vector2f* getVelocity();
+
+	void setCollider(Collider* collider);
+	const Collider& getCollider();
+	bool isCollidable();
 
 	float getWidth();
 	float getHeight();
 	void setWidth(float width);
 	void setHeight(float height);
 
-	void setUserDate(void* userData);
-	void* getUserData();
-
-	void setCollisionCallback(std::function<void(Body*)> onCollisionCallback);
-	void onCollision(Body* body);
-
-	virtual void serialize(Serializer& serializer) const {
+	void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
-		onSerialization(serializer);
+		serializer.writer.String("speed");
+		serializer.writer.Double(speed);
 
-		serializer.writer.String("mSpeed");
-		serializer.writer.Double(mSpeed);
+		serializer.writer.String("position");
+		position->serialize(serializer);
 
-		serializer.writer.String("mPosition");
-		mPosition->serialize(serializer);
+		serializer.writer.String("velocity");
+		velocity->serialize(serializer);
 
-		serializer.writer.String("mVelocity");
-		mVelocity->serialize(serializer);
+		serializer.writer.String("width");
+		serializer.writer.Double(width);
 
-		serializer.writer.String("mWidth");
-		serializer.writer.Double(mWidth);
-
-		serializer.writer.String("mHeight");
-		serializer.writer.Double(mHeight);
+		serializer.writer.String("height");
+		serializer.writer.Double(height);
 
 		serializer.writer.EndObject();
 	}
-
-protected:
-	virtual void onSerialization(Serializer& serializer) const = 0;
-
-	std::function<void(Body*)> mOnCollisionCallback;
-	std::shared_ptr<void> mUserData{ nullptr };
-	float mSpeed;
-	p_vector2f mPosition{ nullptr };
-	p_vector2f mVelocity{ nullptr };
-	float mWidth;
-	float mHeight;
-};
-
-class BlockBody : public Body {
-public:
-	BlockBody(float x, float y, float width, float height);
-
-	BlockBody(const rapidjson::Value& root) : Body(root) {}
-
-	bool checkPoint(const vector2f& point) override;
-	bool checkCollision(Body& body) override;
-	Extent getExtent() override;
-
-protected:
-	void onSerialization(Serializer& serializer) const override;
 };
 
 class QuadtreeNode {
 public:
 	QuadtreeNode(float x, float y, float width, float height);
-	std::vector<std::shared_ptr<QuadtreeNode>> children;
+	std::vector<QuadtreeNode*> children;
 	std::unordered_set<Body*> bodiesContainer;
 
 	void pushChild(QuadtreeNode* node) {
-		children.push_back(std::shared_ptr<QuadtreeNode>(node));
+		children.push_back(node);
 	}
 
 	bool leaf{ false };
@@ -135,7 +115,9 @@ public:
 	void remove(Body* body);
 	bool contains(Body* body);
 
-	Extent getNodeExtent();
+	void clear();
+
+	void getNodeExtent(Extent& extent);
 
 private:
 	std::unique_ptr<Body> mBody{ nullptr };
@@ -149,6 +131,7 @@ public:
 	void addBody(Body* body);
 	void removeBody(Body* body);
 	void getCollidingBodies(Body* body, std::vector<Body*>& bodies);
+	void clear();
 
 private:
 	void addHelper(Body* body, QuadtreeNode* node);
@@ -160,21 +143,19 @@ private:
 
 class PhysicsComponent : public Component {
 public:
-	PhysicsComponent(unsigned long entityId, Body* body) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, Body* body, PhysicsNotifier* physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		mBody = body;
+		mPhysicsNotifier = physicsNotifier;
 	}
 
-	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root, PhysicsNotifier* physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		const rapidjson::Value& body = root["mBody"];
-		std::string bodyType = body["BodyType"].GetString();
-		if (bodyType == "BlockBody") {
-			mBody = new BlockBody(body);
-		}
-		else {
-			assert(false);
-		}
+		mBody = new Body(body);
+		mPhysicsNotifier = physicsNotifier;
 	}
 
+	void setCollider(Collider* collider);
+	bool isCollidable();
 	void setPosition(vector2f* position);
 	const vector2f* getPosition();
 	void setVelocity(vector2f* velocity);
@@ -204,6 +185,7 @@ public:
 
 private:
 	Body* mBody;
+	PhysicsNotifier* mPhysicsNotifier;
 };
 
 #endif // !__PHYSICS_H__

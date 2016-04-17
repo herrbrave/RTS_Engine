@@ -2,11 +2,6 @@
 
 bool InputListener::onEvent(EventType eventType, Event* evt, MouseMovementHandler* mouseMovementHandler) {
 	if (eventType == EventType::MOUSE_MOVE) {
-		if (eventCallbacks.find(InputEvent::ON_MOUSE_MOVE) != eventCallbacks.end()) {
-			auto moveCallback = eventCallbacks.at(InputEvent::ON_MOUSE_MOVE);
-			moveCallback(evt);
-		}
-
 		if (mouseMovementHandler->checkForMouseOver(id, *evt->mouseEvent->position.get())) {
 			if (mouseState == MouseState::UP) {
 				mouseState = MouseState::OVER;

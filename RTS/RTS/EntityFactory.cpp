@@ -11,12 +11,14 @@ Entity* EntityFactory::createDefault() {
 	entitySystem->registerEntity(entity);
 
 	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
-	Body* blockBody = new BlockBody(0, 0, 32, 32);
+	Body* blockBody = new Body(0, 0, 16, 16);
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
+	Collider* collider = new Collider(0, 0, 16, 16);
+	physicsComponent->setCollider(collider);
 
 	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
-	Drawable* blockDrawable = new BlockDrawable(32, 32, 255, 0, 0, 255);
+	Drawable* blockDrawable = new BlockDrawable(16, 16, 255, 0, 0, 255);
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, blockDrawable);
 
@@ -39,9 +41,9 @@ Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, floa
 	entitySystem->registerEntity(entity);
 
 	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
-	Body* blockBody = new BlockBody(0, 0, w, h);
+	Body* blockBody = new Body(0, 0, w, h);
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
 	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Texture* texture = new Texture(assetTag, tx, ty, w, h);
@@ -90,7 +92,7 @@ Entity* EntityFactory::createFromSerialization(std::string path) {
 			graphicsSystem->registerDrawable(entity->id, comp->getDrawable());
 		}
 		else if (componentId == ComponentType::PHYSICS_COMPONENT) {
-			PhysicsComponent* comp = new PhysicsComponent(entity->id, component);
+			PhysicsComponent* comp = new PhysicsComponent(entity->id, component, physicsSystem->physicsNotifier.get());
 			entity->componentContainer->registerComponent(comp);
 			physicsSystem->registerBody(entity->id, comp->getBody());
 		}

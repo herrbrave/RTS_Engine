@@ -1,6 +1,8 @@
 #ifndef __MAP_FACTORY_H__
 #define __MAP_FACTORY_H__
 
+#include<iostream>
+
 #include"EntityFactory.h"
 #include"Map.h"
 #include"System.h"

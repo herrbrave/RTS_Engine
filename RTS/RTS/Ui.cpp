@@ -248,10 +248,10 @@ Entity* WidgetFactory::createButton(std::function<void()> callback, float x, flo
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	Body* blockBody = new BlockBody(x, y, width, height);
+	Body* blockBody = new Body(x, y, width, height);
 	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
 	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new ButtonDrawable(width, height, *mButtonConfig.get());
@@ -274,9 +274,9 @@ Entity* WidgetFactory::createPanel(float x, float y, float width, float height) 
 	entitySystem->registerEntity(entity);
 
 	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
-	Body* blockBody = new BlockBody(x, y, width, height);
+	Body* blockBody = new Body(x, y, width, height);
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
 	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new PanelDrawable(width, height, *mPanelConfig.get());

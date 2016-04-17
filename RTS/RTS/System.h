@@ -132,10 +132,30 @@ private:
 	std::unordered_map<unsigned long, Entity*> mEntityMap;
 };
 
-class PhysicsSystem : public System {
+class DefaultPhysicsNotifier : public PhysicsNotifier {
 public:
 
-	PhysicsSystem(SystemManager* systemManager) : System(SystemType::PHYSICS, systemManager) {}
+	DefaultPhysicsNotifier(SystemManager* systemManager) {
+		this->systemManager = systemManager;
+	}
+
+	void notifyPositionSet(unsigned long id) override;
+	void notifyColliderUpdate(unsigned long id) override;
+
+private:
+	SystemManager* systemManager;
+};
+
+class PhysicsSystem : public System {
+public:
+	std::unique_ptr<Quadtree> quadTree{ nullptr };
+	std::unique_ptr<PhysicsNotifier> physicsNotifier{ nullptr };
+
+	PhysicsSystem(SystemManager* systemManager) : System(SystemType::PHYSICS, systemManager) {
+		quadTree.reset(new Quadtree(512, 384, 1024, 768));
+		physicsNotifier.reset(new DefaultPhysicsNotifier(systemManager));
+	}
+
 	~PhysicsSystem() = default;
 
 	Body* getBody(const unsigned long id);
@@ -148,7 +168,7 @@ public:
 	void clear() override;
 
 private:
-	std::map<unsigned long, std::shared_ptr<Body>> mBodies;
+	std::unordered_map<unsigned long, Body*> mBodies;
 	void handleCollision(Body* incidentBody, Body* otherBody);
 };
 
@@ -184,6 +204,8 @@ private:
 
 
 void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager);
+
+void getPositionById(vector2f* vector, unsigned long id, SystemManager& systemManager);
 
 Entity* getEntityById(unsigned long entityId, SystemManager* systemManager);
 
