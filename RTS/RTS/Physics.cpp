@@ -16,6 +16,17 @@ Body::Body(const rapidjson::Value& root) {
 	this->height = root["height"].GetDouble();
 }
 
+Body::Body(const Body& copy) {
+	this->speed = copy.speed;
+	this->position.reset(new vector2f(*copy.position));
+	this->velocity.reset(new vector2f(*copy.velocity));
+	this->width = copy.width;
+	this->height = copy.height;
+	if (copy.collider != nullptr) {
+		this->collider.reset(new Collider(*copy.collider));
+	}
+}
+
 void Body::setSpeed(float speed) {
 	this->speed = speed;
 }
@@ -90,6 +101,11 @@ Collider::Collider(float x, float y, float width, float height) {
 	this->height = height;
 }
 
+Collider::Collider(const Collider& copy) {
+	this->position.reset(new vector2f(*copy.position));
+	this->width = copy.width;
+	this->height = copy.height;
+}
 
 void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& callback) {
 	onCollisionCallback = callback;
@@ -285,6 +301,45 @@ void Quadtree::getCollidingBodies(Body* body, std::vector<Body*>& bodies) {
 
 			const Collider& collider = *otherBody->collider.get();
 			if (collider.checkCollision(*body->collider.get())) {
+				bodies.push_back(otherBody);
+			}
+		}
+	}
+}
+
+void Quadtree::getNeigboringBodies(Body* body, std::vector<Body*>& bodies) {
+	std::vector<QuadtreeNode*> nodes;
+	std::stack<QuadtreeNode*> stack;
+	stack.push(mRootNode.get());
+
+	while (!stack.empty()) {
+		QuadtreeNode* node = stack.top();
+		stack.pop();
+
+		if (!node->check(body)) {
+			continue;
+		}
+
+		if (node->leaf) {
+			nodes.push_back(node);
+			continue;
+		}
+
+		for (QuadtreeNode* childNode : node->children) {
+			stack.push(childNode);
+		}
+	}
+
+	for (auto leaf : nodes) {
+
+		// check against all bodies in the leaf
+		for (auto otherBody : leaf->bodiesContainer) {
+			// make sure we don't collide with ourselves.
+			if (otherBody == body) {
+				continue;
+			}
+
+			if (std::find(bodies.begin(), bodies.end(), otherBody) == bodies.end()) {
 				bodies.push_back(otherBody);
 			}
 		}

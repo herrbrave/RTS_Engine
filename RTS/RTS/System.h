@@ -169,7 +169,7 @@ public:
 
 private:
 	std::unordered_map<unsigned long, Body*> mBodies;
-	void handleCollision(Body* incidentBody, Body* otherBody);
+	float sweptAABB(Body& incidentBody, Body& otherBody, const vector2f& velocity, vector2f& normal);
 };
 
 class DefaultMouseMovementHandler : public MouseMovementHandler {

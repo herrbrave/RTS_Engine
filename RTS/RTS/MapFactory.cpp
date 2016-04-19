@@ -12,7 +12,6 @@ Entity* TileFactory::createTile(const std::string& assetTag, int xIndex, int yIn
 	return entity;
 }
 
-
 MapFactory::MapFactory(TileFactory* tileFactory, SystemManager* systemManager) {
 	mTileFactory = tileFactory;
 	mSystemManager = systemManager;
@@ -48,7 +47,27 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 	mapConfig->tileWidth = tileWidth;
 	mapConfig->tileHeight = tileHeight;
 
-	auto data = doc["layers"][0]["data"].GetArray();
+	auto layers = doc["layers"].GetArray();
+	for (int index = 0; index < layers.Size(); index++) {
+		auto layer = layers[index].GetObject();
+		std::string type = layer["type"].GetString();
+		if (type == "tilelayer") {
+			loadTileLayer(layer, assetTag, offset, width, height, tileWidth, tileHeight, columns, *mapConfig);
+		}
+		else {
+			loadObjectLayer(layer, *mapConfig);
+		}
+	}
+
+	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem));
+
+	return map;
+}
+
+void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer, std::string assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig) {
+	auto data = tileLayer["data"].GetArray();
 	for (int index = 0; index < data.Size(); index++) {
 		int tileVal(data[index].GetInt() - offset);
 		int x = (index % width);
@@ -57,15 +76,26 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 		int ty = tileHeight * (tileVal / columns);
 
 		Entity* tile = mTileFactory->createTile(assetTag, x, y, new vector2f(x * tileWidth, y * tileHeight), tx, ty, tileWidth, tileHeight);
-		mapConfig->tiles.push_back(tile->id);
+		mapConfig.tiles.push_back(tile->id);
 
 		TileComponent* tileComponent = reinterpret_cast<TileComponent*>(tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		// TODO: Add this value as a property of the tile.
 		tileComponent->canOccupy = tileVal == 1;
 	}
+}
 
-	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
-	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem));
+void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig) {
+	auto data = objectLayer["objects"].GetArray();
+	for (int index = 0; index < data.Size(); index++) {
+		auto object = data[index].GetObject();
+		int width = object["width"].GetInt();
+		int height = object["height"].GetInt();
 
-	return map;
+		// Tiled stored location from the top left corner.
+		int x = (object["x"].GetInt() + (width / 2) - (mapConfig.tileWidth / 2));
+		int y = (object["y"].GetInt() + (height / 2) - (mapConfig.tileHeight / 2));
+
+		Entity* tile = mTileFactory->createPhysicsEntity(x, y, width, height);
+		mapConfig.objects.push_back(tile->id);
+	}
 }

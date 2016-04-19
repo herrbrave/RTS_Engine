@@ -29,6 +29,8 @@ public:
 
 	Collider(float x, float y, float width, float height);
 
+	Collider(const Collider& copy);
+
 	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
 
 	bool checkCollision(const Collider& collider) const;
@@ -54,6 +56,8 @@ public:
 	Body(float x, float y, float width, float height);
 
 	Body(const rapidjson::Value& root);
+
+	Body(const Body& copy);
 
 	bool checkPoint(const vector2f& point);
 
@@ -131,6 +135,7 @@ public:
 	void addBody(Body* body);
 	void removeBody(Body* body);
 	void getCollidingBodies(Body* body, std::vector<Body*>& bodies);
+	void getNeigboringBodies(Body* body, std::vector<Body*>& bodies);
 	void clear();
 
 private:

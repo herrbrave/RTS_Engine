@@ -5,7 +5,6 @@ EntityFactory::EntityFactory(SystemManager* systemManager) {
 }
 
 Entity* EntityFactory::createDefault() {
-	// TODO: Make the create method take a json blob config so I can create from serialization.
 	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
@@ -35,7 +34,6 @@ Entity* EntityFactory::createDefault() {
 }
 
 Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h) {
-	// TODO: Make the create method take a json blob config so I can create from serialization.
 	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
@@ -103,6 +101,24 @@ Entity* EntityFactory::createFromSerialization(std::string path) {
 			assert(false);
 		}
 	}
+
+	return entity;
+}
+
+Entity* EntityFactory::createPhysicsEntity(float x, float y, float width, float height) {
+
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	Entity* entity = new Entity();
+	entitySystem->registerEntity(entity);
+
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	Body* blockBody = new Body(x, y, width, height);
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
+	Collider* collider = new Collider(x, y, width, height);
+	physicsComponent->setCollider(collider);
+
+	entity->componentContainer->registerComponent(physicsComponent);
 
 	return entity;
 }

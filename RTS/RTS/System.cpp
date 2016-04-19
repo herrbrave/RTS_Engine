@@ -147,55 +147,134 @@ void PhysicsSystem::update(Uint32 delta) {
 		velocityCopy *= step;
 
 		vector2f positionCopy(*element.second->getPosition());
-		positionCopy += velocityCopy;
-
-		element.second->setPosition(&positionCopy);
+		vector2f newPosition(positionCopy + velocityCopy);
+		
 		if (!element.second->isCollidable()) {
+			element.second->setPosition(&newPosition);
+			quadTree->removeBody(element.second);
+			quadTree->addBody(element.second);
 			continue;
 		}
+		
+		std::vector<Body*> collidingBodies;
+		quadTree->getNeigboringBodies(element.second, collidingBodies);
+
+		if (collidingBodies.size() == 0) {
+			element.second->setPosition(&newPosition);
+			quadTree->removeBody(element.second);
+			quadTree->addBody(element.second);
+			continue;
+		}
+		
+		// Clean this up and move it into another method.
+		Body copyBody(*element.second);
+		copyBody.setPosition(&newPosition);
+		for (Body* collidingBody : collidingBodies) {
+			if (!copyBody.collider->checkCollision(*collidingBody->collider)) {
+				continue;
+			}
+
+			vector2f normal(0, 0);
+			float collisionTime = sweptAABB(*element.second, *collidingBody, velocityCopy, normal);
+			if (collisionTime == 1.0f) {
+				continue;
+			}
+
+			velocityCopy *= collisionTime;
+			newPosition.set(&(positionCopy + velocityCopy));
+			copyBody.setPosition(&newPosition);
+
+			collidingBody->collider->onCollision(*element.second->collider);
+			element.second->collider->onCollision(*collidingBody->collider);
+		}
+
+
+		element.second->setPosition(&newPosition);
 
 		// update the bodies location in the tree.
 		quadTree->removeBody(element.second);
 		quadTree->addBody(element.second);
-
-		std::vector<Body*> collidingBodies;
-		quadTree->getCollidingBodies(element.second, collidingBodies);
-
-		for (Body* collidingBody : collidingBodies) {
-			collidingBody->collider->onCollision(*element.second->collider);
-			element.second->collider->onCollision(*collidingBody->collider);
-			handleCollision(element.second, collidingBody);
-		}
 	}
-
-	//sweepDirtyBodies();
 }
 
 void PhysicsSystem::clear() {
 	mBodies.clear();
+	quadTree->clear();
 }
 
-void PhysicsSystem::handleCollision(Body* incidentBody, Body* otherBody) {
-	const vector2f& incidentPosition = *incidentBody->getPosition();
-	const vector2f& otherPosition = *otherBody->getPosition();
+float PhysicsSystem::sweptAABB(Body& incidentBody, Body& otherBody, const vector2f& velocity, vector2f& normal) {
+	Extent incidentExtent;
+	incidentBody.collider->getExtent(incidentExtent);
+	Extent otherExtent;
+	otherBody.collider->getExtent(otherExtent);
 
-	vector2f diff(otherPosition - incidentPosition);
-	
-	float width = ((incidentBody->getWidth() / 2) + (otherBody->getWidth() / 2));
-	float height = ((incidentBody->getHeight() / 2) + (otherBody->getHeight() / 2));
+	vector2f inverseEntry;
+	vector2f inverseExit;
 
-	if (std::abs(diff.x) > std::abs(diff.y)) {
-		diff.x = ((diff.x > 0) ? (width - std::abs(diff.x)) : -(width - std::abs(diff.x)));
-		diff.y = 0;
+	if (velocity.x > 0.0f) {
+		inverseEntry.x = (otherExtent.x0 - incidentExtent.x1);
+		inverseExit.x = (otherExtent.x1 - incidentExtent.x0);
 	}
 	else {
-		diff.x = 0;
-		diff.y = ((diff.y > 0) ? (height - std::abs(diff.y)) : -(height - std::abs(diff.y)));
+		inverseEntry.x = (otherExtent.x1 - incidentExtent.x0);
+		inverseExit.x = (otherExtent.x0 - incidentExtent.x1);
 	}
 
-	vector2f position(*incidentBody->getPosition());
-	position -= diff;
-	incidentBody->setPosition(&position);
+	if (velocity.y > 0.0f) {
+		inverseEntry.y = (otherExtent.y0 - incidentExtent.y1);
+		inverseExit.y = (otherExtent.y1 - incidentExtent.y0);
+	}
+	else {
+		inverseEntry.y = (otherExtent.y1 - incidentExtent.y0);
+		inverseExit.y = (otherExtent.y0 - incidentExtent.y1);
+	}
+
+	vector2f entry;
+	vector2f exit;
+
+	if (velocity.x == 0.0f) {
+		entry.x = -std::numeric_limits<float>::infinity();
+		exit.x = std::numeric_limits<float>::infinity();
+	}
+	else {
+		entry.x = (inverseEntry.x / velocity.x);
+		exit.x = (inverseExit.x / velocity.x);
+	}
+
+	if (velocity.y == 0.0f) {
+		entry.y = -std::numeric_limits<float>::infinity();
+		exit.y = std::numeric_limits<float>::infinity();
+	}
+	else {
+		entry.y = (inverseEntry.y / velocity.y);
+		exit.y = (inverseExit.y / velocity.y);
+	}
+
+	float entryTime = std::max(entry.x, entry.y);
+	float exitTime = std::min(exit.x, exit.y);
+	if (entryTime > exitTime || entry.x < 0.0f && entry.y < 0.0f || entry.x > 1.0f || entry.y > 1.0f) {
+		normal.set(0.0f, 0.0f);
+		return 1.0f;
+	}
+
+	if (entry.x > entry.y) {
+		if (inverseEntry.x < 0.0f) {
+			normal.set(1.0f, 0.0f);
+		}
+		else {
+			normal.set(-1.0f, 0.0f);
+		}
+	}
+	else {
+		if (inverseEntry.y < 0.0f) {
+			normal.set(0.0f, 1.0f);
+		}
+		else {
+			normal.set(0.0f, -1.0f);
+		}
+	}
+
+	return entryTime;
 }
 
 void InputSystem::registerEventListener(InputListener* inputListener) {

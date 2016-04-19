@@ -18,6 +18,8 @@ void RTS::setup() {
 
 	mTileFactory.reset(new TileFactory(mSystemManager.get()));
 	mMapFactory.reset(new MapFactory(mTileFactory.get(), mSystemManager.get()));
+
+	mMap.reset(mMapFactory->createMap("Maps/test_map_with_collision.json"));
 }
 
 void RTS::handleEvents()

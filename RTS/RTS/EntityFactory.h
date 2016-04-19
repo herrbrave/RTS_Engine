@@ -17,6 +17,8 @@ public:
 
 	Entity* createFromSerialization(std::string path);
 
+	Entity* createPhysicsEntity(float x, float y, float width, float height);
+
 protected:
 	SystemManager* mSystemManager{ nullptr };
 };

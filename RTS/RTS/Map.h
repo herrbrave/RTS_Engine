@@ -13,7 +13,8 @@ struct MapConfig {
 	int tileHeight;
 	int mapWidth;
 	int mapHeight;
-	std::vector<int	> tiles;
+	std::vector<unsigned long> tiles;
+	std::vector<unsigned long> objects;
 };
 
 struct Node {

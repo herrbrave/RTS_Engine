@@ -21,6 +21,9 @@ public:
 	Map* createMap(const std::string pathToMap);
 
 private:
+	void loadTileLayer(const rapidjson::Value& tileLayer, std::string assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig);
+	void loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig);
+
 	SystemManager* mSystemManager{ nullptr };
 	TileFactory* mTileFactory{ nullptr };
 };
