@@ -11,13 +11,15 @@
 #include"Input.h"
 #include"Graphics.h"
 #include"Physics.h"
+#include"Sound.h"
 
 enum class SystemType {
 	ASSET = 1,
 	ENTITY = 2,
 	INPUT = 3,
 	GRAPHICS = 4,
-	PHYSICS = 5
+	PHYSICS = 5,
+	SOUND = 6,
 };
 
 class System;
@@ -202,6 +204,35 @@ private:
 	std::unique_ptr<MouseMovementHandler> mMouseMovementHandler{ nullptr };
 };
 
+class DefaultSoundController : public SoundController {
+public:
+	DefaultSoundController(Sound* sound, SystemManager* systemManager) : SoundController(sound) {
+		mSystemManager = systemManager;
+	}
+
+	void play(int loop = 0) override;
+	void pause() override;
+	void stop() override;
+private:
+	SystemManager* mSystemManager;
+};
+
+class SoundSystem : public System {
+public:
+	SoundSystem(SystemManager* systemManager) : System(SystemType::SOUND, systemManager) {
+		if (!Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+			std::string error("Error initializing SDL_Mixer: ");
+			error.append(SDL_GetError());
+			throw std::exception(error.c_str());
+		}
+	}
+
+	void loadSound(const std::string& path, const std::string& assetTag, SoundType soundType);
+
+	SoundController* createController(const std::string& assetTag, SoundType soundType);
+
+	void clear() override {/* no op */}
+};
 
 void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager);
 

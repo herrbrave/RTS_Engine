@@ -6,6 +6,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::PHYSICS, new PhysicsSystem(this));
 	systems.emplace(SystemType::GRAPHICS, new GraphicsSystem(graphicsConfig, this));
 	systems.emplace(SystemType::INPUT, new InputSystem(this));
+	systems.emplace(SystemType::SOUND, new SoundSystem(this));
 }
 
 
@@ -340,6 +341,71 @@ void InputSystem::clear() {
 bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const vector2f& position) {
 	Body* body = getBodyById(id, mSystemManager);
 	return body->checkPoint(position);
+}
+
+void DefaultSoundController::play(int loop) {
+	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	Asset* asset = assetSystem->getAsset(mSound->assetTag);
+	if (SoundType::SOUND == mSound->soundType) {
+		Mix_Chunk* mix = reinterpret_cast<Mix_Chunk*>(asset->getAsset());
+		Mix_PlayChannel(-1, mix, loop);
+	}
+	else if (SoundType::MUSIC == mSound->soundType) {
+		Mix_Music* mix = reinterpret_cast<Mix_Music*>(asset->getAsset());
+		Mix_PlayMusic(mix, -1);
+	}
+}
+
+void DefaultSoundController::pause() {
+	if (SoundType::SOUND == mSound->soundType) {
+		// no op
+	}
+	else if (SoundType::MUSIC == mSound->soundType) {
+		Mix_PauseMusic();
+	}
+}
+
+void DefaultSoundController::stop() {
+	if (SoundType::SOUND == mSound->soundType) {
+		// no op
+	}
+	else if (SoundType::MUSIC == mSound->soundType) {
+		Mix_HaltMusic();
+	}
+}
+
+void SoundSystem::loadSound(const std::string& path, const std::string& assetTag, SoundType soundType) {
+	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	if (assetSystem->contains(assetTag)) {
+		return;
+	}
+
+	Asset* asset = nullptr;
+	if (soundType == SoundType::SOUND) {
+		asset = new Asset(Mix_LoadWAV(path.c_str()), path, assetTag, std::function<void(void*)>([](void* asset) {
+			Mix_Chunk* mix = reinterpret_cast<Mix_Chunk*>(asset);
+			Mix_FreeChunk(mix);
+		}));
+	}
+	else if (soundType == SoundType::MUSIC) {
+		asset = new Asset(Mix_LoadMUS(path.c_str()), path, assetTag, std::function<void(void*)>([](void* asset) {
+			Mix_Music* mix = reinterpret_cast<Mix_Music*>(asset);
+			Mix_FreeMusic(mix);
+		}));
+	}
+
+	if (asset == nullptr || asset->getAsset() == nullptr) {
+		std::string error("Error loading sound: ");
+		error.append(SDL_GetError());
+		throw std::exception(error.c_str());
+	}
+
+	assetSystem->registerAsset(asset);
+}
+
+SoundController* SoundSystem::createController(const std::string& assetTag, SoundType soundType) {
+	SoundController* soundController = new DefaultSoundController(new Sound(assetTag, soundType), mSystemManager);
+	return soundController;
 }
 
 void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager) {

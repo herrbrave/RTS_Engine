@@ -100,7 +100,11 @@ SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig, AssetVendor* assetVendo
 		throw std::exception("Failed to initialize TTF");
 	}
 
-	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+		throw std::exception("Error setting up SDL.");
+	}
+
+	if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF) < 0) {
 		throw std::exception("Error setting up SDL.");
 	}
 

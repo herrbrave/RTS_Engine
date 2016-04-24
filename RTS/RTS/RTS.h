@@ -8,6 +8,7 @@
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
+#include"SoundControllerFactory.h"
 #include"System.h"
 #include"Ui.h"
 
@@ -22,6 +23,8 @@ private:
 	std::unique_ptr<Map> mMap{ nullptr };
 
 	std::unique_ptr<WidgetFactory> mWidgetFactory{ nullptr };
+
+	std::unique_ptr<SoundControllerFactory> mSoundControllerFactory{nullptr};
 
 	Uint32 mLastTime{ 0 };
 

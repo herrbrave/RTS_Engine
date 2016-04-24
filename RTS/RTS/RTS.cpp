@@ -15,6 +15,7 @@ void RTS::setup() {
 	mSystemManager.reset(new SystemManager(config));
 	mEntityFactory.reset(new EntityFactory(mSystemManager.get()));
 	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager.get()));
+	mSoundControllerFactory.reset(new SoundControllerFactory(mSystemManager.get()));
 
 	mTileFactory.reset(new TileFactory(mSystemManager.get()));
 	mMapFactory.reset(new MapFactory(mTileFactory.get(), mSystemManager.get()));
@@ -22,8 +23,7 @@ void RTS::setup() {
 	mMap.reset(mMapFactory->createMap("Maps/test_map_with_collision.json"));
 }
 
-void RTS::handleEvents()
-{
+void RTS::handleEvents() {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
@@ -39,22 +39,22 @@ void RTS::handleEvents()
 	}
 }
 
-void RTS::update(){
+void RTS::update() {
 	Uint32 lastTime(SDL_GetTicks());
 	updatePhysicsSystem(lastTime - mLastTime, mSystemManager.get());
 	mLastTime = lastTime;
 }
 
-void RTS::draw(){
+void RTS::draw() {
 	drawGraphicsSystem(mSystemManager.get());
 }
-void RTS::delay(Uint32 frameTime){
+void RTS::delay(Uint32 frameTime) {
 	if (frameTime < 33) {
 		SDL_Delay(Uint32(33) - frameTime);
 	}
 }
 
-void RTS::teardown(){
+void RTS::teardown() {
 	TTF_Quit();
 	SDL_Quit();
 }
