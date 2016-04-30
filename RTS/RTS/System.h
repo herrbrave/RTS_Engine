@@ -6,6 +6,7 @@
 #include<string>
 #include<unordered_map>
 
+#include"Animation.h"
 #include"Asset.h"
 #include"Entity.h"
 #include"Input.h"
@@ -14,6 +15,7 @@
 #include"Sound.h"
 
 enum class SystemType {
+	ANIMATION = 0,
 	ASSET = 1,
 	ENTITY = 2,
 	INPUT = 3,
@@ -42,6 +44,24 @@ public:
 
 protected:
 	SystemManager* mSystemManager;
+};
+
+class AnimationSystem : public System {
+public:
+	AnimationSystem(SystemManager* systemManager) : System(SystemType::ANIMATION, systemManager) {}
+
+	void update(Uint32 delta);
+
+	void registerAnimation(unsigned long id, AnimationHandler* animationHandler);
+
+	void deregisterAnimation(unsigned long id);
+
+	AnimationSet* createAnimationSet(std::string path);
+
+	void clear() override;
+
+private:
+	std::unordered_map<unsigned long, AnimationHandler*> mAnimations;
 };
 
 class AssetSystem : public System {

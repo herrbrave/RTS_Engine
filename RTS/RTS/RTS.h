@@ -4,6 +4,7 @@
 #include<memory>
 #include<vector>
 
+#include"Animation.h"
 #include"EntityFactory.h"
 #include"Flowfield.h"
 #include"Game.h"
@@ -17,6 +18,7 @@ private:
 	std::unique_ptr<SystemManager> mSystemManager;
 
 	std::unique_ptr<EntityFactory> mEntityFactory{ nullptr };
+	std::unique_ptr<Entity> mEntity{ nullptr };
 
 	std::unique_ptr<TileFactory> mTileFactory{ nullptr };
 	std::unique_ptr<MapFactory> mMapFactory{ nullptr };

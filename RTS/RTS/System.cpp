@@ -1,6 +1,7 @@
 #include"System.h"
 
 SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
+	systems.emplace(SystemType::ANIMATION, new AnimationSystem(this));
 	systems.emplace(SystemType::ASSET, new AssetSystem(this));
 	systems.emplace(SystemType::ENTITY, new EntitySystem(this));
 	systems.emplace(SystemType::PHYSICS, new PhysicsSystem(this));
@@ -9,6 +10,77 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::SOUND, new SoundSystem(this));
 }
 
+void AnimationSystem::update(Uint32 delta) {
+	for (auto animation : mAnimations) {
+		animation.second->update(delta);
+	}
+}
+
+void AnimationSystem::registerAnimation(unsigned long id, AnimationHandler* animationHandler) {
+	if (mAnimations.find(id) == mAnimations.end()) {
+		return;
+	}
+
+	mAnimations.emplace(id, animationHandler);
+}
+
+void AnimationSystem::deregisterAnimation(unsigned long id) {
+	if (mAnimations.find(id) != mAnimations.end()) {
+		return;
+	}
+
+	mAnimations.erase(id);
+}
+
+AnimationSet* AnimationSystem::createAnimationSet(std::string path) {
+	std::ifstream file(path);
+	std::string line;
+	std::string builder;
+	while (std::getline(file, line)) {
+		builder.append(line);
+	}
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(builder.c_str());
+
+	std::string name(doc["name"].GetString());
+	std::string imagePath(doc["spritesheet"].GetString());
+	std::string defaultAnimationName(doc["defaultAnimationName"].GetString());
+	int fps(doc["fps"].GetInt());
+
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->addTexture(imagePath, name);
+
+	AnimationSet* animationSet = new AnimationSet();
+	animationSet->defaultAnimationName = defaultAnimationName;
+	animationSet->fps = fps;
+	auto animations = doc["animations"].GetArray();
+	for (int index = 0; index < animations.Size(); index++) {
+		auto animation = animations[index].GetObject();
+
+		Animation* anim = new Animation();
+		anim->name =animation["name"].GetString();
+		animationSet->animations.emplace(anim->name, anim);
+		auto frames = animation["frames"].GetArray();
+		for (int frameIndex = 0; frameIndex < frames.Size(); frameIndex++) {
+			auto frame = frames[frameIndex].GetObject();
+			float x(float(frame["x"].GetInt()));
+			float y(float(frame["y"].GetInt()));
+			float w(float(frame["w"].GetInt()));
+			float h(float(frame["h"].GetInt()));
+
+			Texture* texture = new Texture(name, x, y, w, h);
+			anim->frames.push_back(texture);
+		}
+	}
+
+	return animationSet;
+}
+
+void  AnimationSystem::clear() {
+	mAnimations.clear();
+}
 
 Asset* AssetSystem::DefaultAssetVendor::getAsset(const std::string& tag) {
 	return mAssetSystem->getAsset(tag);

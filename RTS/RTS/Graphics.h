@@ -123,6 +123,11 @@ public:
 		mTexture.reset(new Texture(texture));
 	}
 
+	void setTexture(Texture* texture) {
+		mTexture.release();
+		mTexture.reset(texture);
+	}
+
 	void draw(Graphics* graphicsRef, const vector2f* position) override;
 
 	void setSize(float width, float height) override;

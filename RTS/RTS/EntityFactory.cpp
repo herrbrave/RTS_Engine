@@ -61,6 +61,40 @@ Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, floa
 	return entity;
 }
 
+Entity* EntityFactory::createAnimatedEntity(std::string path, float width, float height) {
+	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	Entity* entity = new Entity();
+	entitySystem->registerEntity(entity);
+
+	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	Body* blockBody = new Body(0, 0, width, height);
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
+
+	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	TextureDrawable* textureDrawable = new TextureDrawable(new Texture(""));
+	graphicsSystem->registerDrawable(entity->id, textureDrawable);
+	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
+
+	AnimationSystem* animationSystem = reinterpret_cast<AnimationSystem*>(mSystemManager->systems.at(SystemType::ANIMATION));
+	AnimationSet* animationSet = animationSystem->createAnimationSet(path);
+	AnimationHandler* animationHandler = new AnimationHandler(textureDrawable, animationSet, animationSet->fps);
+	animationSystem->registerAnimation(entity->id, animationHandler);
+	AnimationComponent* animationComponent = new AnimationComponent(entity->id, animationHandler);
+
+	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputListener* inputListener = new InputListener(entity->id);
+	inputSystem->registerEventListener(inputListener);
+	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
+
+	entity->componentContainer->registerComponent(physicsComponent);
+	entity->componentContainer->registerComponent(drawableComponent);
+	entity->componentContainer->registerComponent(inputComponent);
+	entity->componentContainer->registerComponent(animationComponent);
+
+	return entity;
+}
+
 Entity* EntityFactory::createFromSerialization(std::string path) {
 	std::ifstream file(path);
 	std::string line;

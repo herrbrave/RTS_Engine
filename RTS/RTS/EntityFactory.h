@@ -15,6 +15,8 @@ public:
 
 	Entity* createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h);
 
+	Entity* createAnimatedEntity(std::string path, float width, float height);
+
 	Entity* createFromSerialization(std::string path);
 
 	Entity* createPhysicsEntity(float x, float y, float width, float height);
