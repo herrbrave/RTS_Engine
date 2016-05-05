@@ -15,7 +15,7 @@ ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemM
 
 	const rapidjson::Value& parsedButton = doc["button"];
 	std::string image = parsedButton["image"].GetString();
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(image, image);
 
 	ButtonConfig* buttonConfig = new ButtonConfig();
@@ -44,7 +44,7 @@ PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemMan
 
 	const rapidjson::Value& parsedPanel = doc["panel"];
 	std::string image = parsedPanel["image"].GetString();
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(image, image);
 
 	PanelConfig* panelConfig = new PanelConfig();
@@ -166,7 +166,7 @@ void ButtonComponent::setCallback(const std::function<void()>& callback) {
 }
 
 void ButtonComponent::setText(const std::string& text, SystemManager* systemManager) {
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
 	Texture* textTexture = new Texture(text);
 	mText = text;
@@ -244,16 +244,16 @@ WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConf
 }
 
 Entity* WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
 	Body* blockBody = new Body(x, y, width, height);
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new ButtonDrawable(width, height, *mButtonConfig.get());
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
@@ -269,16 +269,16 @@ Entity* WidgetFactory::createButton(std::function<void()> callback, float x, flo
 }
 
 Entity* WidgetFactory::createPanel(float x, float y, float width, float height) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new Body(x, y, width, height);
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* textureDrawable = new PanelDrawable(width, height, *mPanelConfig.get());
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);

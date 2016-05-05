@@ -38,7 +38,7 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 	std::string assetTag(doc["tilesets"][0]["name"].GetString());
 	int columns(doc["tilesets"][0]["columns"].GetInt());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(imagePath, assetTag);
 
 	MapConfig* mapConfig = new MapConfig();
@@ -60,8 +60,8 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 	}
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
-	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
+	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem.get()));
 
 	return map;
 }

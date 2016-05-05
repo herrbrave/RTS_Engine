@@ -5,23 +5,23 @@ EntityFactory::EntityFactory(SystemManager* systemManager) {
 }
 
 Entity* EntityFactory::createDefault() {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new Body(0, 0, 16, 16);
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 	Collider* collider = new Collider(0, 0, 16, 16);
 	physicsComponent->setCollider(collider);
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Drawable* blockDrawable = new BlockDrawable(16, 16, 255, 0, 0, 255);
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, blockDrawable);
 
-	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(mSystemManager->systems.at(SystemType::INPUT));
 	InputListener* inputListener = new InputListener(entity->id);
 	inputSystem->registerEventListener(inputListener);
 	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
@@ -34,22 +34,22 @@ Entity* EntityFactory::createDefault() {
 }
 
 Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new Body(0, 0, w, h);
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	Texture* texture = new Texture(assetTag, tx, ty, w, h);
 	Drawable* textureDrawable = new TextureDrawable(texture);
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
 
-	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(mSystemManager->systems.at(SystemType::INPUT));
 	InputListener* inputListener = new InputListener(entity->id);
 	inputSystem->registerEventListener(inputListener);
 	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
@@ -62,27 +62,27 @@ Entity* EntityFactory::createTexturedEntity(std::string assetTag, float tx, floa
 }
 
 Entity* EntityFactory::createAnimatedEntity(std::string path, float width, float height) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new Body(0, 0, width, height);
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	TextureDrawable* textureDrawable = new TextureDrawable(new Texture(""));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
 
-	AnimationSystem* animationSystem = reinterpret_cast<AnimationSystem*>(mSystemManager->systems.at(SystemType::ANIMATION));
+	AnimationSystemPtr animationSystem = static_pointer_cast<AnimationSystem>(mSystemManager->systems.at(SystemType::ANIMATION));
 	AnimationSet* animationSet = animationSystem->createAnimationSet(path);
 	AnimationHandler* animationHandler = new AnimationHandler(textureDrawable, animationSet, animationSet->fps);
 	animationSystem->registerAnimation(entity->id, animationHandler);
 	AnimationComponent* animationComponent = new AnimationComponent(entity->id, animationHandler);
 
-	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(mSystemManager->systems.at(SystemType::INPUT));
+	InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(mSystemManager->systems.at(SystemType::INPUT));
 	InputListener* inputListener = new InputListener(entity->id);
 	inputSystem->registerEventListener(inputListener);
 	InputComponent* inputComponent = new InputComponent(entity->id, inputListener);
@@ -107,13 +107,13 @@ Entity* EntityFactory::createFromSerialization(std::string path) {
 	rapidjson::Document doc;
 	doc.Parse(builder.c_str());
 
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 	const rapidjson::Value& componentContainer = doc["componentContainer"];
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	for (rapidjson::SizeType index = 0; index < componentContainer.Size(); index++) {
 		const rapidjson::Value& component = componentContainer[index];
 		Uint8 componentId = component["componentId"].GetUint();
@@ -141,11 +141,11 @@ Entity* EntityFactory::createFromSerialization(std::string path) {
 
 Entity* EntityFactory::createPhysicsEntity(float x, float y, float width, float height) {
 
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = new Entity();
 	entitySystem->registerEntity(entity);
 
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
 	Body* blockBody = new Body(x, y, width, height);
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());

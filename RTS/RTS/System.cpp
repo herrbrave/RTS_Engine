@@ -1,13 +1,14 @@
 #include"System.h"
 
 SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
-	systems.emplace(SystemType::ANIMATION, new AnimationSystem(this));
-	systems.emplace(SystemType::ASSET, new AssetSystem(this));
-	systems.emplace(SystemType::ENTITY, new EntitySystem(this));
-	systems.emplace(SystemType::PHYSICS, new PhysicsSystem(this));
-	systems.emplace(SystemType::GRAPHICS, new GraphicsSystem(graphicsConfig, this));
-	systems.emplace(SystemType::INPUT, new InputSystem(this));
-	systems.emplace(SystemType::SOUND, new SoundSystem(this));
+	SystemManagerPtr ptr(this);
+	systems.emplace(SystemType::ANIMATION, AnimationSystemPtr(new AnimationSystem(ptr)));
+	systems.emplace(SystemType::ASSET, AssetSystemPtr(new AssetSystem(ptr)));
+	systems.emplace(SystemType::ENTITY, EntitySystemPtr(new EntitySystem(ptr)));
+	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(new PhysicsSystem(ptr)));
+	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(new GraphicsSystem(graphicsConfig, ptr)));
+	systems.emplace(SystemType::INPUT, InputSystemPtr(new InputSystem(ptr)));
+	systems.emplace(SystemType::SOUND, SoundSystemPtr(new SoundSystem(ptr)));
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -49,7 +50,7 @@ AnimationSet* AnimationSystem::createAnimationSet(std::string path) {
 	std::string defaultAnimationName(doc["defaultAnimationName"].GetString());
 	int fps(doc["fps"].GetInt());
 
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(mSystemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(imagePath, name);
 
 	AnimationSet* animationSet = new AnimationSet();
@@ -123,21 +124,21 @@ Drawable* GraphicsSystem::getDrawableById(unsigned long entityId) {
 }
 
 void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
-	if (assetExists(assetTag, mSystemManager)) {
+	if (assetExists(assetTag, mSystemManager.get())) {
 		SDL_Log("Asset already loaded.");
 		return;
 	}
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 
 	assetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
 }
 
 void GraphicsSystem::createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	if (assetExists(assetTag, mSystemManager)) {
+	if (assetExists(assetTag, mSystemManager.get())) {
 		SDL_Log("Text already added.");
 		return;
 	}
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 
 	assetSystem->registerAsset(mGraphics->createTextAsset(text, assetTag, r, g, b, a));
 }
@@ -174,7 +175,7 @@ void EntitySystem::clear() {
 
 
 void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
 	Body* body = physicsSystem->getBody(id);
 	physicsSystem->quadTree->removeBody(body);
 	if (body->collider != nullptr) {
@@ -183,7 +184,7 @@ void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
 }
 
 void DefaultPhysicsNotifier::notifyColliderUpdate(unsigned long id) {
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
 	Body* body = physicsSystem->getBody(id);
 	physicsSystem->quadTree->removeBody(body);
 	if (body->collider != nullptr) {
@@ -411,12 +412,12 @@ void InputSystem::clear() {
 }
 
 bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const vector2f& position) {
-	Body* body = getBodyById(id, mSystemManager);
+	Body* body = getBodyById(id, mSystemManager.get());
 	return body->checkPoint(position);
 }
 
 void DefaultSoundController::play(int loop) {
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 	Asset* asset = assetSystem->getAsset(mSound->assetTag);
 	if (SoundType::SOUND == mSound->soundType) {
 		Mix_Chunk* mix = reinterpret_cast<Mix_Chunk*>(asset->getAsset());
@@ -447,7 +448,7 @@ void DefaultSoundController::stop() {
 }
 
 void SoundSystem::loadSound(const std::string& path, const std::string& assetTag, SoundType soundType) {
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(mSystemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 	if (assetSystem->contains(assetTag)) {
 		return;
 	}
@@ -476,7 +477,7 @@ void SoundSystem::loadSound(const std::string& path, const std::string& assetTag
 }
 
 SoundController* SoundSystem::createController(const std::string& assetTag, SoundType soundType) {
-	SoundController* soundController = new DefaultSoundController(new Sound(assetTag, soundType), mSystemManager);
+	SoundController* soundController = new DefaultSoundController(new Sound(assetTag, soundType), mSystemManager.get());
 	return soundController;
 }
 
@@ -484,7 +485,7 @@ void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemMa
 	PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
 	vector->set(physicsComponent->getPosition()->x, physicsComponent->getPosition()->y);
 
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
 
 	unsigned long parentId = entity->parent;
 	while (parentId != -1) {
@@ -496,66 +497,66 @@ void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemMa
 }
 
 void getPositionById(vector2f* vector, unsigned long id, SystemManager& systemManager) {
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager.systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager.systems.at(SystemType::PHYSICS));
 	vector2f position(*physicsSystem->getBody(id)->getPosition());
 	vector->set(&position);
 }
 
 Entity* getEntityById(unsigned long entityId, SystemManager* systemManager) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
 	return entitySystem->getEntityById(entityId);
 }
 
 bool assetExists(const std::string& assetTag, SystemManager* systemManager) {
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(systemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET));
 	return assetSystem->contains(assetTag);
 }
 
 Asset* getAsset(const std::string& assetTag, SystemManager* systemManager) {
-	AssetSystem* assetSystem = reinterpret_cast<AssetSystem*>(systemManager->systems.at(SystemType::ASSET));
+	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET));
 	return assetSystem->getAsset(assetTag);
 }
 
 void updatePhysicsSystem(Uint32 ticks, SystemManager* systemManager) {
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
 	physicsSystem->update(ticks);
 }
 
 void drawGraphicsSystem(SystemManager* systemManager) {
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->draw();
 }
 
 void handleInput(const SDL_Event& event, SystemManager* systemManager) {
-	InputSystem* inputSystem = reinterpret_cast<InputSystem*>(systemManager->systems.at(SystemType::INPUT));
+	InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(systemManager->systems.at(SystemType::INPUT));
 	inputSystem->handleEvent(event);
 }
 
 Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager) {
-	GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	return graphicsSystem->getDrawableById(drawableId);
 }
 
 Body* getBodyById(unsigned long bodyId, SystemManager* systemManager) {
-	PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
 	return physicsSystem->getBody(bodyId);
 }
 
 void destroyEntity(unsigned long entityId, SystemManager* systemManager) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
 	Entity* entity = entitySystem->getEntityById(entityId);
 
 	for (auto component : entity->componentContainer->mComponents) {
 		if (component.first == ComponentType::DRAWABLE_COMPONENT) {
-			GraphicsSystem* graphicsSystem = reinterpret_cast<GraphicsSystem*>(systemManager->systems.at(SystemType::GRAPHICS));
+			GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 			graphicsSystem->deregisterDrawable(entityId);
 		}
 		else if (component.first == ComponentType::INPUT_COMPONENT) {
-			InputSystem* inputSystem = reinterpret_cast<InputSystem*>(systemManager->systems.at(SystemType::INPUT));
+			InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(systemManager->systems.at(SystemType::INPUT));
 			inputSystem->deregisterEventListener(entityId);
 		}
 		else if (component.first == ComponentType::PHYSICS_COMPONENT) {
-			PhysicsSystem* physicsSystem = reinterpret_cast<PhysicsSystem*>(systemManager->systems.at(SystemType::PHYSICS));
+			PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
 			physicsSystem->deregisterBody(entityId);
 		}
 		else if (component.first == ComponentType::TILE_COMPONENT) {
@@ -566,7 +567,7 @@ void destroyEntity(unsigned long entityId, SystemManager* systemManager) {
 }
 
 void destroyAllEntities(SystemManager* systemManager) {
-	EntitySystem* entitySystem = reinterpret_cast<EntitySystem*>(systemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
 	std::vector<Entity*> entities;
 	entitySystem->getAllEntities(entities);
 
