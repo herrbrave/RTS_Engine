@@ -1,6 +1,7 @@
 #ifndef __COMPONENT_H__
 #define __COMPONENT_H__
 
+#include"Constants.h"
 #include"Serializer.h"
 
 #include<algorithm>
@@ -9,48 +10,30 @@
 #include<SDL.h>
 #include<unordered_map>
 
-struct ComponentType {
-	static const Uint8 DRAWABLE_COMPONENT = 1;
-	static const Uint8 PHYSICS_COMPONENT = 2;
-	static const Uint8 TILE_COMPONENT = 3;
-	static const Uint8 BUTTON_COMPONENT = 4;
-	static const Uint8 INPUT_COMPONENT = 5;
-	static const Uint8 ANIMATION_COMPONENT = 6;
+enum class ComponentType : Uint8 {
+	DRAWABLE_COMPONENT = 1,
+	PHYSICS_COMPONENT = 2,
+	TILE_COMPONENT = 3,
+	BUTTON_COMPONENT = 4,
+	INPUT_COMPONENT = 5,
+	ANIMATION_COMPONENT = 6,
 };
+
+class Component;
+typedef shared_ptr<Component> ComponentPtr;
+typedef weak_ptr<Component> WeakComponentPtr;
 
 class Component {
 public:
 	unsigned int entityId;
-	Uint8 componentId;
+	ComponentType componentId;
 
-	Component(unsigned long entityId, Uint8 componentId) {
+	Component(unsigned long entityId, ComponentType componentId) {
 		this->entityId = entityId;
 		this->componentId = componentId;
 	}
 
 	virtual void serialize(Serializer& serializer) const = 0;
-};
-
-class ComponentContainer {
-public:
-	ComponentContainer() {}
-
-	void registerComponent(Component* component);
-	void deregisterComponent(Uint8 id);
-
-	Component* getComponentByType(Uint8 type);
-
-	void serialize(Serializer& serializer) const {
-		serializer.writer.StartArray();
-
-		for (auto component : mComponents) {
-			component.second->serialize(serializer);
-		}
-
-		serializer.writer.EndArray();
-	}
-
-	std::unordered_map<Uint8, Component*> mComponents;
 };
 
 #endif // !__COMPONENT_H__

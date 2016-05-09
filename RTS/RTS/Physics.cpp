@@ -2,28 +2,28 @@
 
 Body::Body(float x, float y, float width, float height) {
 	this->speed = 0;
-	this->position.reset(new vector2f(x, y));
-	this->velocity.reset(new vector2f(0, 0));
+	this->position.reset(GCC_NEW Vector2f(x, y));
+	this->velocity.reset(GCC_NEW Vector2f(0, 0));
 	this->width = width;
 	this->height = height;
 }
 
 Body::Body(const rapidjson::Value& root) {
 	this->speed = root["speed"].GetDouble();
-	this->position.reset(new vector2f(root["position"]));
-	this->velocity.reset(new vector2f(root["velocity"]));
+	this->position.reset(GCC_NEW Vector2f(root["position"]));
+	this->velocity.reset(GCC_NEW Vector2f(root["velocity"]));
 	this->width = root["width"].GetDouble();
 	this->height = root["height"].GetDouble();
 }
 
 Body::Body(const Body& copy) {
 	this->speed = copy.speed;
-	this->position.reset(new vector2f(*copy.position));
-	this->velocity.reset(new vector2f(*copy.velocity));
+	this->position.reset(GCC_NEW Vector2f(*copy.position));
+	this->velocity.reset(GCC_NEW Vector2f(*copy.velocity));
 	this->width = copy.width;
 	this->height = copy.height;
 	if (copy.collider != nullptr) {
-		this->collider.reset(new Collider(*copy.collider));
+		this->collider.reset(GCC_NEW Collider(*copy.collider));
 	}
 }
 
@@ -35,30 +35,31 @@ float Body::getSpeed() {
 	return speed;
 }
 
-void Body::setPosition(vector2f* position) {
-	this->position->set(position);
+void Body::setPosition(Vector2fPtr position) {
+	this->position->set(position.get());
 	if (collider != nullptr) {
-		collider->position->set(position);
+		collider->position->set(position.get());
 	}
 }
 
-const vector2f* Body::getPosition() {
-	return position.get();
+WeakVector2fPtr Body::getPosition() {
+	return WeakVector2fPtr(position);
 }
 
-void Body::setVelocity(vector2f* vector) {
-	this->velocity->set(vector);
-}
-const vector2f* Body::getVelocity() {
-	return velocity.get();
+void Body::setVelocity(Vector2fPtr vector) {
+	this->velocity->set(position.get());
 }
 
-void Body::setCollider(Collider* collider) {
-	this->collider.reset(collider);
+WeakVector2fPtr Body::getVelocity() {
+	return WeakVector2fPtr(velocity);
 }
 
-const Collider& Body::getCollider() {
-	return *collider.get();
+void Body::setCollider(ColliderPtr collider) {
+	this->collider = collider;
+}
+
+WeakColliderPtr Body::getCollider() {
+	return WeakColliderPtr(collider);
 }
 
 bool Body::isCollidable() {
@@ -79,7 +80,7 @@ void Body::setHeight(float height) {
 	this->height = height;
 }
 
-bool Body::checkPoint(const vector2f& point) {
+bool Body::checkPoint(const Vector2f& point) {
 	Extent extent;
 
 	float width(width / 2);
@@ -96,40 +97,38 @@ bool Body::checkPoint(const vector2f& point) {
 }
 
 Collider::Collider(float x, float y, float width, float height) {
-	this->position.reset(new vector2f(x, y));
+	this->position = Vector2fPtr(GCC_NEW Vector2f(x, y));
 	this->width = width;
 	this->height = height;
 }
 
 Collider::Collider(const Collider& copy) {
-	this->position.reset(new vector2f(*copy.position));
+	this->position = Vector2fPtr(GCC_NEW Vector2f(*copy.position));
 	this->width = copy.width;
 	this->height = copy.height;
 }
 
-void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& callback) {
+void Collider::setOnCollisionCallback(std::function<void(ColliderPtr)>& callback) {
 	onCollisionCallback = callback;
 }
 
-bool Collider::checkCollision(const Collider& collider) const {
-	Extent extent; 
-	getExtent(extent);
-	Extent otherExtent;
-	collider.getExtent(otherExtent);
+bool Collider::checkCollision(ColliderPtr collider) const {
+	ExtentPtr extent = getExtent();
+	ExtentPtr otherExtent = collider->getExtent();
 
-	bool collision(extent.x0 <= otherExtent.x1
-		&& extent.x1 >= otherExtent.x0
-		&& extent.y0 <= otherExtent.y1
-		&& extent.y1 >= otherExtent.y0);
+	bool collision(extent->x0 <= otherExtent->x1
+		&& extent->x1 >= otherExtent->x0
+		&& extent->y0 <= otherExtent->y1
+		&& extent->y1 >= otherExtent->y0);
 	if (collision) {
 		onCollision(collider);
-		collider.onCollision(*this);
+		collider->onCollision(ColliderPtr(const_cast<Collider*>(this)));
 	}
 
 	return collision;
 }
 
-void Collider::onCollision(const Collider& collider) const {
+void Collider::onCollision(ColliderPtr collider) const {
 	if (onCollisionCallback == nullptr) {
 		return;
 	}
@@ -137,31 +136,34 @@ void Collider::onCollision(const Collider& collider) const {
 	onCollisionCallback(collider);
 }
 
-void Collider::getExtent(Extent& extent) const {
+ExtentPtr Collider::getExtent() const {
 	float x(position->x);
 	float y(position->y);
 	float halfWidth(width / 2);
-	float halfHeight(height / 2);
-	extent.x0 = (x - halfWidth);
-	extent.y0 = (y - halfHeight);
-	extent.x1 = (x + halfWidth);
-	extent.y1 = (y + halfHeight);
+	float halfHeight(height / 2); 
+	ExtentPtr extent(GCC_NEW Extent());
+	extent->x0 = (x - halfWidth);
+	extent->y0 = (y - halfHeight);
+	extent->x1 = (x + halfWidth);
+	extent->y1 = (y + halfHeight);
+
+	return extent;
 }
 
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
-	mBody.reset(new Body(x, y, width, height));
-	mBody->setCollider(new Collider(x, y, width, height));
+	mBody.reset(GCC_NEW Body(x, y, width, height));
+	mBody->setCollider(ColliderPtr(GCC_NEW Collider(x, y, width, height)));
 }
 
-bool QuadtreeNode::check(Body* body) {
-	return mBody->collider->checkCollision(*body->collider);
+bool QuadtreeNode::check(BodyPtr body) {
+	return mBody->collider->checkCollision(body->collider);
 }
 
-void QuadtreeNode::add(Body* body) {
+void QuadtreeNode::add(BodyPtr body) {
 	bodiesContainer.emplace(body);
 }
 
-void QuadtreeNode::remove(Body* body) {
+void QuadtreeNode::remove(BodyPtr body) {
 	bodiesContainer.erase(std::find(bodiesContainer.begin(), bodiesContainer.end(), body));
 }
 
@@ -169,28 +171,27 @@ void QuadtreeNode::clear() {
 	bodiesContainer.clear();
 }
 
-bool QuadtreeNode::contains(Body* body) {
+bool QuadtreeNode::contains(BodyPtr body) {
 	return (bodiesContainer.find(body) != bodiesContainer.end());
 }
 
-void QuadtreeNode::getNodeExtent(Extent& extent) {
-	return mBody->collider->getExtent(extent);
+ExtentPtr QuadtreeNode::getNodeExtent() {
+	return mBody->collider->getExtent();
 }
 
 Quadtree::Quadtree(float x, float y, float width, float height) {
 	mRootNode.reset(new QuadtreeNode(x, y, width, height));
-	createTree(mRootNode.get());
+	createTree(mRootNode);
 }
 
-void Quadtree::createTree(QuadtreeNode* parent) {
-	Extent parentExtent;
-	parent->getNodeExtent(parentExtent);
-	float width = (parentExtent.x1 - parentExtent.x0) / 2;
-	float height = (parentExtent.y1 - parentExtent.y0) / 2;
+void Quadtree::createTree(QuadtreeNodePtr parent) {
+	ExtentPtr parentExtent = parent->getNodeExtent();
+	float width = (parentExtent->x1 - parentExtent->x0) / 2;
+	float height = (parentExtent->y1 - parentExtent->y0) / 2;
 	float widthHalf = (width / 2);
 	float heightHalf = (height / 2);
-	float x = (parentExtent.x0 + width);
-	float y = (parentExtent.y0 + height);
+	float x = (parentExtent->x0 + width);
+	float y = (parentExtent->y0 + height);
 
 	if (width < MIN_SIZE || height < MIN_SIZE) {
 		parent->leaf = true;
@@ -199,31 +200,31 @@ void Quadtree::createTree(QuadtreeNode* parent) {
 	}
 
 	// upper left corner
-	QuadtreeNode* upperLeft = new QuadtreeNode(x - widthHalf, y - heightHalf, width, height);
+	QuadtreeNodePtr upperLeft(GCC_NEW QuadtreeNode(x - widthHalf, y - heightHalf, width, height));
 	parent->pushChild(upperLeft);
 	createTree(upperLeft);
 
 	// upper right
-	QuadtreeNode* upperRight = new QuadtreeNode(x + widthHalf, y - heightHalf, width, height);
+	QuadtreeNodePtr upperRight(GCC_NEW QuadtreeNode(x + widthHalf, y - heightHalf, width, height));
 	parent->pushChild(upperRight);
 	createTree(upperRight);
 
 	// bottom left corner
-	QuadtreeNode* bottomLeft = new QuadtreeNode(x - widthHalf, y + heightHalf, width, height);
+	QuadtreeNodePtr bottomLeft(GCC_NEW QuadtreeNode(x - widthHalf, y + heightHalf, width, height));
 	parent->pushChild(bottomLeft);
 	createTree(bottomLeft);
 
 	// bottom right corner
-	QuadtreeNode* bottomRight = new QuadtreeNode(x + widthHalf, y + heightHalf, width, height);
+	QuadtreeNodePtr bottomRight(GCC_NEW QuadtreeNode(x + widthHalf, y + heightHalf, width, height));
 	parent->pushChild(bottomRight);
 	createTree(bottomRight);
 }
 
 void Quadtree::clear() {
-	std::stack<QuadtreeNode*> stack;
-	stack.push(mRootNode.get());
+	std::stack<QuadtreeNodePtr> stack;
+	stack.push(mRootNode);
 	while (stack.size() > 0) {
-		QuadtreeNode* node = stack.top();
+		QuadtreeNodePtr node = stack.top();
 		stack.pop();
 		node->clear();
 
@@ -233,11 +234,11 @@ void Quadtree::clear() {
 	}
 }
 
-void Quadtree::addBody(Body* body) {
-	addHelper(body, mRootNode.get());
+void Quadtree::addBody(BodyPtr body) {
+	addHelper(body, mRootNode);
 }
 
-void  Quadtree::addHelper(Body* body, QuadtreeNode* node) {
+void  Quadtree::addHelper(BodyPtr body, QuadtreeNodePtr node) {
 	if (!node->check(body)) {
 		return;
 	}
@@ -252,11 +253,11 @@ void  Quadtree::addHelper(Body* body, QuadtreeNode* node) {
 	}
 }
 
-void Quadtree::removeBody(Body* body) {
-	removeHelper(body, mRootNode.get());
+void Quadtree::removeBody(BodyPtr body) {
+	removeHelper(body, mRootNode);
 }
 
-void Quadtree::removeHelper(Body* body, QuadtreeNode* node) {
+void Quadtree::removeHelper(BodyPtr body, QuadtreeNodePtr node) {
 	if (!node->contains(body)) {
 		return;
 	}
@@ -267,13 +268,13 @@ void Quadtree::removeHelper(Body* body, QuadtreeNode* node) {
 	}
 }
 
-void Quadtree::getCollidingBodies(Body* body, std::vector<Body*>& bodies) {
-	std::vector<QuadtreeNode*> nodes;
-	std::stack<QuadtreeNode*> stack;
-	stack.push(mRootNode.get());
+void Quadtree::getCollidingBodies(BodyPtr body, std::vector<WeakBodyPtr>& bodies) {
+	std::vector<QuadtreeNodePtr> nodes;
+	std::stack<QuadtreeNodePtr> stack;
+	stack.push(mRootNode);
 
 	while (!stack.empty()) {
-		QuadtreeNode* node = stack.top();
+		QuadtreeNodePtr node = stack.top();
 		stack.pop();
 
 		if (!node->check(body)) {
@@ -285,7 +286,7 @@ void Quadtree::getCollidingBodies(Body* body, std::vector<Body*>& bodies) {
 			continue;
 		}
 
-		for (QuadtreeNode* childNode : node->children) {
+		for (QuadtreeNodePtr childNode : node->children) {
 			stack.push(childNode);
 		}
 	}
@@ -299,21 +300,20 @@ void Quadtree::getCollidingBodies(Body* body, std::vector<Body*>& bodies) {
 				continue;
 			}
 
-			const Collider& collider = *otherBody->collider.get();
-			if (collider.checkCollision(*body->collider.get())) {
+			if (otherBody->collider->checkCollision(body->collider)) {
 				bodies.push_back(otherBody);
 			}
 		}
 	}
 }
 
-void Quadtree::getNeigboringBodies(Body* body, std::vector<Body*>& bodies) {
-	std::vector<QuadtreeNode*> nodes;
-	std::stack<QuadtreeNode*> stack;
-	stack.push(mRootNode.get());
+void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
+	std::vector<QuadtreeNodePtr> nodes;
+	std::stack<QuadtreeNodePtr> stack;
+	stack.push(mRootNode);
 
 	while (!stack.empty()) {
-		QuadtreeNode* node = stack.top();
+		QuadtreeNodePtr node = stack.top();
 		stack.pop();
 
 		if (!node->check(body)) {
@@ -325,7 +325,7 @@ void Quadtree::getNeigboringBodies(Body* body, std::vector<Body*>& bodies) {
 			continue;
 		}
 
-		for (QuadtreeNode* childNode : node->children) {
+		for (QuadtreeNodePtr childNode : node->children) {
 			stack.push(childNode);
 		}
 	}
@@ -346,12 +346,12 @@ void Quadtree::getNeigboringBodies(Body* body, std::vector<Body*>& bodies) {
 	}
 }
 
-void PhysicsComponent::setPosition(vector2f* position) {
+void PhysicsComponent::setPosition(Vector2fPtr position) {
 	mBody->setPosition(position);
 	mPhysicsNotifier->notifyPositionSet(entityId);
 }
 
-void PhysicsComponent::setCollider(Collider* collider) {
+void PhysicsComponent::setCollider(ColliderPtr collider) {
 	mBody->setCollider(collider);
 	mPhysicsNotifier->notifyColliderUpdate(entityId);
 }
@@ -360,15 +360,15 @@ bool PhysicsComponent::isCollidable() {
 	return (mBody->collider != nullptr);
 }
 
-const vector2f* PhysicsComponent::getPosition() {
+WeakVector2fPtr PhysicsComponent::getPosition() {
 	return mBody->getPosition();
 }
 
-void PhysicsComponent::setVelocity(vector2f* velocity) {
+void PhysicsComponent::setVelocity(Vector2fPtr velocity) {
 	mBody->setVelocity(velocity);
 }
 
-const vector2f* PhysicsComponent::getVelocity()  {
+WeakVector2fPtr PhysicsComponent::getVelocity()  {
 	return mBody->getVelocity();
 }
 

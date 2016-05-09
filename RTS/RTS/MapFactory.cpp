@@ -1,23 +1,23 @@
 #include"MapFactory.h"
 
-Entity* TileFactory::createTile(const std::string& assetTag, int xIndex, int yIndex, vector2f* position, float tx, float ty, float width, float height) {
-	Entity* entity = createTexturedEntity(assetTag, tx, ty, width, height);
+EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height) {
+	EntityPtr entity = createTexturedEntity(assetTag, tx, ty, width, height);
 
-	TileComponent* tileComponent = new TileComponent(entity->id, xIndex, yIndex);
-	entity->componentContainer->registerComponent(tileComponent);
+	TileComponentPtr tileComponent(GCC_NEW TileComponent(entity->id, xIndex, yIndex));
+	entity->addComponent(tileComponent);
 
-	PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
-	physicsComponent->setPosition(position);
+	PhysicsComponentPtr physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+	physicsComponent->setPosition(Vector2fPtr(GCC_NEW Vector2f(position)));
 
 	return entity;
 }
 
-MapFactory::MapFactory(TileFactory* tileFactory, SystemManager* systemManager) {
+MapFactory::MapFactory(TileFactoryPtr tileFactory, SystemManagerPtr systemManager) {
 	mTileFactory = tileFactory;
 	mSystemManager = systemManager;
 }
 
-Map* MapFactory::createMap(const std::string pathToMap) {
+MapPtr MapFactory::createMap(const string& pathToMap) {
 	std::ifstream file(pathToMap);
 	std::string line;
 	std::string builder;
@@ -60,13 +60,13 @@ Map* MapFactory::createMap(const std::string pathToMap) {
 	}
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
-	Map* map = new Map(mapConfig, new EntitySystem::DefaultEntityVendor(entitySystem.get()));
+	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), EntityVendorPtr(GCC_NEW EntitySystem::DefaultEntityVendor(entitySystem))));
 
 	return map;
 }
 
-void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer, std::string assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig) {
+void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer, const string& assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig) {
 	auto data = tileLayer["data"].GetArray();
 	for (int index = 0; index < data.Size(); index++) {
 		int tileVal(data[index].GetInt() - offset);
@@ -75,10 +75,10 @@ void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer, std::string as
 		int tx = tileWidth * (tileVal % columns);
 		int ty = tileHeight * (tileVal / columns);
 
-		Entity* tile = mTileFactory->createTile(assetTag, x, y, new vector2f(x * tileWidth, y * tileHeight), tx, ty, tileWidth, tileHeight);
+		EntityPtr tile = mTileFactory->createTile(assetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), tx, ty, tileWidth, tileHeight);
 		mapConfig.tiles.push_back(tile->id);
 
-		TileComponent* tileComponent = reinterpret_cast<TileComponent*>(tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		TileComponentPtr tileComponent(tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 		// TODO: Add this value as a property of the tile.
 		tileComponent->canOccupy = tileVal == 1;
 	}
@@ -95,7 +95,7 @@ void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig&
 		int x = (object["x"].GetInt() + (width / 2) - (mapConfig.tileWidth / 2));
 		int y = (object["y"].GetInt() + (height / 2) - (mapConfig.tileHeight / 2));
 
-		Entity* tile = mTileFactory->createPhysicsEntity(x, y, width, height);
+		EntityPtr tile = mTileFactory->createPhysicsEntity(x, y, width, height);
 		mapConfig.objects.push_back(tile->id);
 	}
 }

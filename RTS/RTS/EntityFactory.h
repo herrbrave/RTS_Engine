@@ -6,23 +6,26 @@
 #include"Serializer.h"
 #include"System.h"
 
+class EntityFactory;
+typedef shared_ptr<EntityFactory> EntityFactoryPtr;
+typedef weak_ptr<EntityFactory> WeakEntityFactoryPtr;
 
 class EntityFactory {
 public:
-	EntityFactory(SystemManager* systemManager);
+	EntityFactory(SystemManagerPtr systemManager);
 
-	Entity* createDefault();
+	EntityPtr createDefault();
 
-	Entity* createTexturedEntity(std::string assetTag, float tx, float ty, float w, float h);
+	EntityPtr createTexturedEntity(const string& assetTag, float tx, float ty, float w, float h);
 
-	Entity* createAnimatedEntity(std::string path, float width, float height);
+	EntityPtr createAnimatedEntity(const string& path, float width, float height);
 
-	Entity* createFromSerialization(std::string path);
+	EntityPtr createFromSerialization(const string& path);
 
-	Entity* createPhysicsEntity(float x, float y, float width, float height);
+	EntityPtr createPhysicsEntity(float x, float y, float width, float height);
 
 protected:
-	SystemManager* mSystemManager{ nullptr };
+	SystemManagerPtr mSystemManager{ nullptr };
 };
 
 #endif // !__ENTITY_FACTORY_H__

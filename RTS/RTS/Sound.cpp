@@ -37,6 +37,6 @@ void Sound::serialize(Serializer& serializer) const {
 	serializer.writer.EndObject();
 }
 
-SoundController::SoundController(Sound* sound) {
-	this->mSound.reset(sound);
+SoundController::SoundController(SoundPtr sound) {
+	this->mSound = sound;
 }

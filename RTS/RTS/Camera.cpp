@@ -1,5 +1,5 @@
 #include "Camera.h"
 
-void translateToCamera(vector2f* vector, Camera* camera){
-	*vector -= *camera->position.get();
+void translateToCamera(Vector2fPtr vector, CameraPtr camera) {
+	*vector -= *camera->position;
 }

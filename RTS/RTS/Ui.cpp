@@ -1,6 +1,6 @@
 #include"Ui.h"
 
-ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemManager) {
+ButtonConfigPtr createButtonConfig(const std::string& path, SystemManagerPtr systemManager) {
 	std::ifstream file;
 	file.open(path);
 	std::string builder;
@@ -26,10 +26,10 @@ ButtonConfig* createButtonConfig(const std::string& path, SystemManager* systemM
 	parseState(image, parsedButton["button_over"], buttonConfig->buttonOver);
 	parseState(image, parsedButton["button_down"], buttonConfig->buttonDown);
 	
-	return buttonConfig;
+	return ButtonConfigPtr(buttonConfig);
 }
 
-PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemManager) {
+PanelConfigPtr createPanelConfig(const std::string& path, SystemManagerPtr systemManager) {
 	std::ifstream file;
 	file.open(path);
 	std::string builder;
@@ -53,35 +53,35 @@ PanelConfig* createPanelConfig(const std::string& path, SystemManager* systemMan
 
 	parseState(image, parsedPanel["sections"], panelConfig->panelSections);
 
-	return panelConfig;
+	return PanelConfigPtr(panelConfig);
 }
 
-void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, Texture*>& stateMap) {
+void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, TexturePtr>& stateMap) {
 	for (auto it = button.MemberBegin(); it != button.MemberEnd(); it++) {
 		std::string name = it->name.GetString();
 		const rapidjson::Value& value = it->value;
-		Texture* texture = new Texture(tag, value["x"].GetDouble(), value["y"].GetDouble(), value["w"].GetDouble(), value["h"].GetDouble());
+		TexturePtr texture(GCC_NEW Texture(tag, value["x"].GetDouble(), value["y"].GetDouble(), value["w"].GetDouble(), value["h"].GetDouble()));
 		stateMap.emplace(name, texture);
 	}
 }
 
 
-SectionDrawable::SectionDrawable(float width, float height, vector2f* positionOffset, Texture* texture) : Drawable(width, height) {
-	mPosOffset.reset(positionOffset);
+SectionDrawable::SectionDrawable(float width, float height, const Vector2f& positionOffset, TexturePtr texture) : Drawable(width, height) {
+	mPosOffset = Vector2fPtr(const_cast<Vector2f*>(&positionOffset));
 	mTexture = texture;
 }
 
-void SectionDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
-	vector2f translated = *position + *mPosOffset.get();
-	graphicsRef->renderTexture(mTexture, translated.x, translated.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+void SectionDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	Vector2fPtr translated(&(position + *mPosOffset));
+	graphicsRef.renderTexture(mTexture, translated->x, translated->y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) : Drawable(width, height) {
 	isUi = true;
 	state = ButtonState::UP;
-	mSections[ButtonState::UP] = std::vector<SectionDrawable*>();
-	mSections[ButtonState::OVER] = std::vector<SectionDrawable*>();
-	mSections[ButtonState::DOWN] = std::vector<SectionDrawable*>();
+	mSections[ButtonState::UP] = vector<SectionDrawablePtr>();
+	mSections[ButtonState::OVER] = vector<SectionDrawablePtr>();
+	mSections[ButtonState::DOWN] = vector<SectionDrawablePtr>();
 
 	float sectionWidth = buttonConfig.sectionWidth;
 	float sectionHeight = buttonConfig.sectionHeight;
@@ -105,12 +105,12 @@ ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& bu
 	int count = 0;
 	for (int yDir : dirs) {
 		for (int xDir : dirs) {
-			vector2f* posOffset = new vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight - (sectionHeight / 2)) * yDir);
+			Vector2fPtr posOffset(GCC_NEW Vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight - (sectionHeight / 2)) * yDir));
 			std::string name = names[count];
 
-			SectionDrawable* upDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonUp.at(name));
-			SectionDrawable* overDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonOver.at(name));
-			SectionDrawable* downDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonDown.at(name));
+			SectionDrawablePtr upDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonUp.at(name)));
+			SectionDrawablePtr overDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonOver.at(name)));
+			SectionDrawablePtr downDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, buttonConfig.buttonDown.at(name)));
 			mSections.at(ButtonState::UP).push_back(upDrawable);
 			mSections.at(ButtonState::OVER).push_back(overDrawable);
 			mSections.at(ButtonState::DOWN).push_back(downDrawable);
@@ -119,41 +119,43 @@ ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& bu
 	}
 }
 
-void ButtonDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+void ButtonDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	for (auto drawable : mSections[state]) {
 		drawable->draw(graphicsRef, position);
 	}
 
 	if (mButtonTexture != nullptr) {
-		graphicsRef->renderTexture(mButtonTexture.get(), position->x, position->y, -1, -1, 255, 255, 255, 255);
+		graphicsRef.renderTexture(mButtonTexture, position.x, position.y, -1, -1, 255, 255, 255, 255);
 	}
 }
 
 
-void ButtonDrawable::setButtonTexture(Texture* texture) {
-	mButtonTexture.reset(texture);
+void ButtonDrawable::setButtonTexture(TexturePtr texture) {
+	mButtonTexture = texture;
 }
 
-void ButtonComponent::onMouseEvent(const MouseEvent& mouseEvent, SystemManager* systemManager) {
+void ButtonComponent::onMouseEvent(const MouseEvent& mouseEvent, SystemManagerPtr systemManager) {
+	PhysicsSystemPtr physicsSystem = makeShared(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	if (mouseEvent.action == MouseAction::MOVE) {
-		Body* body = getBodyById(entityId, systemManager);
+		BodyPtr body = makeShared(physicsSystem->getBody(entityId));
 		if (body->checkPoint(*mouseEvent.position)) {
-			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+			ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 			drawable->state = ButtonState::OVER;
 		}
 		else {
-			ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+			ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 			drawable->state = ButtonState::UP;
 		}
 	}
 	else if (mouseEvent.action == MouseAction::CLICK_DOWN) {
-		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+		ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 		if (drawable->state == ButtonState::OVER) {
 			drawable->state = ButtonState::DOWN;
 		}
 	}
 	else {
-		ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+		ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 		if (drawable->state == ButtonState::DOWN) {
 			drawable->state = ButtonState::OVER;
 			mCallback();
@@ -165,35 +167,40 @@ void ButtonComponent::setCallback(const std::function<void()>& callback) {
 	mCallback = std::move(callback);
 }
 
-void ButtonComponent::setText(const std::string& text, SystemManager* systemManager) {
+void ButtonComponent::setText(const std::string& text, SystemManagerPtr systemManager) {
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
-	Texture* textTexture = new Texture(text);
+	TexturePtr textTexture(GCC_NEW Texture(text));
 	mText = text;
 
-	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+	ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 	drawable->setButtonTexture(textTexture);
 }
 
-std::string& ButtonComponent::getText() {
+string& ButtonComponent::getText() {
 	return mText;
 }
 
-void ButtonComponent::setIcon(Texture* texture, SystemManager* systemManager) {
-	ButtonDrawable* drawable = reinterpret_cast<ButtonDrawable*>(getDrawableById(entityId, systemManager));
+void ButtonComponent::setIcon(TexturePtr texture, SystemManagerPtr systemManager) {
+	GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
 	drawable->setButtonTexture(texture);
 }
 
-void setButtonText(Entity* entity, const std::string& text, SystemManager* systemManager) {
-	ButtonComponent* buttonComponent = reinterpret_cast<ButtonComponent*>(entity->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
-	buttonComponent->setText(text, systemManager);
+void setButtonText(EntityPtr entity, const std::string& text, SystemManagerPtr systemManager) {
+	weak_ptr<ButtonComponent> buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
+	if (auto ptr = buttonComponent.lock()) {
+		ptr->setText(text, systemManager);
+	}
 }
 
-void setIcon(Entity* entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManager* systemManager) {
-	Texture* texture = new Texture(assetTag, tx, ty, tw, th);
+void setIcon(EntityPtr entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManagerPtr systemManager) {
+	TexturePtr texture(GCC_NEW Texture(assetTag, tx, ty, tw, th));
 
-	ButtonComponent* buttonComponent = reinterpret_cast<ButtonComponent*>(entity->componentContainer->getComponentByType(ComponentType::BUTTON_COMPONENT));
-	buttonComponent->setIcon(texture, systemManager);
+	weak_ptr<ButtonComponent> buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
+	if (auto ptr = buttonComponent.lock()) {
+		ptr->setIcon(texture, systemManager);
+	}
 }
 
 PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {
@@ -222,69 +229,69 @@ PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panel
 	int count = 0;
 	for (int yDir : dirs) {
 		for (int xDir : dirs) {
-			vector2f* posOffset = new vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight -(sectionHeight / 2)) * yDir);
+			Vector2fPtr posOffset(GCC_NEW Vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight -(sectionHeight / 2)) * yDir));
 			std::string name = names[count];
 
-			SectionDrawable* sectionDrawable = new SectionDrawable(size[count][0], size[count][1], posOffset, panelConfig.panelSections.at(name));
+			SectionDrawablePtr sectionDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, panelConfig.panelSections.at(name)));
 			mSections.push_back(sectionDrawable);
 			count++;
 		}
 	}
 }
 
-void PanelDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
+void PanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	for (auto drawable : mSections) {
 		drawable->draw(graphicsRef, position);
 	}
 }
 
-WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManager* systemManager) : EntityFactory(systemManager) {
-	mButtonConfig.reset(createButtonConfig(buttonConfigPath, systemManager));
-	mPanelConfig.reset(createPanelConfig(panelConfigPath, systemManager));
+WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager) : EntityFactory(systemManager) {
+	mButtonConfig = createButtonConfig(buttonConfigPath, systemManager);
+	mPanelConfig = createPanelConfig(panelConfigPath, systemManager);
 }
 
-Entity* WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
-	Entity* entity = new Entity();
-	entitySystem->registerEntity(entity);
+EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
 
-	Body* blockBody = new Body(x, y, width, height);
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
 
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
-	Drawable* textureDrawable = new ButtonDrawable(width, height, *mButtonConfig.get());
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	DrawablePtr textureDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
-	ButtonComponent* buttonComponent = new ButtonComponent(entity->id);
+	ButtonComponentPtr buttonComponent(GCC_NEW ButtonComponent(entity->id));
 	buttonComponent->setCallback(callback);
 
-	entity->componentContainer->registerComponent(physicsComponent);
-	entity->componentContainer->registerComponent(drawableComponent);
-	entity->componentContainer->registerComponent(buttonComponent);
+	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
+	entity->addComponent(buttonComponent);
 
 	return entity;
 }
 
-Entity* WidgetFactory::createPanel(float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
-	Entity* entity = new Entity();
-	entitySystem->registerEntity(entity);
+EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height) {
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
 
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
-	Body* blockBody = new Body(x, y, width, height);
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponent* physicsComponent = new PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier.get());
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
 
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
-	Drawable* textureDrawable = new PanelDrawable(width, height, *mPanelConfig.get());
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, *mPanelConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponent* drawableComponent = new DrawableComponent(entity->id, textureDrawable);
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
-	entity->componentContainer->registerComponent(physicsComponent);
-	entity->componentContainer->registerComponent(drawableComponent);
+	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
 
 	return entity;
 }

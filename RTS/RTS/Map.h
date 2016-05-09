@@ -2,8 +2,6 @@
 #define __MAP_H__
 
 #include<queue>
-#include<vector>
-#include<unordered_map>
 #include<unordered_set>
 
 #include"EntityFactory.h"
@@ -16,11 +14,23 @@ struct MapConfig {
 	std::vector<unsigned long> tiles;
 	std::vector<unsigned long> objects;
 };
+typedef shared_ptr<MapConfig> MapConfigPtr;
+typedef weak_ptr<MapConfig> WeakMapConfigPtr;
 
 struct Node {
-	Entity* tile;
+	EntityPtr tile;
 	int cost;
 };
+typedef shared_ptr<Node> NodePtr;
+typedef weak_ptr<Node> WeakNodePtr;
+
+class TileComponent;
+typedef shared_ptr<TileComponent> TileComponentPtr;
+typedef weak_ptr<TileComponent> WeakTileComponentPtr;
+
+class Map;
+typedef shared_ptr<Map> MapPtr;
+typedef weak_ptr<Map> WeakMapPtr;
 
 class TileComponent : public Component {
 public:
@@ -42,7 +52,7 @@ public:
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint(componentId);
+		serializer.writer.Uint((Uint8)componentId);
 
 		serializer.writer.String("x");
 		serializer.writer.Uint(x);
@@ -59,11 +69,11 @@ public:
 
 class Map {
 public:
-	Map(MapConfig* config, EntityVendor* entityVendor);
+	Map(MapConfigPtr config, EntityVendorPtr entityVendor);
 
-	Entity* getTileAt(int x, int y);
+	WeakEntityPtr getTileAt(int x, int y);
 
-	Entity** findPath(int startX, int startY, int endX, int endY);
+	void findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX, int endY);
 
 	int getMapWidth() {
 		return mMapConfig->mapWidth;
@@ -73,11 +83,11 @@ public:
 		return mMapConfig->mapHeight;
 	}
 
-	Entity* tileAtPoint(const vector2f* point);
+	WeakEntityPtr tileAtPoint(const Vector2f& point);
 
 private:
-	EntityVendor* mEntityVendor{ nullptr };
-	std::unique_ptr<MapConfig> mMapConfig{ nullptr };
+	EntityVendorPtr mEntityVendor{ nullptr };
+	MapConfigPtr mMapConfig{ nullptr };
 
 	inline int getIndex(int x, int y) {
 		if (x < 0 || x >= mMapConfig->mapWidth || y < 0 || y >= mMapConfig->mapHeight) {

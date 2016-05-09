@@ -8,6 +8,10 @@
 #include<rapidjson\document.h>
 #include<string>
 
+class Texture;
+typedef shared_ptr<Texture> TexturePtr;
+typedef weak_ptr<Texture> WeakTexturePtr;
+
 class Texture {
 public:
 	float x;

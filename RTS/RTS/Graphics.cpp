@@ -1,69 +1,52 @@
 #include"Graphics.h"
 
 
-GraphicsConfig* GraphicsConfig::setTitle(std::string title) {
+void GraphicsConfig::setTitle(const string& title) {
 	mTitle = title;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setWindowX(int x) {
+void GraphicsConfig::setWindowX(int x) {
 	mWindowX = x;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setWindowY(int y) {
+void GraphicsConfig::setWindowY(int y) {
 	mWindowY = y;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setWindowWidth(int width) {
+void GraphicsConfig::setWindowWidth(int width) {
 	mWidth = width;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setWindowHeight(int height) {
+void GraphicsConfig::setWindowHeight(int height) {
 	mHeight = height;
-	return this;
 }
 
-
-GraphicsConfig* GraphicsConfig::fullscreen() {
+void GraphicsConfig::fullscreen() {
 	mFlags |= SDL_WINDOW_FULLSCREEN;
-	return this;
 }
 
-
-GraphicsConfig* GraphicsConfig::withOpenGL() {
+void GraphicsConfig::withOpenGL() {
 	mFlags |= SDL_WINDOW_OPENGL;
-	return this;
 }
 
-
-GraphicsConfig* GraphicsConfig::borderless() {
+void GraphicsConfig::borderless() {
 	mFlags |= SDL_WINDOW_BORDERLESS;
-	return this;
 }
 
-
-GraphicsConfig* GraphicsConfig::resizable() {
+void GraphicsConfig::resizable() {
 	mFlags |= SDL_WINDOW_RESIZABLE;
-	return this;
 }
 
-
-GraphicsConfig* GraphicsConfig::maximized() {
+void GraphicsConfig::maximized() {
 	mFlags |= SDL_WINDOW_MAXIMIZED;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setFont(const std::string& fontPath) {
+void GraphicsConfig::setFont(const string& fontPath) {
 	mFontPath = fontPath;
-	return this;
 }
 
-GraphicsConfig* GraphicsConfig::setFontSize(int fontSize) {
+void GraphicsConfig::setFontSize(int fontSize) {
 	mFontSize = fontSize;
-	return this;
 }
 
 void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
@@ -78,15 +61,15 @@ void Drawable::setSize(float width, float height) {
 	this->height = height;
 }
 
-void BlockDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
-	float x = position->x;
-	float y = position->y;
+void BlockDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	float x = position.x;
+	float y = position.y;
 	
-	graphicsRef->drawSquare(x, y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+	graphicsRef.drawSquare(x, y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
-void TextureDrawable::draw(Graphics* graphicsRef, const vector2f* position) {
-	graphicsRef->renderTexture(mTexture.get(), position->x, position->y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+void TextureDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	graphicsRef.renderTexture(mTexture, position.x, position.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 void TextureDrawable::setSize(float width, float height) {
@@ -95,7 +78,7 @@ void TextureDrawable::setSize(float width, float height) {
 	mTexture->h = height;
 }
 
-SDLGraphics::SDLGraphics(GraphicsConfig* graphicsConfig, AssetVendor* assetVendor) : Graphics(assetVendor) {
+SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(assetVendor) {
 	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
 	}
@@ -148,7 +131,7 @@ void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 
 
 	SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_NONE);
 
-	if (DEBUG) {
+	if (__DEBUG__) {
 		SDL_SetRenderDrawColor(mRenderer.get(), 255, 0, 0, 255);
 		SDL_RenderDrawLine(mRenderer.get(), rect.x, rect.y, rect.x + rect.w, rect.y);
 		SDL_RenderDrawLine(mRenderer.get(), rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + rect.h);
@@ -169,12 +152,12 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 	SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphics::renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
-	Asset* asset = mAssetVendor->getAsset(texture->assetTag);
-	SDL_Texture* sdlTexture = reinterpret_cast<SDL_Texture*>(asset->getAsset());
+	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
+	shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
 	if (a < 255) {
-		SDL_SetTextureAlphaMod(sdlTexture, a);
+		SDL_SetTextureAlphaMod(sdlTexture.get(), a);
 	}
 	SDL_SetRenderDrawColor(mRenderer.get(), r, g, b, a);
 
@@ -182,7 +165,7 @@ void SDLGraphics::renderTexture(Texture* texture, float x, float y, float w, flo
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };
 	// if no size is specified
 	if (src.w == -1 || src.h == -1) {
-		SDL_QueryTexture(sdlTexture, nullptr, nullptr, &src.w, &src.h);
+		SDL_QueryTexture(sdlTexture.get(), nullptr, nullptr, &src.w, &src.h);
 	}
 	if (dest.w == -1 || dest.h == -1) {
 		dest.x = (x - src.w / 2);
@@ -191,13 +174,13 @@ void SDLGraphics::renderTexture(Texture* texture, float x, float y, float w, flo
 		dest.h = src.h;
 	}
 
-	SDL_RenderCopy(mRenderer.get(), sdlTexture, &src, &dest);
+	SDL_RenderCopy(mRenderer.get(), sdlTexture.get(), &src, &dest);
 
 	if (a < 255) {
-		SDL_SetTextureAlphaMod(sdlTexture, 255);
+		SDL_SetTextureAlphaMod(sdlTexture.get(), 255);
 	}
 
-	if (DEBUG) {
+	if (__DEBUG__) {
 		SDL_SetRenderDrawColor(mRenderer.get(), 255, 0, 0, 255);
 		SDL_RenderDrawLine(mRenderer.get(), dest.x, dest.y, dest.x + dest.w, dest.y);
 		SDL_RenderDrawLine(mRenderer.get(), dest.x + dest.w, dest.y, dest.x + dest.w, dest.y + dest.h);
@@ -219,23 +202,23 @@ SDL_Renderer* SDLGraphics::getRenderer() {
 	return mRenderer.get();
 }
 
-Asset* SDLGraphics::createTexture(const std::string& path, const std::string& assetTag) {
+AssetPtr SDLGraphics::createTexture(const string& path, const string& assetTag) {
 	SDL_Texture* texture = IMG_LoadTexture(mRenderer.get(), path.c_str());
 	if (texture == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load texture at: " + *path.c_str());
 	}
 
-	Asset* asset = new Asset(texture, path, assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+	AssetPtr asset(GCC_NEW Asset(VoidPtr(texture, SDL_DELETERS()), path, assetTag));
 	return asset;
 }
 
-Asset* SDLGraphics::createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+AssetPtr SDLGraphics::createTextAsset(const string& text, const string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	SDL_Color textColor{ r, g, b, a };
 	SDL_Surface* surface = TTF_RenderText_Solid(mFont.get(), text.c_str(), textColor);
 	SDL_Texture* sdlTexture = SDL_CreateTextureFromSurface(mRenderer.get(), surface);
 	SDL_FreeSurface(surface);
 
-	Asset* asset = new Asset(sdlTexture, "", assetTag, std::function<void(void*)>([](void* deleteMe){SDL_DestroyTexture(reinterpret_cast<SDL_Texture*>(deleteMe)); }));
+	AssetPtr asset(GCC_NEW Asset(shared_ptr<void>(sdlTexture, SDL_DELETERS()), "", assetTag));
 
 	return asset;
 }

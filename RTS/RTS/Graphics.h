@@ -15,7 +15,24 @@
 #include<SDL_ttf.h>
 #include<SDL_image.h>
 
+
+
 class Graphics;
+typedef shared_ptr<Graphics> GraphicsPtr;
+typedef weak_ptr<Graphics> WeakGraphicsPtr;
+
+class GraphicsConfig;
+typedef shared_ptr<GraphicsConfig> GraphicsConfigPtr;
+typedef weak_ptr<GraphicsConfig> WeakGraphicsConfigPtr;
+
+class Drawable;
+typedef shared_ptr<Drawable> DrawablePtr;
+typedef weak_ptr<Drawable> WeakDrawablePtr;
+
+class DrawableComponent;
+typedef shared_ptr<DrawableComponent> DrawableComponentPtr; 
+typedef weak_ptr<DrawableComponent> WeakDrawableComponentPtr;
+
 class Drawable {
 public:
 	float width;
@@ -39,7 +56,7 @@ public:
 		});
 	}
 
-	virtual void draw(Graphics* graphicsRef, const vector2f* position) = 0;
+	virtual void draw(Graphics& graphicsRef, const Vector2f& position) = 0;
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
@@ -87,7 +104,7 @@ public:
 
 	BlockDrawable(const rapidjson::Value& root) : Drawable(root) {}
 
-	void draw(Graphics* graphicsRef, const vector2f* position) override;
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 protected:
 
 	virtual void onSerialize(Serializer& serializer) const {
@@ -114,8 +131,8 @@ protected:
 
 class TextureDrawable : public Drawable {
 public:
-	TextureDrawable(Texture* texture) : Drawable(texture->w, texture->h) {
-		mTexture.reset(texture);
+	TextureDrawable(TexturePtr texture) : Drawable(texture->w, texture->h) {
+		mTexture = std::move(texture);
 	}
 
 	TextureDrawable(const rapidjson::Value& root) : Drawable(0, 0) {
@@ -123,12 +140,11 @@ public:
 		mTexture.reset(new Texture(texture));
 	}
 
-	void setTexture(Texture* texture) {
-		mTexture.release();
-		mTexture.reset(texture);
+	void setTexture(TexturePtr texture) {
+		mTexture = texture;
 	}
 
-	void draw(Graphics* graphicsRef, const vector2f* position) override;
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
 	void setSize(float width, float height) override;
 
@@ -146,24 +162,24 @@ protected:
 	}
 
 private:
-	std::unique_ptr<Texture> mTexture{ nullptr };
+	TexturePtr mTexture{ nullptr };
 };
 
 
 class GraphicsConfig {
 public:
-	GraphicsConfig* setTitle(std::string title);
-	GraphicsConfig* setWindowX(int x);
-	GraphicsConfig* setWindowY(int y);
-	GraphicsConfig* setWindowWidth(int width);
-	GraphicsConfig* setWindowHeight(int height);
-	GraphicsConfig* fullscreen();
-	GraphicsConfig* withOpenGL();
-	GraphicsConfig* borderless();
-	GraphicsConfig* resizable();
-	GraphicsConfig* maximized();
-	GraphicsConfig* setFont(const std::string& fontPath);
-	GraphicsConfig* setFontSize(int fontSize);
+	void setTitle(const string& title);
+	void setWindowX(int x);
+	void setWindowY(int y);
+	void setWindowWidth(int width);
+	void setWindowHeight(int height);
+	void fullscreen();
+	void withOpenGL();
+	void borderless();
+	void resizable();
+	void maximized();
+	void setFont(const string& fontPath);
+	void setFontSize(int fontSize);
 
 	~GraphicsConfig() {
 	}
@@ -180,31 +196,31 @@ public:
 
 class Graphics {
 public:
-	Graphics(AssetVendor* assetVendor) { mAssetVendor.reset(assetVendor); }
+	Graphics(AssetVendorPtr assetVendor) { mAssetVendor = assetVendor; }
 	virtual void onBeforeDraw() = 0;
-	virtual void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
 
-	virtual Asset* createTexture(const std::string& path, const std::string& assetTag) = 0;
-	virtual Asset* createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual AssetPtr createTexture(const std::string& path, const std::string& assetTag) = 0;
+	virtual AssetPtr createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 protected:
-	std::unique_ptr<AssetVendor> mAssetVendor{ nullptr };
+	AssetVendorPtr mAssetVendor{ nullptr };
 };
 
 class SDLGraphics : public Graphics {
 public:
-	SDLGraphics(GraphicsConfig* graphisConfig, AssetVendor* assetVendor);
+	SDLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
 	void onBeforeDraw() override;
-	void renderTexture(Texture* texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
 
 	SDL_Renderer* getRenderer();
-	Asset* createTexture(const std::string& path, const std::string& assetTag) override;
-	Asset* createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
+	AssetPtr createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 private:
 
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
@@ -214,7 +230,7 @@ private:
 
 class DrawableComponent : public Component {
 public:
-	DrawableComponent(unsigned long entityId, Drawable* drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
+	DrawableComponent(unsigned long entityId, DrawablePtr drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
 		mDrawable = drawable;
 	}
 
@@ -222,10 +238,10 @@ public:
 		const rapidjson::Value& drawable = root["mDrawable"];
 		std::string drawableType = drawable["drawableType"].GetString();
 		if (drawableType == "BlockDrawable") {
-			mDrawable = new BlockDrawable(drawable);
+			mDrawable = DrawablePtr(GCC_NEW BlockDrawable(drawable));
 		}
 		else if (drawableType == "TextureDrawable") {
-			mDrawable = new TextureDrawable(drawable);
+			mDrawable = DrawablePtr(GCC_NEW TextureDrawable(drawable));
 		}
 		else {
 			assert(false);
@@ -234,7 +250,7 @@ public:
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void setSize(float width, float height);
-	Drawable* getDrawable() {
+	WeakDrawablePtr getDrawable() {
 		return mDrawable;
 	}
 
@@ -242,14 +258,14 @@ public:
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint(componentId);
+		serializer.writer.Uint((Uint8) componentId);
 		serializer.writer.String("mDrawable");
 		mDrawable->serialize(serializer);
 
 		serializer.writer.EndObject();
 	}
 private:
-	Drawable* mDrawable;
+	DrawablePtr mDrawable;
 };
 
 #endif // !__GRAPHICS_H__

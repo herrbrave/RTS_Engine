@@ -4,16 +4,20 @@
 #include"Sound.h"
 #include"System.h"
 
+class SoundControllerFactory;
+typedef shared_ptr<SoundControllerFactory> SoundControllerFactoryPtr;
+typedef weak_ptr<SoundControllerFactory> WeakSoundControllerFactoryPtr;
+
 class SoundControllerFactory {
 public:
-	SoundControllerFactory(SystemManager* systemManager) {
+	SoundControllerFactory(SystemManagerPtr systemManager) {
 		mSystemManager = systemManager;
 	}
 
-	SoundController* createSound(std::string& assetTag, SoundType soundType);
+	SoundControllerPtr createSound(std::string& assetTag, SoundType soundType);
 
 private:
-	SystemManager* mSystemManager;
+	SystemManagerPtr mSystemManager;
 };
 
 #endif // !__SOUND_CONTROLLER_H__

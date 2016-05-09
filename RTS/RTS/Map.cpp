@@ -1,40 +1,40 @@
 #include"Map.h"
 
-Map::Map(MapConfig* config, EntityVendor* entityVendor) {
-	mMapConfig.reset(config);
+Map::Map(MapConfigPtr config, EntityVendorPtr entityVendor) {
+	mMapConfig = std::move(config);
 	mEntityVendor = entityVendor;
 }
 
-Entity* Map::getTileAt(int x, int y) {
+WeakEntityPtr Map::getTileAt(int x, int y) {
 	int index = getIndex(x, y);
 	if (index == -1) {
-		return nullptr;
+		return WeakEntityPtr();
 	}
 
 	return mEntityVendor->getEntityById(mMapConfig->tiles[index]);
 }
 
-Entity* Map::tileAtPoint(const vector2f* point) {
-	int xIndex = std::round(point->x / float(mMapConfig->tileWidth));
-	int yIndex = std::round(point->y / float(mMapConfig->tileHeight));
+WeakEntityPtr Map::tileAtPoint(const Vector2f& point) {
+	int xIndex = std::round(point.x / float(mMapConfig->tileWidth));
+	int yIndex = std::round(point.y / float(mMapConfig->tileHeight));
 
 	return this->getTileAt(xIndex, yIndex);
 }
 
-Entity** Map::findPath(int startX, int startY, int endX, int endY) {
+void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX, int endY) {
 	int endIndex = getIndex(endX, endY);
 	if (endIndex == -1) {
 		// return an empty path.
-		return nullptr;
+		return;
 	}
 
-	auto endTile = mEntityVendor->getEntityById(mMapConfig->tiles[endIndex]);
+	auto endTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[endIndex]));
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
-		TileComponent* leftComponent = reinterpret_cast<TileComponent*>(left.tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
-		TileComponent* rightComponent = reinterpret_cast<TileComponent*>(right.tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
-		TileComponent* endComponent = reinterpret_cast<TileComponent*>(endTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		TileComponentPtr leftComponent(left.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		TileComponentPtr rightComponent(right.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		TileComponentPtr endComponent(endTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 
 		// dumb heuristic based on distance.
 		int deltaX = leftComponent->x - endComponent->x;
@@ -49,15 +49,15 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 	};
 
 	int startIndex = getIndex(startX, startY);
-	auto startTile = mEntityVendor->getEntityById(mMapConfig->tiles[startIndex]);
-	std::unordered_set<Entity*> openSetLookup;
+	auto startTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[startIndex]));
+	std::unordered_set<EntityPtr> openSetLookup;
 	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
 	openSet.emplace(Node{ startTile, 0 });
 
 	// set of explored tiles.
-	std::unordered_set<Entity*> closedSet;
+	unordered_set<EntityPtr> closedSet;
 	// back path map.
-	std::unordered_map<Entity*, Entity*> pathMap;
+	unordered_map<EntityPtr, EntityPtr> pathMap;
 
 
 	while (openSet.size() > 0) {
@@ -65,18 +65,15 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 		openSet.pop();
 		closedSet.emplace(current.tile);
 
-		TileComponent*  component = reinterpret_cast<TileComponent*>(current.tile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		TileComponentPtr component(current.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 		if (component->x == endX && component->y == endY) {
-			std::vector<Entity*> path;
 			auto tile = current.tile;
 			while (tile != startTile) {
-				path.insert(path.begin(), tile);
+				path.insert(path.begin(), WeakEntityPtr(tile));
 				tile = pathMap[tile];
 			}
 
-			
-
-			return &path[0];
+			return;
 		}
 
 		int currX = component->x;
@@ -93,8 +90,8 @@ Entity** Map::findPath(int startX, int startY, int endX, int endY) {
 					continue;
 				}
 
-				auto neighborTile = mEntityVendor->getEntityById(mMapConfig->tiles[index]);
-				TileComponent*  component = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+				auto neighborTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[index]));
+				TileComponentPtr component(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
 				}

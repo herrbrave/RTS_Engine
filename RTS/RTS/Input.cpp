@@ -1,6 +1,6 @@
 #include"Input.h"
 
-bool InputListener::onEvent(EventType eventType, Event* evt, MouseMovementHandler* mouseMovementHandler) {
+bool InputListener::onEvent(EventType eventType, EventPtr evt, MouseMovementHandlerPtr mouseMovementHandler) {
 	if (eventType == EventType::MOUSE_MOVE) {
 		if (mouseMovementHandler->checkForMouseOver(id, *evt->mouseEvent->position.get())) {
 			if (mouseState == MouseState::UP) {
@@ -91,6 +91,6 @@ bool InputListener::onEvent(EventType eventType, Event* evt, MouseMovementHandle
 	return false;
 }
 
-void InputComponent::setInputCallback(InputEvent inputEvent, std::function<bool(Event*)>& callback) {
+void InputComponent::setInputCallback(InputEvent inputEvent, std::function<bool(EventPtr)>& callback) {
 	mInputListener->eventCallbacks.emplace(inputEvent, callback);
 }

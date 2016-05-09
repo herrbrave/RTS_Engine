@@ -7,7 +7,7 @@
 
 class PathState : public State {
 public:
-	PathState(Entity* unit, Flowfield* flowField);
+	PathState(EntityPtr unit, FlowfieldPtr flowField);
 	virtual void begin();
 	virtual void update();
 	virtual void end();
@@ -18,8 +18,8 @@ public:
 private:
 	static int const MAX_SEE_AHEAD = 10;
 
-	Flowfield* mFlowfield;
-	Entity* mUnit;
+	FlowfieldPtr mFlowfield;
+	EntityPtr mUnit;
 	bool mStarted{ false };
 	bool mEnded{ false };
 };

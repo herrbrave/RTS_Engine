@@ -1,6 +1,6 @@
 #include"PathState.h"
 
-PathState::PathState(Entity* unit, Flowfield* flowField) {
+PathState::PathState(EntityPtr unit, FlowfieldPtr flowField) {
 	mUnit = unit;
 	mFlowfield = flowField;
 }
@@ -14,14 +14,14 @@ void PathState::update() {
 		return;
 	}
 
-	auto component = reinterpret_cast<PhysicsComponent*>(mUnit->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
-	auto tile = mFlowfield->tileAtPoint(component->getPosition());
+	auto component = makeShared(mUnit->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+	auto tile = makeShared(mFlowfield->tileAtPoint(makeShared(component->getPosition())));
 	if (tile == nullptr || tile == mFlowfield->mTargetTile) {
 		end();
 		return;
 	}
 
-	auto vector = mFlowfield->getVectorForTile(tile->id);
+	auto vector = makeShared(mFlowfield->getVectorForTile(tile->id));
 	if (vector == nullptr) {
 		end();
 		return;

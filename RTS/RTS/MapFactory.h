@@ -7,25 +7,37 @@
 #include"Map.h"
 #include"System.h"
 
+class TileFactory;
+typedef shared_ptr<TileFactory> TileFactoryPtr;
+typedef weak_ptr<TileFactory> WeakTileFactoryPtr;
+
+class TileFactory;
+typedef shared_ptr<TileFactory> TileFactoryPtr;
+typedef weak_ptr<TileFactory> WeakTileFactoryPtr;
+
+class MapFactory;
+typedef shared_ptr<MapFactory> MapFactoryPtr;
+typedef weak_ptr<MapFactory> WeakMapFactoryPtr;
+
 class TileFactory : public EntityFactory {
 public:
-	TileFactory(SystemManager* systemManager) : EntityFactory(systemManager) {}
+	TileFactory(SystemManagerPtr systemManager) : EntityFactory(systemManager) {}
 
-	Entity* createTile(const std::string& assetTag, int xIndex, int yIndex, vector2f* position, float tx, float ty, float width, float height);
+	EntityPtr createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height);
 };
 
 class MapFactory {
 public:
-	MapFactory(TileFactory* tileFactory, SystemManager* systemManager);
+	MapFactory(TileFactoryPtr tileFactory, SystemManagerPtr systemManager);
 
-	Map* createMap(const std::string pathToMap);
+	MapPtr createMap(const string& pathToMap);
 
 private:
-	void loadTileLayer(const rapidjson::Value& tileLayer, std::string assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig);
+	void loadTileLayer(const rapidjson::Value& tileLayer, const string& assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig);
 	void loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig);
 
-	SystemManager* mSystemManager{ nullptr };
-	TileFactory* mTileFactory{ nullptr };
+	SystemManagerPtr mSystemManager{ nullptr };
+	TileFactoryPtr mTileFactory{ nullptr };
 };
 
 #endif // !__MAP_FACTORY_H__

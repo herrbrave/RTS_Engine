@@ -14,7 +14,7 @@
 #include"Physics.h"
 #include"Sound.h"
 
-enum class SystemType {
+enum class SystemType : Uint8 {
 	ANIMATION = 0,
 	ASSET = 1,
 	ENTITY = 2,
@@ -26,31 +26,40 @@ enum class SystemType {
 
 /* Early class definitions. */
 class System;
-class SystemManager;
-class AnimationSystem;
-class AssetSystem;
-class EntitySystem;
-class InputSystem;
-class GraphicsSystem;
-class PhysicsSystem;
-class SoundSystem;
-
-/* Smart pointers aliases. */
-using std::shared_ptr;
-using std::vector;
-using std::unordered_map;
-using std::string;
-using std::static_pointer_cast;
-
 typedef shared_ptr<System> SystemPtr;
+typedef weak_ptr<System> WeakSystemPtr;
+
+class SystemManager;
 typedef shared_ptr<SystemManager> SystemManagerPtr;
+typedef weak_ptr<SystemManager> WeakSystemManagerPtr;
+
+class AnimationSystem;
 typedef shared_ptr<AnimationSystem> AnimationSystemPtr;
+typedef weak_ptr<AnimationSystem> WeakAnimationSystemPtr;
+
+class AssetSystem;
 typedef shared_ptr<AssetSystem> AssetSystemPtr;
+typedef weak_ptr<AssetSystem> WeakAssetSystemPtr;
+
+class EntitySystem;
 typedef shared_ptr<EntitySystem> EntitySystemPtr;
+typedef weak_ptr<EntitySystem> WeakEntitySystemPtr;
+
+class InputSystem;
 typedef shared_ptr<InputSystem> InputSystemPtr;
+typedef weak_ptr<InputSystem> WeakInputSystemPtr;
+
+class GraphicsSystem;
 typedef shared_ptr<GraphicsSystem> GraphicsSystemPtr;
+typedef weak_ptr<GraphicsSystem> WeakGraphicsSystemPtr;
+
+class PhysicsSystem;
 typedef shared_ptr<PhysicsSystem> PhysicsSystemPtr;
+typedef weak_ptr<PhysicsSystem> WeakPhysicsSystemPtr;
+
+class SoundSystem;
 typedef shared_ptr<SoundSystem> SoundSystemPtr;
+typedef weak_ptr<SoundSystem> WeakSoundSystemPtr;
 
 
 class SystemManager {
@@ -58,6 +67,18 @@ public:
 	unordered_map<SystemType, SystemPtr> systems;
 
 	SystemManager(GraphicsConfig* graphicsConfig);
+
+	template<class ClassType>
+	weak_ptr<ClassType> getSystemByType(SystemType systemType) const {
+		if (systems.find(systemType) == systems.end()) {
+			return weak_ptr<ClassType>();
+		}
+
+		shared_ptr<System> systemPtr = systems.at(systemType);
+		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(systemPtr);
+
+		return weak_ptr<ClassType>(converted);
+	}
 };
 
 class System {
@@ -80,23 +101,23 @@ public:
 
 	void update(Uint32 delta);
 
-	void registerAnimation(unsigned long id, AnimationHandler* animationHandler);
+	void registerAnimation(unsigned long id, AnimationHandlerPtr animationHandler);
 
 	void deregisterAnimation(unsigned long id);
 
-	AnimationSet* createAnimationSet(string path);
+	AnimationSetPtr createAnimationSet(const string& path);
 
 	void clear() override;
 
 private:
-	unordered_map<unsigned long, AnimationHandler*> mAnimations;
+	unordered_map<unsigned long, AnimationHandlerPtr> mAnimations;
 };
 
 class AssetSystem : public System {
 public:
 	AssetSystem(SystemManagerPtr systemManager) : System(SystemType::ASSET, systemManager) {}
 
-	void registerAsset(Asset* asset) {
+	void registerAsset(AssetPtr asset) {
 		mAssets.emplace(asset->tag, asset);
 	}
 
@@ -104,7 +125,7 @@ public:
 		mAssets.erase(mAssets.find(assetTag));
 	}
 
-	Asset* getAsset(const string& assetTag) {
+	AssetPtr getAsset(const string& assetTag) {
 		return mAssets[assetTag];
 	}
 
@@ -119,33 +140,33 @@ public:
 		DefaultAssetVendor(AssetSystemPtr assetSystem) {
 			mAssetSystem = assetSystem;
 		}
-		Asset* getAsset(const string& tag) override;
+		AssetPtr getAsset(const string& tag) override;
 	private:
 		AssetSystemPtr mAssetSystem;
 	};
 
 private:
-	unordered_map<string, Asset*> mAssets;
+	unordered_map<string, AssetPtr> mAssets;
 };
 
 class GraphicsSystem : public System {
 public:
-	GraphicsSystem(GraphicsConfig* graphisConfig, SystemManagerPtr systemManager) : System(SystemType::GRAPHICS, systemManager) {
-		mGraphicsConfig.reset(std::move(graphisConfig));
-		mGraphics.reset(new SDLGraphics(mGraphicsConfig.get(), new AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET)))));
-		mCamera.reset(new Camera());
-		mCamera->position.reset(new vector2f(0, 0));
+	GraphicsSystem(GraphicsConfigPtr graphisConfig, SystemManagerPtr systemManager) : System(SystemType::GRAPHICS, systemManager) {
+		mGraphicsConfig = std::move(graphisConfig);
+		mGraphics.reset(GCC_NEW SDLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
+		mCamera.reset(GCC_NEW Camera());
+		mCamera->position.reset(GCC_NEW Vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;
 		mCamera->height = mGraphicsConfig->mHeight;
 	}
 
-	void registerDrawable(const unsigned long, Drawable* drawable);
+	void registerDrawable(const unsigned long, DrawablePtr drawable);
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
-	Drawable* getDrawableById(unsigned long entityId);
+	WeakDrawablePtr getDrawableById(unsigned long entityId);
 
-	Camera* getCamera();
+	WeakCameraPtr getCamera();
 
 	void addTexture(const string& path, const string& assetTag);
 
@@ -153,33 +174,33 @@ public:
 
 	void clear() override;
 private:
-	std::unique_ptr<GraphicsConfig> mGraphicsConfig{ nullptr };
-	std::unique_ptr<Graphics> mGraphics{ nullptr };
-	std::unique_ptr<Camera> mCamera;
-	unordered_map<unsigned long, Drawable*> mDrawables;
+	GraphicsConfigPtr mGraphicsConfig{ nullptr };
+	GraphicsPtr mGraphics{ nullptr };
+	CameraPtr mCamera;
+	unordered_map<unsigned long, DrawablePtr> mDrawables;
 };
 
 class EntitySystem : public System {
 public:
 	EntitySystem(SystemManagerPtr systemManager) : System(SystemType::ENTITY, systemManager) {}
 
-	void registerEntity(Entity* entity);
-	Entity* getEntityById(unsigned long id);
+	void addEntity(EntityPtr entity);
+	WeakEntityPtr getEntityById(unsigned long id);
 	void deregisterEntity(unsigned long id);
-	void getAllEntities(std::vector<Entity*>& entity);
+	void getAllEntities(std::vector<EntityPtr>& entity);
 
 	void clear() override;
 
 	class DefaultEntityVendor : public EntityVendor {
 	public:
-		DefaultEntityVendor(EntitySystem* entitySystem) { mEntitySystem = entitySystem; }
-		Entity* getEntityById(unsigned long entityId) override;
+		DefaultEntityVendor(EntitySystemPtr entitySystem) { mEntitySystem = entitySystem; }
+		WeakEntityPtr getEntityById(unsigned long entityId) override;
 	private:
-		EntitySystem* mEntitySystem;
+		EntitySystemPtr mEntitySystem;
 	};
 
 private:
-	unordered_map<unsigned long, Entity*> mEntityMap;
+	unordered_map<unsigned long, EntityPtr> mEntityMap;
 };
 
 class DefaultPhysicsNotifier : public PhysicsNotifier {
@@ -198,19 +219,19 @@ private:
 
 class PhysicsSystem : public System {
 public:
-	std::unique_ptr<Quadtree> quadTree{ nullptr };
-	std::unique_ptr<PhysicsNotifier> physicsNotifier{ nullptr };
+	QuadtreePtr quadTree{ nullptr };
+	PhysicsNotifierPtr physicsNotifier{ nullptr };
 
 	PhysicsSystem(SystemManagerPtr systemManager) : System(SystemType::PHYSICS, systemManager) {
-		quadTree.reset(new Quadtree(512, 384, 1024, 768));
-		physicsNotifier.reset(new DefaultPhysicsNotifier(systemManager));
+		quadTree.reset(GCC_NEW Quadtree(512, 384, 1024, 768));
+		physicsNotifier.reset(GCC_NEW DefaultPhysicsNotifier(systemManager));
 	}
 
 	~PhysicsSystem() = default;
 
-	Body* getBody(const unsigned long id);
+	WeakBodyPtr getBody(const unsigned long id);
 
-	void registerBody(const unsigned long id, Body* body);
+	void registerBody(const unsigned long id, BodyPtr body);
 	void deregisterBody(const unsigned long id);
 
 	void update(Uint32 delta);
@@ -218,8 +239,8 @@ public:
 	void clear() override;
 
 private:
-	unordered_map<unsigned long, Body*> mBodies;
-	float sweptAABB(Body& incidentBody, Body& otherBody, const vector2f& velocity, vector2f& normal);
+	unordered_map<unsigned long, BodyPtr> mBodies;
+	float sweptAABB(Body& incidentBody, Body& otherBody, const Vector2f& velocity, Vector2f& normal);
 };
 
 class DefaultMouseMovementHandler : public MouseMovementHandler {
@@ -228,7 +249,7 @@ public:
 		mSystemManager = systemManager;
 	}
 
-	bool checkForMouseOver(unsigned long id, const vector2f& position) override;
+	bool checkForMouseOver(unsigned long id, const Vector2f& position) override;
 
 private:
 	SystemManagerPtr mSystemManager;
@@ -237,10 +258,10 @@ private:
 class InputSystem : public System {
 public:
 	InputSystem(SystemManagerPtr systemManager) : System(SystemType::INPUT, systemManager) {
-		mMouseMovementHandler.reset(new DefaultMouseMovementHandler(systemManager));
+		mMouseMovementHandler.reset(GCC_NEW DefaultMouseMovementHandler(systemManager));
 	}
 
-	void registerEventListener(InputListener* inputListener);
+	void registerEventListener(InputListenerPtr inputListener);
 	void deregisterEventListener(unsigned long id);
 
 	void handleEvent(const SDL_Event& evt);
@@ -248,13 +269,13 @@ public:
 	void clear() override;
 
 private:
-	unordered_map<unsigned long, InputListener*> mListeners;
-	std::unique_ptr<MouseMovementHandler> mMouseMovementHandler{ nullptr };
+	unordered_map<unsigned long, InputListenerPtr> mListeners;
+	MouseMovementHandlerPtr mMouseMovementHandler{ nullptr };
 };
 
 class DefaultSoundController : public SoundController {
 public:
-	DefaultSoundController(Sound* sound, SystemManager* systemManager) : SoundController(sound) {
+	DefaultSoundController(SoundPtr sound, SystemManagerPtr systemManager) : SoundController(sound) {
 		mSystemManager = systemManager;
 	}
 
@@ -262,7 +283,7 @@ public:
 	void pause() override;
 	void stop() override;
 private:
-	SystemManager* mSystemManager;
+	SystemManagerPtr mSystemManager;
 };
 
 class SoundSystem : public System {
@@ -277,33 +298,9 @@ public:
 
 	void loadSound(const string& path, const string& assetTag, SoundType soundType);
 
-	SoundController* createController(const string& assetTag, SoundType soundType);
+	SoundControllerPtr createController(const string& assetTag, SoundType soundType);
 
 	void clear() override {/* no op */}
 };
-
-void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager);
-
-void getPositionById(vector2f* vector, unsigned long id, SystemManager& systemManager);
-
-Entity* getEntityById(unsigned long entityId, SystemManager* systemManager);
-
-bool assetExists(const string& assetTag, SystemManager* systemManager);
-
-Asset* getAsset(const string& assetTag, SystemManager* systemManager);
-
-void updatePhysicsSystem(Uint32 ticks, SystemManager* systemManager);
-
-void drawGraphicsSystem(SystemManager* systemManager);
-
-void handleInput(const SDL_Event& event, SystemManager* systemManager);
-
-Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager);
-
-Body* getBodyById(unsigned long bodyId, SystemManager* systemManager); 
-
-void destroyEntity(unsigned long entityId, SystemManager* systemManager);
-
-void destroyAllEntities(SystemManager* systemManager);
 
 #endif // !__SYSTEM_H__

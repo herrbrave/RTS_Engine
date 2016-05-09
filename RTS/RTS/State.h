@@ -1,7 +1,12 @@
 #ifndef __STATE_H__
 #define __STATE_H__
 
+#include"Constants.h"
 #include<functional>
+
+class State;
+typedef shared_ptr<State> StatePtr;
+typedef weak_ptr<State> WeakStatePtr;
 
 class State {
 public:

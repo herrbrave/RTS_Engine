@@ -1,9 +1,5 @@
 #include"Entity.h"
 
-Entity::Entity() {
-	componentContainer.reset(new ComponentContainer());
-}
-
 void Entity::update() {
 	if (mStateQueue.size() <= 0) {
 		return;
@@ -30,6 +26,10 @@ void Entity::update() {
 	}
 }
 
-void Entity::pushState(std::shared_ptr<State> state) {
+void Entity::pushState(StatePtr state) {
 	mStateQueue.push_back(state);
+}
+
+void Entity::addComponent(ComponentPtr component) {
+	mComponents.emplace(component->componentId, component);
 }

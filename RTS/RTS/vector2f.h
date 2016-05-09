@@ -6,25 +6,29 @@
 #include<cmath>
 #include<memory>
 
-class vector2f {
+class Vector2f;
+typedef shared_ptr<Vector2f> Vector2fPtr;
+typedef weak_ptr<Vector2f> WeakVector2fPtr;
+
+class Vector2f {
 public:
-	vector2f() : x(0), y(0) {}
-	vector2f(const vector2f& copy) {
-		x = copy.x;
-		y = copy.y;
+	Vector2f() : x(0), y(0) {}
+	Vector2f(Vector2fPtr copy) {
+		x = copy->x;
+		y = copy->y;
 	}
 
-	vector2f(float x, float y) {
+	Vector2f(float x, float y) {
 		this->x = x;
 		this->y = y;
 	}
 
-	vector2f(const rapidjson::Value& root) {
+	Vector2f(const rapidjson::Value& root) {
 		x = root["x"].GetDouble();
 		y = root["y"].GetDouble();
 	}
 
-	void set(vector2f* vector) {
+	void set(Vector2f* vector) {
 		x = vector->x;
 		y = vector->y;
 	}
@@ -34,38 +38,38 @@ public:
 		this->y = y;
 	}
 
-	vector2f operator*(float scalar) const {
-		return vector2f(x * scalar, y * scalar);
+	Vector2f operator*(float scalar) const {
+		return Vector2f(x * scalar, y * scalar);
 	}
 
-	vector2f operator+(const vector2f& other) const {
-		return vector2f(x + other.x, y + other.y);
+	Vector2f operator+(const Vector2f& other) const {
+		return Vector2f(x + other.x, y + other.y);
 	}
 
-	vector2f operator-(const vector2f& other) const {
-		return vector2f(x - other.x, y - other.y);
+	Vector2f operator-(const Vector2f& other) const {
+		return Vector2f(x - other.x, y - other.y);
 	}
 
-	vector2f& operator*=(float scalar) {
+	Vector2f& operator*=(float scalar) {
 		x *= scalar;
 		y *= scalar;
 		return *this;
 	}
 
-	vector2f& operator+=(const vector2f& other) {
+	Vector2f& operator+=(const Vector2f& other) {
 		x += other.x; 
 		y += other.y;
 		return *this;
 	}
 
-	vector2f& operator-=(const vector2f& other) {
+	Vector2f& operator-=(const Vector2f& other) {
 		x -= other.x;
 		y -= other.y;
 		return *this;
 	}
 
-	vector2f dot(const vector2f& other) const {
-		return vector2f(x * other.x, y * other.y);
+	Vector2f dot(const Vector2f& other) const {
+		return Vector2f(x * other.x, y * other.y);
 	}
 
 	float magnitude() {
@@ -92,7 +96,5 @@ public:
 		serializer.writer.EndObject();
 	}
 };
-
-typedef std::shared_ptr<vector2f> p_vector2f;
 
 #endif // !__VECTOR_H__

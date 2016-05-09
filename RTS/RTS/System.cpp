@@ -2,13 +2,13 @@
 
 SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	SystemManagerPtr ptr(this);
-	systems.emplace(SystemType::ANIMATION, AnimationSystemPtr(new AnimationSystem(ptr)));
-	systems.emplace(SystemType::ASSET, AssetSystemPtr(new AssetSystem(ptr)));
-	systems.emplace(SystemType::ENTITY, EntitySystemPtr(new EntitySystem(ptr)));
-	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(new PhysicsSystem(ptr)));
-	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(new GraphicsSystem(graphicsConfig, ptr)));
-	systems.emplace(SystemType::INPUT, InputSystemPtr(new InputSystem(ptr)));
-	systems.emplace(SystemType::SOUND, SoundSystemPtr(new SoundSystem(ptr)));
+	systems.emplace(SystemType::ANIMATION, AnimationSystemPtr(GCC_NEW AnimationSystem(ptr)));
+	systems.emplace(SystemType::ASSET, AssetSystemPtr(GCC_NEW AssetSystem(ptr)));
+	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
+	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
+	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(GraphicsConfigPtr(graphicsConfig), ptr)));
+	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
+	systems.emplace(SystemType::SOUND, SoundSystemPtr(GCC_NEW SoundSystem(ptr)));
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -17,7 +17,7 @@ void AnimationSystem::update(Uint32 delta) {
 	}
 }
 
-void AnimationSystem::registerAnimation(unsigned long id, AnimationHandler* animationHandler) {
+void AnimationSystem::registerAnimation(unsigned long id, AnimationHandlerPtr animationHandler) {
 	if (mAnimations.find(id) == mAnimations.end()) {
 		return;
 	}
@@ -33,7 +33,7 @@ void AnimationSystem::deregisterAnimation(unsigned long id) {
 	mAnimations.erase(id);
 }
 
-AnimationSet* AnimationSystem::createAnimationSet(std::string path) {
+AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 	std::ifstream file(path);
 	std::string line;
 	std::string builder;
@@ -53,14 +53,14 @@ AnimationSet* AnimationSystem::createAnimationSet(std::string path) {
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(imagePath, name);
 
-	AnimationSet* animationSet = new AnimationSet();
+	AnimationSetPtr animationSet(GCC_NEW AnimationSet());
 	animationSet->defaultAnimationName = defaultAnimationName;
 	animationSet->fps = fps;
 	auto animations = doc["animations"].GetArray();
 	for (int index = 0; index < animations.Size(); index++) {
 		auto animation = animations[index].GetObject();
 
-		Animation* anim = new Animation();
+		AnimationPtr anim(GCC_NEW Animation());
 		anim->name =animation["name"].GetString();
 		animationSet->animations.emplace(anim->name, anim);
 		auto frames = animation["frames"].GetArray();
@@ -71,7 +71,7 @@ AnimationSet* AnimationSystem::createAnimationSet(std::string path) {
 			float w(float(frame["w"].GetInt()));
 			float h(float(frame["h"].GetInt()));
 
-			Texture* texture = new Texture(name, x, y, w, h);
+			TexturePtr texture(GCC_NEW Texture(name, x, y, w, h));
 			anim->frames.push_back(texture);
 		}
 	}
@@ -83,7 +83,7 @@ void  AnimationSystem::clear() {
 	mAnimations.clear();
 }
 
-Asset* AssetSystem::DefaultAssetVendor::getAsset(const std::string& tag) {
+AssetPtr AssetSystem::DefaultAssetVendor::getAsset(const string& tag) {
 	return mAssetSystem->getAsset(tag);
 }
 
@@ -91,7 +91,7 @@ void AssetSystem::clear() {
 	mAssets.clear();
 }
 
-void GraphicsSystem::registerDrawable(const unsigned long id, Drawable* drawable) {
+void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
 	mDrawables.emplace(id, drawable);
 }
 
@@ -103,42 +103,43 @@ void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
 	for (auto drawable : mDrawables) {
-		vector2f position(0, 0);
-		getPositionById(&position, drawable.first, *mSystemManager);
+		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+		BodyPtr body(physicsSystem->getBody(drawable.first));
+		Vector2fPtr position(body->getPosition());
 		if (!drawable.second->isUi) {
-			translateToCamera(&position, mCamera.get());
+			translateToCamera(position, mCamera);
 		}
 
-		drawable.second->draw(mGraphics.get(), &position);
+		drawable.second->draw(*mGraphics, position);
 	}
 
 	mGraphics->onAfterDraw();
 }
 
-Camera* GraphicsSystem::getCamera() {
-	return mCamera.get();
+WeakCameraPtr GraphicsSystem::getCamera() {
+	return mCamera;
 }
 
-Drawable* GraphicsSystem::getDrawableById(unsigned long entityId) {
-	return mDrawables.at(entityId);
+WeakDrawablePtr GraphicsSystem::getDrawableById(unsigned long entityId) {
+	return WeakDrawablePtr(mDrawables.at(entityId));
 }
 
 void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
-	if (assetExists(assetTag, mSystemManager.get())) {
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	if (assetSystem->contains(assetTag)) {
 		SDL_Log("Asset already loaded.");
 		return;
 	}
-	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 
 	assetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
 }
 
 void GraphicsSystem::createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	if (assetExists(assetTag, mSystemManager.get())) {
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	if (assetSystem->contains(assetTag)) {
 		SDL_Log("Text already added.");
 		return;
 	}
-	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
 
 	assetSystem->registerAsset(mGraphics->createTextAsset(text, assetTag, r, g, b, a));
 }
@@ -147,19 +148,21 @@ void GraphicsSystem::clear() {
 	mDrawables.clear();
 }
 
-void EntitySystem::registerEntity(Entity* entity) {
+void EntitySystem::addEntity(EntityPtr entity) {
 	mEntityMap.emplace(entity->id, entity);
 }
 
-Entity* EntitySystem::getEntityById(unsigned long id) {
+WeakEntityPtr EntitySystem::getEntityById(unsigned long id) {
 	return mEntityMap.at(id);
 }
 
-Entity* EntitySystem::DefaultEntityVendor::getEntityById(unsigned long entityId) {
-	return mEntitySystem->getEntityById(entityId);
+WeakEntityPtr EntitySystem::DefaultEntityVendor::getEntityById(unsigned long entityId) {
+
+
+	return WeakEntityPtr( mEntitySystem->getEntityById(entityId) );
 }
 
-void EntitySystem::getAllEntities(std::vector<Entity*>& entities) {
+void EntitySystem::getAllEntities(std::vector<EntityPtr>& entities) {
 	for (auto entry : mEntityMap) {
 		entities.push_back(entry.second);
 	}
@@ -175,8 +178,8 @@ void EntitySystem::clear() {
 
 
 void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
-	Body* body = physicsSystem->getBody(id);
+	PhysicsSystemPtr physicsSystem(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr body(physicsSystem->getBody(id));
 	physicsSystem->quadTree->removeBody(body);
 	if (body->collider != nullptr) {
 		physicsSystem->quadTree->addBody(body);
@@ -184,15 +187,15 @@ void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
 }
 
 void DefaultPhysicsNotifier::notifyColliderUpdate(unsigned long id) {
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
-	Body* body = physicsSystem->getBody(id);
+	PhysicsSystemPtr physicsSystem(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr body(physicsSystem->getBody(id));
 	physicsSystem->quadTree->removeBody(body);
 	if (body->collider != nullptr) {
 		physicsSystem->quadTree->addBody(body);
 	}
 }
 
-void PhysicsSystem::registerBody(const unsigned long id, Body* body) {
+void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
 	mBodies.emplace(id, body);
 }
 
@@ -202,8 +205,8 @@ void PhysicsSystem::deregisterBody(const unsigned long id) {
 }
 
 
-Body* PhysicsSystem::getBody(const unsigned long id) {
-	return mBodies.at(id);
+WeakBodyPtr PhysicsSystem::getBody(const unsigned long id) {
+	return WeakBodyPtr(mBodies.at(id));
 }
 
 void PhysicsSystem::update(Uint32 delta) {
@@ -212,58 +215,59 @@ void PhysicsSystem::update(Uint32 delta) {
 
 	// TODO: add steering later.
 	for (auto element : mBodies) {
-		vector2f velocityCopy(*element.second->getVelocity());
-		if (velocityCopy.x == 0 && velocityCopy.y == 0) {
+		Vector2fPtr velocityCopy(element.second->getVelocity());
+		if (velocityCopy->x == 0 && velocityCopy->y == 0) {
 			continue;
 		}
 
-		velocityCopy *= element.second->getSpeed();
-		velocityCopy *= step;
+		*velocityCopy *= element.second->getSpeed();
+		*velocityCopy *= step;
 
-		vector2f positionCopy(*element.second->getPosition());
-		vector2f newPosition(positionCopy + velocityCopy);
+		Vector2fPtr positionCopy(element.second->getPosition());
+		Vector2fPtr newPosition(&(*positionCopy + *velocityCopy));
 		
 		if (!element.second->isCollidable()) {
-			element.second->setPosition(&newPosition);
+			element.second->setPosition(newPosition);
 			quadTree->removeBody(element.second);
 			quadTree->addBody(element.second);
 			continue;
 		}
 		
-		std::vector<Body*> collidingBodies;
+		vector<BodyPtr> collidingBodies;
 		quadTree->getNeigboringBodies(element.second, collidingBodies);
 
 		if (collidingBodies.size() == 0) {
-			element.second->setPosition(&newPosition);
+			element.second->setPosition(newPosition);
 			quadTree->removeBody(element.second);
 			quadTree->addBody(element.second);
 			continue;
 		}
 		
 		// Clean this up and move it into another method.
-		Body copyBody(*element.second);
-		copyBody.setPosition(&newPosition);
-		for (Body* collidingBody : collidingBodies) {
-			if (!copyBody.collider->checkCollision(*collidingBody->collider)) {
+		BodyPtr copyBody(element.second);
+		copyBody->setPosition(newPosition);
+		for (WeakBodyPtr collidingBodyPtr : collidingBodies) {
+			BodyPtr collidingBody(collidingBodyPtr);
+			if (!copyBody->collider->checkCollision(collidingBody->collider)) {
 				continue;
 			}
 
-			vector2f normal(0, 0);
+			Vector2f normal(0, 0);
 			float collisionTime = sweptAABB(*element.second, *collidingBody, velocityCopy, normal);
 			if (collisionTime == 1.0f) {
 				continue;
 			}
 
-			velocityCopy *= collisionTime;
-			newPosition.set(&(positionCopy + velocityCopy));
-			copyBody.setPosition(&newPosition);
+			*velocityCopy *= collisionTime;
+			newPosition->set(&(*positionCopy + *velocityCopy));
+			copyBody->setPosition(newPosition);
 
-			collidingBody->collider->onCollision(*element.second->collider);
-			element.second->collider->onCollision(*collidingBody->collider);
+			collidingBody->collider->onCollision(element.second->collider);
+			element.second->collider->onCollision(collidingBody->collider);
 		}
 
 
-		element.second->setPosition(&newPosition);
+		element.second->setPosition(newPosition);
 
 		// update the bodies location in the tree.
 		quadTree->removeBody(element.second);
@@ -276,35 +280,33 @@ void PhysicsSystem::clear() {
 	quadTree->clear();
 }
 
-float PhysicsSystem::sweptAABB(Body& incidentBody, Body& otherBody, const vector2f& velocity, vector2f& normal) {
-	Extent incidentExtent;
-	incidentBody.collider->getExtent(incidentExtent);
-	Extent otherExtent;
-	otherBody.collider->getExtent(otherExtent);
+float PhysicsSystem::sweptAABB(Body& incidentBody, Body& otherBody, const Vector2f& velocity, Vector2f& normal) {
+	ExtentPtr incidentExtent = incidentBody.collider->getExtent();
+	ExtentPtr otherExtent = otherBody.collider->getExtent();
 
-	vector2f inverseEntry;
-	vector2f inverseExit;
+	Vector2f inverseEntry;
+	Vector2f inverseExit;
 
 	if (velocity.x > 0.0f) {
-		inverseEntry.x = (otherExtent.x0 - incidentExtent.x1);
-		inverseExit.x = (otherExtent.x1 - incidentExtent.x0);
+		inverseEntry.x = (otherExtent->x0 - incidentExtent->x1);
+		inverseExit.x = (otherExtent->x1 - incidentExtent->x0);
 	}
 	else {
-		inverseEntry.x = (otherExtent.x1 - incidentExtent.x0);
-		inverseExit.x = (otherExtent.x0 - incidentExtent.x1);
+		inverseEntry.x = (otherExtent->x1 - incidentExtent->x0);
+		inverseExit.x = (otherExtent->x0 - incidentExtent->x1);
 	}
 
 	if (velocity.y > 0.0f) {
-		inverseEntry.y = (otherExtent.y0 - incidentExtent.y1);
-		inverseExit.y = (otherExtent.y1 - incidentExtent.y0);
+		inverseEntry.y = (otherExtent->y0 - incidentExtent->y1);
+		inverseExit.y = (otherExtent->y1 - incidentExtent->y0);
 	}
 	else {
-		inverseEntry.y = (otherExtent.y1 - incidentExtent.y0);
-		inverseExit.y = (otherExtent.y0 - incidentExtent.y1);
+		inverseEntry.y = (otherExtent->y1 - incidentExtent->y0);
+		inverseExit.y = (otherExtent->y0 - incidentExtent->y1);
 	}
 
-	vector2f entry;
-	vector2f exit;
+	Vector2f entry;
+	Vector2f exit;
 
 	if (velocity.x == 0.0f) {
 		entry.x = -std::numeric_limits<float>::infinity();
@@ -351,7 +353,7 @@ float PhysicsSystem::sweptAABB(Body& incidentBody, Body& otherBody, const vector
 	return entryTime;
 }
 
-void InputSystem::registerEventListener(InputListener* inputListener) {
+void InputSystem::registerEventListener(InputListenerPtr inputListener) {
 	mListeners.emplace(inputListener->id, inputListener);
 }
 
@@ -362,20 +364,20 @@ void InputSystem::deregisterEventListener(unsigned long id) {
 void InputSystem::handleEvent(const SDL_Event& evt) {
 	int x, y;
 	SDL_GetMouseState(&x, &y);
-	vector2f mousePosition(x, y);
-	MouseEvent mouseEvent;
-	mouseEvent.button = ((evt.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
-	mouseEvent.position->x = x;
-	mouseEvent.position->y = y;
+	Vector2fPtr mousePosition(GCC_NEW Vector2f(x, y));
+	MouseEventPtr mouseEvent(GCC_NEW MouseEvent());
+	mouseEvent->button = ((evt.button.button == SDL_BUTTON_LEFT) ? MouseButton::LEFT : MouseButton::RIGHT);
+	mouseEvent->position->x = x;
+	mouseEvent->position->y = y;
 
-	KeyboardEvent keyEvent;
-	keyEvent.key = evt.key.keysym.sym;
-	keyEvent.ctrlDown = (evt.key.keysym.mod & KMOD_CTRL);
-	keyEvent.shiftDown = (evt.key.keysym.mod & KMOD_SHIFT);
+	KeyboardEventPtr keyEvent(GCC_NEW KeyboardEvent());
+	keyEvent->key = evt.key.keysym.sym;
+	keyEvent->ctrlDown = (evt.key.keysym.mod & KMOD_CTRL);
+	keyEvent->shiftDown = (evt.key.keysym.mod & KMOD_SHIFT);
 
-	Event inputEvent;
-	inputEvent.keyEvent = &keyEvent;
-	inputEvent.mouseEvent = &mouseEvent;
+	EventPtr inputEvent(GCC_NEW Event());
+	inputEvent->keyEvent = keyEvent;
+	inputEvent->mouseEvent = mouseEvent;
 
 	EventType type = EventType::NONE;
 	switch (evt.type) {
@@ -401,7 +403,7 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 	}
 
 	for (auto listener : mListeners) {
-		if (listener.second->onEvent(type, &inputEvent, mMouseMovementHandler.get())) {
+		if (listener.second->onEvent(type, inputEvent, mMouseMovementHandler)) {
 			return;
 		}
 	}
@@ -411,21 +413,22 @@ void InputSystem::clear() {
 	mListeners.clear();
 }
 
-bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const vector2f& position) {
-	Body* body = getBodyById(id, mSystemManager.get());
+bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vector2f& position) {
+	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr body(physicsSystem->getBody(id));
 	return body->checkPoint(position);
 }
 
 void DefaultSoundController::play(int loop) {
-	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(mSystemManager->systems.at(SystemType::ASSET));
-	Asset* asset = assetSystem->getAsset(mSound->assetTag);
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetPtr asset(assetSystem->getAsset(mSound->assetTag));
 	if (SoundType::SOUND == mSound->soundType) {
-		Mix_Chunk* mix = reinterpret_cast<Mix_Chunk*>(asset->getAsset());
-		Mix_PlayChannel(-1, mix, loop);
+		shared_ptr<Mix_Chunk> mix = makeShared(asset->getAsset<Mix_Chunk>());
+		Mix_PlayChannel(-1, mix.get(), loop);
 	}
 	else if (SoundType::MUSIC == mSound->soundType) {
-		Mix_Music* mix = reinterpret_cast<Mix_Music*>(asset->getAsset());
-		Mix_PlayMusic(mix, -1);
+		shared_ptr<Mix_Music> mix(asset->getAsset<Mix_Music>());
+		Mix_PlayMusic(mix.get(), -1);
 	}
 }
 
@@ -453,21 +456,17 @@ void SoundSystem::loadSound(const std::string& path, const std::string& assetTag
 		return;
 	}
 
-	Asset* asset = nullptr;
+	AssetPtr asset = nullptr;
 	if (soundType == SoundType::SOUND) {
-		asset = new Asset(Mix_LoadWAV(path.c_str()), path, assetTag, std::function<void(void*)>([](void* asset) {
-			Mix_Chunk* mix = reinterpret_cast<Mix_Chunk*>(asset);
-			Mix_FreeChunk(mix);
-		}));
+		VoidPtr assetPtr(Mix_LoadWAV(path.c_str()), SDL_DELETERS());
+		asset = AssetPtr(GCC_NEW Asset(assetPtr, path, assetTag));
 	}
 	else if (soundType == SoundType::MUSIC) {
-		asset = new Asset(Mix_LoadMUS(path.c_str()), path, assetTag, std::function<void(void*)>([](void* asset) {
-			Mix_Music* mix = reinterpret_cast<Mix_Music*>(asset);
-			Mix_FreeMusic(mix);
-		}));
+		VoidPtr assetPtr(Mix_LoadMUS(path.c_str()), SDL_DELETERS());
+		asset = AssetPtr(GCC_NEW Asset(assetPtr, path, assetTag));
 	}
 
-	if (asset == nullptr || asset->getAsset() == nullptr) {
+	if (asset == nullptr) {
 		std::string error("Error loading sound: ");
 		error.append(SDL_GetError());
 		throw std::exception(error.c_str());
@@ -476,102 +475,6 @@ void SoundSystem::loadSound(const std::string& path, const std::string& assetTag
 	assetSystem->registerAsset(asset);
 }
 
-SoundController* SoundSystem::createController(const std::string& assetTag, SoundType soundType) {
-	SoundController* soundController = new DefaultSoundController(new Sound(assetTag, soundType), mSystemManager.get());
-	return soundController;
-}
-
-void getEntityPosition(vector2f* vector, Entity* entity, SystemManager* systemManager) {
-	PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
-	vector->set(physicsComponent->getPosition()->x, physicsComponent->getPosition()->y);
-
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
-
-	unsigned long parentId = entity->parent;
-	while (parentId != -1) {
-		Entity* parent = entitySystem->getEntityById(parentId);
-		physicsComponent = reinterpret_cast<PhysicsComponent*>(parent->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
-		*vector += *physicsComponent->getPosition();
-		parentId = parent->parent;
-	}
-}
-
-void getPositionById(vector2f* vector, unsigned long id, SystemManager& systemManager) {
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager.systems.at(SystemType::PHYSICS));
-	vector2f position(*physicsSystem->getBody(id)->getPosition());
-	vector->set(&position);
-}
-
-Entity* getEntityById(unsigned long entityId, SystemManager* systemManager) {
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
-	return entitySystem->getEntityById(entityId);
-}
-
-bool assetExists(const std::string& assetTag, SystemManager* systemManager) {
-	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET));
-	return assetSystem->contains(assetTag);
-}
-
-Asset* getAsset(const std::string& assetTag, SystemManager* systemManager) {
-	AssetSystemPtr assetSystem = static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET));
-	return assetSystem->getAsset(assetTag);
-}
-
-void updatePhysicsSystem(Uint32 ticks, SystemManager* systemManager) {
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
-	physicsSystem->update(ticks);
-}
-
-void drawGraphicsSystem(SystemManager* systemManager) {
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	graphicsSystem->draw();
-}
-
-void handleInput(const SDL_Event& event, SystemManager* systemManager) {
-	InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(systemManager->systems.at(SystemType::INPUT));
-	inputSystem->handleEvent(event);
-}
-
-Drawable* getDrawableById(unsigned long drawableId, SystemManager* systemManager) {
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	return graphicsSystem->getDrawableById(drawableId);
-}
-
-Body* getBodyById(unsigned long bodyId, SystemManager* systemManager) {
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
-	return physicsSystem->getBody(bodyId);
-}
-
-void destroyEntity(unsigned long entityId, SystemManager* systemManager) {
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
-	Entity* entity = entitySystem->getEntityById(entityId);
-
-	for (auto component : entity->componentContainer->mComponents) {
-		if (component.first == ComponentType::DRAWABLE_COMPONENT) {
-			GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-			graphicsSystem->deregisterDrawable(entityId);
-		}
-		else if (component.first == ComponentType::INPUT_COMPONENT) {
-			InputSystemPtr inputSystem = static_pointer_cast<InputSystem>(systemManager->systems.at(SystemType::INPUT));
-			inputSystem->deregisterEventListener(entityId);
-		}
-		else if (component.first == ComponentType::PHYSICS_COMPONENT) {
-			PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(systemManager->systems.at(SystemType::PHYSICS));
-			physicsSystem->deregisterBody(entityId);
-		}
-		else if (component.first == ComponentType::TILE_COMPONENT) {
-		}
-	}
-
-	entitySystem->deregisterEntity(entityId);
-}
-
-void destroyAllEntities(SystemManager* systemManager) {
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(systemManager->systems.at(SystemType::ENTITY));
-	std::vector<Entity*> entities;
-	entitySystem->getAllEntities(entities);
-
-	for (auto entity : entities) {
-		destroyEntity(entity->id, systemManager);
-	}
+SoundControllerPtr SoundSystem::createController(const std::string& assetTag, SoundType soundType) {
+	return SoundControllerPtr(GCC_NEW DefaultSoundController(SoundPtr(GCC_NEW Sound(assetTag, soundType)), mSystemManager));
 }

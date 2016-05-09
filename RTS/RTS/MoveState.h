@@ -12,11 +12,11 @@ public:
 	virtual void end();
 	virtual bool hasBegun();
 	virtual bool isEnded();
-	MoveState(std::shared_ptr<Entity> entity, std::shared_ptr<Entity> target);
+	MoveState(EntityPtr entity, EntityPtr target);
 
 protected:
-	std::shared_ptr<Entity> mEntity;
-	std::shared_ptr<Entity> mTarget;
+	EntityPtr mEntity;
+	EntityPtr mTarget;
 	float mSpeed;
 	bool mHasBegun{ false };
 	bool mDone{ false };

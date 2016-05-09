@@ -1,37 +1,47 @@
 #ifndef __ASSET_H__
 #define __ASSET_H__
 
+#include"Constants.h"
+
 #include<functional>
 #include<memory>
 #include<string>
 #include<unordered_map>
+
+class Asset;
+typedef shared_ptr<Asset> AssetPtr;
+typedef weak_ptr<Asset> WeakAssetPtr;
+
+class AssetVendor;
+typedef shared_ptr<AssetVendor> AssetVendorPtr;
+typedef weak_ptr<AssetVendor> WeakAssetVendorPtr;
+
+typedef shared_ptr<void> VoidPtr;
 
 class Asset {
 public:
 	std::string path;
 	std::string tag;
 
-	Asset(void* asset, const std::string& path, const std::string& tag, std::function<void(void*)> assetDeleter) {
+	Asset(VoidPtr asset, const std::string& path, const std::string& tag) {
 		mAsset = asset;
 		this->tag = std::move(tag);
 	}
-	
-	~Asset() {
-		mDeleter(mAsset);
-	}
 
-	void* getAsset() {
-		return mAsset;
+	template<class ClassType>
+	weak_ptr<ClassType> getAsset() {
+		shared_ptr<void> asset = mAsset;
+		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(asset);
+		return weak_ptr<ClassType>(converted);
 	}
 
 private:
-	void* mAsset;
-	std::function<void(void*)> mDeleter;
+	VoidPtr mAsset;
 };
 
 class AssetVendor {
 public:
-	virtual Asset* getAsset(const std::string& tag) = 0;
+	virtual AssetPtr getAsset(const std::string& tag) = 0;
 };
 
 #endif // !__ASSET_H__

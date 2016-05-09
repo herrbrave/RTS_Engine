@@ -13,6 +13,14 @@ enum class SoundType {
 	MUSIC = 1,
 };
 
+class Sound;
+typedef shared_ptr<Sound> SoundPtr;
+typedef weak_ptr<Sound> WeakSoundPtr;
+
+class SoundController;
+typedef shared_ptr<SoundController> SoundControllerPtr;
+typedef weak_ptr<SoundController> WeakSoundControllerPtr;
+
 class Sound {
 public:
 	std::string assetTag;
@@ -27,13 +35,13 @@ public:
 
 class SoundController {
 public:
-	SoundController(Sound* sound);
+	SoundController(SoundPtr sound);
 
 	virtual void play(int loop = 0) = 0;
 	virtual void pause() = 0;
 	virtual void stop() = 0;
 protected:
-	std::unique_ptr<Sound> mSound;
+	SoundPtr mSound;
 };
 
 #endif // !__SOUND_H__

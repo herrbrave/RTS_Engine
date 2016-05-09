@@ -2,7 +2,7 @@
 #define __PHYSICS_H__
 
 #include"Component.h"
-#include"vector2f.h"
+#include"Vector2f.h"
 
 #include<functional>
 #include<map>
@@ -11,9 +11,36 @@
 #include<unordered_map>
 #include<unordered_set>
 
+
 struct Extent {
 	float x0, y0, x1, y1;
 };
+typedef shared_ptr<Extent> ExtentPtr;
+typedef weak_ptr<Extent> WeakExtentPtr;
+
+class PhysicsNotifier;
+typedef shared_ptr<PhysicsNotifier> PhysicsNotifierPtr;
+typedef weak_ptr<PhysicsNotifier> WeakPhysicsNotifierPtr;
+
+class Collider;
+typedef shared_ptr<Collider> ColliderPtr;
+typedef weak_ptr<Collider> WeakColliderPtr;
+
+class Body;
+typedef shared_ptr<Body> BodyPtr;
+typedef weak_ptr<Body> WeakBodyPtr;
+
+class QuadtreeNode;
+typedef shared_ptr<QuadtreeNode> QuadtreeNodePtr;
+typedef weak_ptr<QuadtreeNode> WeakQuadtreeNodePtr;
+
+class Quadtree;
+typedef shared_ptr<Quadtree> QuadtreePtr;
+typedef weak_ptr<Quadtree> WeakQuadtreePtr;
+
+class PhysicsComponent;
+typedef shared_ptr<PhysicsComponent> PhysicsComponentPtr;
+typedef weak_ptr<PhysicsComponent> WeakPhysicsComponentPtr;
 
 class PhysicsNotifier {
 public:
@@ -25,33 +52,33 @@ class Collider {
 public:
 	float width;
 	float height;
-	p_vector2f position{ nullptr };
+	Vector2fPtr position;
 
 	Collider(float x, float y, float width, float height);
 
 	Collider(const Collider& copy);
 
-	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
+	void setOnCollisionCallback(std::function<void(ColliderPtr)>& callback);
 
-	bool checkCollision(const Collider& collider) const;
+	bool checkCollision(ColliderPtr collider) const;
 
-	void onCollision(const Collider& collider) const;
+	void onCollision(ColliderPtr collider) const;
 
-	void getExtent(Extent& extent) const;
+	ExtentPtr getExtent() const;
 
 private:
-	std::function<void(const Collider&)> onCollisionCallback;
+	std::function<void(ColliderPtr)> onCollisionCallback;
 };
 
 class Body {
 public:
 
 	float speed;
-	p_vector2f position{ nullptr };
-	p_vector2f velocity{ nullptr };
+	Vector2fPtr position{ nullptr };
+	Vector2fPtr velocity{ nullptr };
 	float width;
 	float height;
-	std::unique_ptr<Collider> collider;
+	ColliderPtr collider;
 
 	Body(float x, float y, float width, float height);
 
@@ -59,20 +86,20 @@ public:
 
 	Body(const Body& copy);
 
-	bool checkPoint(const vector2f& point);
+	bool checkPoint(const Vector2f& point);
 
 	void setSpeed(float speed);
 
 	float getSpeed();
 
-	void setPosition(vector2f* position);
-	const vector2f* getPosition();
+	void setPosition(Vector2fPtr position);
+	WeakVector2fPtr getPosition();
 
-	void setVelocity(vector2f* vector);
-	const vector2f* getVelocity();
+	void setVelocity(Vector2fPtr vector);
+	WeakVector2fPtr getVelocity();
 
-	void setCollider(Collider* collider);
-	const Collider& getCollider();
+	void setCollider(ColliderPtr collider);
+	WeakColliderPtr getCollider();
 	bool isCollidable();
 
 	float getWidth();
@@ -105,26 +132,26 @@ public:
 class QuadtreeNode {
 public:
 	QuadtreeNode(float x, float y, float width, float height);
-	std::vector<QuadtreeNode*> children;
-	std::unordered_set<Body*> bodiesContainer;
+	std::vector<QuadtreeNodePtr> children;
+	std::unordered_set<BodyPtr> bodiesContainer;
 
-	void pushChild(QuadtreeNode* node) {
+	void pushChild(QuadtreeNodePtr node) {
 		children.push_back(node);
 	}
 
 	bool leaf{ false };
 
-	bool check(Body* body);
-	void add(Body* body);
-	void remove(Body* body);
-	bool contains(Body* body);
+	bool check(BodyPtr body);
+	void add(BodyPtr body);
+	void remove(BodyPtr body);
+	bool contains(BodyPtr body);
 
 	void clear();
 
-	void getNodeExtent(Extent& extent);
+	ExtentPtr getNodeExtent();
 
 private:
-	std::unique_ptr<Body> mBody{ nullptr };
+	BodyPtr mBody{ nullptr };
 };
 
 class Quadtree {
@@ -132,39 +159,39 @@ public:
 	const static int MIN_SIZE{ 100 };
 
 	Quadtree(float x, float y, float width, float height);
-	void addBody(Body* body);
-	void removeBody(Body* body);
-	void getCollidingBodies(Body* body, std::vector<Body*>& bodies);
-	void getNeigboringBodies(Body* body, std::vector<Body*>& bodies);
+	void addBody(BodyPtr body);
+	void removeBody(BodyPtr body);
+	void getCollidingBodies(BodyPtr body, vector<WeakBodyPtr>& bodies);
+	void getNeigboringBodies(BodyPtr body, vector<BodyPtr>& bodies);
 	void clear();
 
 private:
-	void addHelper(Body* body, QuadtreeNode* node);
-	void removeHelper(Body* body, QuadtreeNode* node);
-	void createTree(QuadtreeNode* parent);
-	std::unique_ptr<QuadtreeNode> mRootNode{ nullptr };
-	std::vector<QuadtreeNode*> mLeaves;
+	void addHelper(BodyPtr body, QuadtreeNodePtr node);
+	void removeHelper(BodyPtr body, QuadtreeNodePtr node);
+	void createTree(QuadtreeNodePtr parent);
+	QuadtreeNodePtr mRootNode{ nullptr };
+	vector<QuadtreeNodePtr> mLeaves;
 };
 
 class PhysicsComponent : public Component {
 public:
-	PhysicsComponent(unsigned long entityId, Body* body, PhysicsNotifier* physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, BodyPtr body, PhysicsNotifierPtr physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		mBody = body;
 		mPhysicsNotifier = physicsNotifier;
 	}
 
-	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root, PhysicsNotifier* physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root, PhysicsNotifierPtr physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		const rapidjson::Value& body = root["mBody"];
-		mBody = new Body(body);
+		mBody = BodyPtr(GCC_NEW Body(body));
 		mPhysicsNotifier = physicsNotifier;
 	}
 
-	void setCollider(Collider* collider);
+	void setCollider(ColliderPtr collider);
 	bool isCollidable();
-	void setPosition(vector2f* position);
-	const vector2f* getPosition();
-	void setVelocity(vector2f* velocity);
-	const vector2f* getVelocity();
+	void setPosition(Vector2fPtr position);
+	WeakVector2fPtr getPosition();
+	void setVelocity(Vector2fPtr velocity);
+	WeakVector2fPtr getVelocity();
 
 	void setSpeed(float speed);
 	float getSpeed();
@@ -172,15 +199,15 @@ public:
 	void setSize(float width, float height);
 	float getWidth();
 	float getHeight();
-	Body* getBody() {
-		return mBody;
+	WeakBodyPtr getBody() {
+		return WeakBodyPtr(mBody);
 	}
 
 	void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
 		serializer.writer.String("componentId");
-		serializer.writer.Uint(componentId);
+		serializer.writer.Uint((Uint8)componentId);
 
 		serializer.writer.String("mBody");
 		mBody->serialize(serializer);
@@ -189,8 +216,8 @@ public:
 	}
 
 private:
-	Body* mBody;
-	PhysicsNotifier* mPhysicsNotifier;
+	BodyPtr mBody;
+	PhysicsNotifierPtr mPhysicsNotifier;
 };
 
 #endif // !__PHYSICS_H__

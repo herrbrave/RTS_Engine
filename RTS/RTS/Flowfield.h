@@ -6,12 +6,16 @@
 
 #include"Map.h"
 #include"SDL_Helpers.h"
-#include"vector2f.h"
+#include"Vector2f.h"
+
+class Flowfield;
+typedef shared_ptr<Flowfield> FlowfieldPtr;
+typedef weak_ptr<Flowfield> WeakFlowfieldPtr;
 
 class Flowfield {
 
 public:
-	Flowfield(Entity* target, Map* map) {
+	Flowfield(EntityPtr target, MapPtr map) {
 		mTargetTile = target;
 		mMap = map;
 
@@ -19,18 +23,22 @@ public:
 	}
 
 	void recalculate() {
-		auto tileComponent = reinterpret_cast<TileComponent*>(mTargetTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+		shared_ptr<TileComponent> tileComponent = makeShared(mTargetTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		if (tileComponent == nullptr) {
+			throw GCC_NEW std::exception("Failed to get tile component from weak pointer.");
+		}
+
 		int targetX = tileComponent->x;
 		int targetY = tileComponent->y;
 		
-		std::list<Entity*> openList({ mTargetTile });
-		std::unordered_set<Entity*> closedList;
+		std::list<EntityPtr> openList({ mTargetTile });
+		std::unordered_set<EntityPtr> closedList;
 
 		mCostMap[mTargetTile->id] = 0;
 
 		while (openList.size() > 0) {
 			auto currentTile = openList.front();
-			tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+			tileComponent = makeShared(currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 			openList.pop_front();
 			closedList.emplace(currentTile);
 			int currentCost = mCostMap[currentTile->id];
@@ -43,8 +51,8 @@ public:
 					if (x < 0 || x >= mMap->getMapWidth() || y < 0 || y >= mMap->getMapHeight() || (i == 0 && j == 0) || (std::abs(i) == std::abs(j))) {
 						continue;
 					}
-					auto neighborTile = mMap->getTileAt(x, y);
-					auto neighborTileComponent = reinterpret_cast<TileComponent*>(neighborTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+					auto neighborTile = makeShared(mMap->getTileAt(x, y));
+					auto neighborTileComponent = makeShared(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 
 					if (closedList.find(neighborTile) != closedList.end() || std::find(openList.begin(), openList.end(), neighborTile) != openList.end()) {
 						if (!neighborTileComponent->canOccupy) {
@@ -59,21 +67,21 @@ public:
 			}
 		}
 
-		std::vector<vector2f> directions {
-			vector2f{-1, 0 },
-			vector2f{ -1, 1 },
-			vector2f{ 0, 1 },
-			vector2f{ 1, 1 },
-			vector2f{ 1, 0 },
-			vector2f{ 1, -1 },
-			vector2f{ 0, -1 },
-			vector2f{ -1, -1 }
+		std::vector<Vector2f> directions {
+			Vector2f{-1, 0 },
+			Vector2f{ -1, 1 },
+			Vector2f{ 0, 1 },
+			Vector2f{ 1, 1 },
+			Vector2f{ 1, 0 },
+			Vector2f{ 1, -1 },
+			Vector2f{ 0, -1 },
+			Vector2f{ -1, -1 }
 		};
 
 		for (int y = 0; y < mMap->getMapHeight(); y++) {
 			for (int x = 0; x < mMap->getMapWidth(); x++) {
-				auto currentTile = mMap->getTileAt(x, y);
-				tileComponent = reinterpret_cast<TileComponent*>(currentTile->componentContainer->getComponentByType(ComponentType::TILE_COMPONENT));
+				auto currentTile = makeShared(mMap->getTileAt(x, y));
+				tileComponent = makeShared(currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 				int costValue = mCostMap[currentTile->id];
 				std::string cost = std::to_string(costValue);
 
@@ -82,9 +90,9 @@ public:
 					continue;
 				}
 
-				vector2f nextDir{ 0, 0 };
+				Vector2f nextDir{ 0, 0 };
 				if (currentTile == mTargetTile) {
-					mVectorMap[currentTile->id] = std::unique_ptr<vector2f>(new vector2f(nextDir));
+					mVectorMap[currentTile->id] = std::unique_ptr<Vector2f>(new Vector2f(nextDir));
 					continue;
 				}
 
@@ -97,7 +105,7 @@ public:
 						continue;
 					}
 
-					auto tileAt = mMap->getTileAt(xIndex, yIndex);
+					auto tileAt = makeShared(mMap->getTileAt(xIndex, yIndex));
 					int cost = mCostMap[tileAt->id];
 					if (cost < shortest) {
 						shortest = cost;
@@ -105,38 +113,39 @@ public:
 					}
 				}
 
-				mVectorMap[currentTile->id] = std::unique_ptr<vector2f>(new vector2f(nextDir));
+				mVectorMap[currentTile->id] = std::unique_ptr<Vector2f>(new Vector2f(nextDir));
 				mVectorMap[currentTile->id]->normalize();
 			}
 		}
 	}
 
-	void guideEntity(Entity* entity) {
-		PhysicsComponent* physicsComponent = reinterpret_cast<PhysicsComponent*>(entity->componentContainer->getComponentByType(ComponentType::PHYSICS_COMPONENT));
-		Entity* tileAt = tileAtPoint(physicsComponent->getPosition());
-		vector2f* velocity = getVectorForTile(tileAt->id);
+	void guideEntity(EntityPtr entity) {
+		auto physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		EntityPtr tileAt = makeShared(tileAtPoint(makeShared(physicsComponent->getPosition())));
+		auto velocity = makeShared(getVectorForTile(tileAt->id));
 		if (velocity == nullptr) {
 			return;
 		}
+
 		physicsComponent->setVelocity(velocity);
 	}
 
-	Entity* tileAtPoint(const vector2f* point) {
+	WeakEntityPtr tileAtPoint(const Vector2f& point) {
 		return mMap->tileAtPoint(point);
 	}
 
-	vector2f* getVectorForTile(unsigned const long tileId) const {
+	WeakVector2fPtr getVectorForTile(unsigned const long tileId) const {
 		if (mVectorMap.find(tileId) == mVectorMap.end()) {
-			return nullptr;
+			return WeakVector2fPtr();
 		}
-		return mVectorMap.at(tileId).get();
+		return WeakVector2fPtr(mVectorMap.at(tileId));
 	}
 
-	Entity* mTargetTile;
+	EntityPtr mTargetTile;
 private:
-	Map* mMap;
+	MapPtr mMap;
 	// map from tile indicies to next closest tile with the shortest path.
-	std::unordered_map<unsigned long, std::unique_ptr<vector2f>> mVectorMap;
+	std::unordered_map<unsigned long, Vector2fPtr> mVectorMap;
 	std::unordered_map<unsigned long, short> mCostMap;
 };
 

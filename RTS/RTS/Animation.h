@@ -8,23 +8,35 @@
 
 enum class AnimationState {
 	PLAYING = 0,
-	STOPPED,
+	STOPPED = 1,
 };
 
 typedef struct {
-	std::vector<Texture*>  frames;
+	std::vector<TexturePtr>  frames;
 	std::string name;
 } Animation;
+typedef shared_ptr<Animation> AnimationPtr;
+typedef weak_ptr<Animation> WeakAnimationPtr;
 
 typedef struct {
-	std::unordered_map<std::string, Animation*> animations;
+	std::unordered_map<std::string, AnimationPtr> animations;
 	std::string defaultAnimationName;
 	int fps;
 } AnimationSet;
+typedef shared_ptr<AnimationSet> AnimationSetPtr;
+typedef weak_ptr<AnimationSet> WeakAnimationSetPtr;
+
+class AnimationHandler;
+typedef shared_ptr<AnimationHandler> AnimationHandlerPtr;
+typedef weak_ptr<AnimationHandler> WeakAnimationHandlerPtr;
+
+class AnimationComponent;
+typedef shared_ptr<AnimationComponent> AnimationComponentPtr;
+typedef weak_ptr<AnimationComponent> WeakAnimationComponentPtr;
 
 class AnimationHandler {
 public:
-	AnimationHandler(TextureDrawable* textureDrawable, AnimationSet* animationSet, int fps) {
+	AnimationHandler(shared_ptr<TextureDrawable> textureDrawable, AnimationSetPtr animationSet, int fps) {
 		mTextureDrawable = textureDrawable;
 		mFps = fps;
 		mState = AnimationState::STOPPED;
@@ -36,17 +48,17 @@ public:
 	void setAnimation(std::string animationName) {
 		mCurrentAnimationName = animationName;
 
-		Animation* currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
+		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
 		mTextureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
-	void setAnimationSet(AnimationSet* animationSet) {
-		mAnimationSet.reset(animationSet);
+	void setAnimationSet(AnimationSetPtr animationSet) {
+		mAnimationSet = animationSet;
 		mCurrentAnimationName = mAnimationSet->defaultAnimationName;
 		mCurrentFrame = 0;
 		mFrameTime = 0;
 
-		Animation* currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
+		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
 		mTextureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
@@ -69,7 +81,7 @@ public:
 			return;
 		}
 
-		Animation* currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
+		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
 
 		if (++mCurrentFrame >= currentAnimation->frames.size()) {
 			mCurrentFrame = 0;
@@ -79,8 +91,8 @@ public:
 	}
 
 private:
-	TextureDrawable* mTextureDrawable;
-	std::unique_ptr<AnimationSet> mAnimationSet;
+	shared_ptr<TextureDrawable> mTextureDrawable;
+	AnimationSetPtr mAnimationSet;
 	int mFps;
 	int mCurrentFrame;
 	std::string mCurrentAnimationName;
@@ -91,9 +103,9 @@ private:
 
 class AnimationComponent : public Component {
 public:
-	AnimationHandler* animationHandler;
+	AnimationHandlerPtr animationHandler;
 
-	AnimationComponent(unsigned long entityId, AnimationHandler* animationHandler) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
+	AnimationComponent(unsigned long entityId, AnimationHandlerPtr animationHandler) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
 		this->animationHandler = animationHandler;
 	}
 

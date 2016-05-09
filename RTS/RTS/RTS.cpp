@@ -12,15 +12,15 @@ void RTS::setup() {
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 	config->setFont("Digital_tech.otf");
 
-	mSystemManager.reset(new SystemManager(config));
-	mEntityFactory.reset(new EntityFactory(mSystemManager.get()));
-	mWidgetFactory.reset(new WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager.get()));
-	mSoundControllerFactory.reset(new SoundControllerFactory(mSystemManager.get()));
+	mSystemManager.reset(GCC_NEW SystemManager(config));
+	mEntityFactory.reset(GCC_NEW EntityFactory(mSystemManager));
+	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager));
+	mSoundControllerFactory.reset(new SoundControllerFactory(mSystemManager));
 
-	mTileFactory.reset(new TileFactory(mSystemManager.get()));
-	mMapFactory.reset(new MapFactory(mTileFactory.get(), mSystemManager.get()));
+	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
+	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
-	mMap.reset(mMapFactory->createMap("Maps/test_map_with_collision.json"));
+	mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
 }
 
 void RTS::handleEvents() {
@@ -35,18 +35,27 @@ void RTS::handleEvents() {
 			}
 		}
 
-		handleInput(event, mSystemManager.get());
+		InputSystemPtr inputSystem(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
+		inputSystem->handleEvent(event);
 	}
 }
 
 void RTS::update() {
 	Uint32 lastTime(SDL_GetTicks());
-	updatePhysicsSystem(lastTime - mLastTime, mSystemManager.get());
+	Uint32 delta(lastTime - mLastTime);
+
+	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	physicsSystem->update(delta);
+
+	AnimationSystemPtr animationSystem(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+	animationSystem->update(delta);
+
 	mLastTime = lastTime;
 }
 
 void RTS::draw() {
-	drawGraphicsSystem(mSystemManager.get());
+	GraphicsSystemPtr graphicsSystem(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	graphicsSystem->draw();
 }
 void RTS::delay(Uint32 frameTime) {
 	if (frameTime < 33) {
