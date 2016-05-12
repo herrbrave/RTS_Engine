@@ -13,13 +13,13 @@ EntityPtr EntityFactory::createDefault() {
 	BodyPtr blockBody(GCC_NEW Body(0, 0, 16, 16));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
-	ColliderPtr collider(GCC_NEW Collider(0, 0, 16, 16));
-	physicsComponent->setCollider(collider);
+	//ColliderPtr collider(GCC_NEW Collider(0, 0, 16, 16));
+	//physicsComponent->setCollider(collider);
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr blockDrawable(GCC_NEW BlockDrawable(16, 16, 255, 0, 0, 255));
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, blockDrawable));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, blockDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
 
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
@@ -47,7 +47,7 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float tx, 
 	TexturePtr texture(GCC_NEW Texture(assetTag, tx, ty, w, h));
 	DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
 
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
@@ -75,7 +75,7 @@ EntityPtr EntityFactory::createAnimatedEntity(const string& path, float width, f
 	TexturePtr texture(GCC_NEW Texture(""));
 	shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
 
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);

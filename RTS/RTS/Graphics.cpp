@@ -49,6 +49,14 @@ void GraphicsConfig::setFontSize(int fontSize) {
 	mFontSize = fontSize;
 }
 
+void Drawable::setDrawDepth(Uint8 depth) {
+	mDrawDepth = depth;
+}
+
+Uint8 Drawable::getDrawDepth() {
+	return mDrawDepth;
+}
+
 void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mColor->r = r;
 	mColor->g = g;
@@ -229,4 +237,13 @@ void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 void DrawableComponent::setSize(float width, float height) {
 	mDrawable->setSize(width, height);
+}
+
+Uint8 DrawableComponent::getZOrder() {
+	return mDrawable->getDrawDepth();
+}
+
+void DrawableComponent::setZOrder(Uint8 zOrder) {
+	mDrawable->setDrawDepth(zOrder);
+	mZOrderNotifier->notifyOfZOrderChange(entityId);
 }

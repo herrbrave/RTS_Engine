@@ -93,24 +93,35 @@ void AssetSystem::clear() {
 
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
 	mDrawables.emplace(id, drawable);
+	mReverseLookup.emplace(drawable, id);
+	mDrawableList.push_back(drawable);
+	sortDrawableList();
 }
 
 void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
+	mDrawableList.erase(std::find(mDrawableList.begin(), mDrawableList.end(), mDrawables.at(id)));
+	mReverseLookup.erase(mDrawables.at(id));
 	mDrawables.erase(mDrawables.find(id));
+}
+
+void GraphicsSystem::sortDrawableList() {
+	mDrawableList.sort([](const DrawablePtr& first, const DrawablePtr& second){
+		return first->getDrawDepth() < second->getDrawDepth();
+	});
 }
 
 void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
-	for (auto drawable : mDrawables) {
+	for (auto drawable : mDrawableList) {
 		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-		BodyPtr body(physicsSystem->getBody(drawable.first));
+		BodyPtr body(physicsSystem->getBody(mReverseLookup.at(drawable)));
 		Vector2fPtr position(body->getPosition());
-		if (!drawable.second->isUi) {
+		if (!drawable->isUi) {
 			translateToCamera(position, mCamera);
 		}
 
-		drawable.second->draw(*mGraphics, position);
+		drawable->draw(*mGraphics, position);
 	}
 
 	mGraphics->onAfterDraw();

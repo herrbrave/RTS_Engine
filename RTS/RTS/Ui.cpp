@@ -263,7 +263,7 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr textureDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
 
 	ButtonComponentPtr buttonComponent(GCC_NEW ButtonComponent(entity->id));
 	buttonComponent->setCallback(callback);
@@ -288,7 +288,7 @@ EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, *mPanelConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
 
 	entity->addComponent(physicsComponent);
 	entity->addComponent(drawableComponent);

@@ -33,6 +33,13 @@ class DrawableComponent;
 typedef shared_ptr<DrawableComponent> DrawableComponentPtr; 
 typedef weak_ptr<DrawableComponent> WeakDrawableComponentPtr;
 
+class ZOrderNotifier {
+public:
+	virtual void notifyOfZOrderChange(unsigned long id) = 0;
+};
+typedef shared_ptr<ZOrderNotifier> ZOrderNotifierPtr;
+typedef weak_ptr<ZOrderNotifier> WeakZOrderNotifierPtr;
+
 class Drawable {
 public:
 	float width;
@@ -43,6 +50,7 @@ public:
 		this->width = width;
 		this->height = height;
 		mColor.reset(new SDL_Color{ 255, 255, 255, 255 });
+		mDrawDepth = 0;
 	}
 
 	Drawable(const rapidjson::Value& root) {
@@ -54,7 +62,12 @@ public:
 			root["b"].GetUint(),
 			root["a"].GetUint()
 		});
+		mDrawDepth = 0;
 	}
+
+	void setDrawDepth(Uint8 depth);
+
+	Uint8 getDrawDepth();
 
 	virtual void draw(Graphics& graphicsRef, const Vector2f& position) = 0;
 
@@ -89,6 +102,7 @@ public:
 	}
 
 protected:
+	Uint8 mDrawDepth;
 	std::unique_ptr<SDL_Color> mColor;
 	virtual void onSerialize(Serializer& serializer) const = 0;
 };
@@ -230,8 +244,9 @@ private:
 
 class DrawableComponent : public Component {
 public:
-	DrawableComponent(unsigned long entityId, DrawablePtr drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
+	DrawableComponent(unsigned long entityId, DrawablePtr drawable, ZOrderNotifierPtr zOrderNotifier) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
 		mDrawable = drawable;
+		mZOrderNotifier = zOrderNotifier;
 	}
 
 	DrawableComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
@@ -247,6 +262,9 @@ public:
 			assert(false);
 		}
 	}
+
+	Uint8 getZOrder();
+	void setZOrder(Uint8 zOrder);
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void setSize(float width, float height);
@@ -265,6 +283,7 @@ public:
 		serializer.writer.EndObject();
 	}
 private:
+	ZOrderNotifierPtr mZOrderNotifier;
 	DrawablePtr mDrawable;
 };
 

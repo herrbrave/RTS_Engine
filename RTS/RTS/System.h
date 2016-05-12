@@ -164,6 +164,8 @@ public:
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
+	void sortDrawableList();
+
 	WeakDrawablePtr getDrawableById(unsigned long entityId);
 
 	WeakCameraPtr getCamera();
@@ -178,7 +180,25 @@ private:
 	GraphicsPtr mGraphics{ nullptr };
 	CameraPtr mCamera;
 	unordered_map<unsigned long, DrawablePtr> mDrawables;
+	unordered_map<DrawablePtr, unsigned long> mReverseLookup;
+	std::list<DrawablePtr> mDrawableList;
 };
+
+class DefautZOrderNotifier : public ZOrderNotifier {
+public:
+
+	DefautZOrderNotifier(SystemManagerPtr systemManager) {
+		mSystemManager = systemManager;
+	}
+
+	void notifyOfZOrderChange(unsigned long id) override {
+		GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		graphicsSystem->sortDrawableList();
+	}
+
+private:
+	SystemManagerPtr mSystemManager;
+}; 
 
 class EntitySystem : public System {
 public:
