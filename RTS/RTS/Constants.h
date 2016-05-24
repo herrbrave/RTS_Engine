@@ -7,6 +7,9 @@ using std::shared_ptr;
 using std::static_pointer_cast;
 using std::weak_ptr;
 
+#include<functional>
+using std::function;
+
 #include<vector>
 #include<unordered_map>
 #include<unordered_set>

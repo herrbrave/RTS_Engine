@@ -245,5 +245,7 @@ Uint8 DrawableComponent::getZOrder() {
 
 void DrawableComponent::setZOrder(Uint8 zOrder) {
 	mDrawable->setDrawDepth(zOrder);
-	mZOrderNotifier->notifyOfZOrderChange(entityId);
+
+	EntityZOrderSetEventData eventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(&eventData);
 }

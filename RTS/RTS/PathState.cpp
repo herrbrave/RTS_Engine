@@ -15,14 +15,14 @@ void PathState::update() {
 	}
 
 	auto component = makeShared(mUnit->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-	auto tile = makeShared(mFlowfield->tileAtPoint(makeShared(component->getPosition())));
+	auto tile = makeShared(mFlowfield->tileAtPoint(component->getPosition()));
 	if (tile == nullptr || tile == mFlowfield->mTargetTile) {
 		end();
 		return;
 	}
 
-	auto vector = makeShared(mFlowfield->getVectorForTile(tile->id));
-	if (vector == nullptr) {
+	auto vector = mFlowfield->getVectorForTile(tile->id);
+	if (vector.x == 0 && vector.y == 0) {
 		end();
 		return;
 	}

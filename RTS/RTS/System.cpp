@@ -116,7 +116,7 @@ void  GraphicsSystem::draw() {
 	for (auto drawable : mDrawableList) {
 		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 		BodyPtr body(physicsSystem->getBody(mReverseLookup.at(drawable)));
-		Vector2fPtr position(body->getPosition());
+		Vector2f& position = Vector2f(body->getPosition());
 		if (!drawable->isUi) {
 			translateToCamera(position, mCamera);
 		}
@@ -161,6 +161,8 @@ void GraphicsSystem::clear() {
 
 void EntitySystem::addEntity(EntityPtr entity) {
 	mEntityMap.emplace(entity->id, entity);
+	EntityCreatedEventData eventData(entity->id, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(&eventData);
 }
 
 WeakEntityPtr EntitySystem::getEntityById(unsigned long id) {
@@ -181,29 +183,12 @@ void EntitySystem::getAllEntities(std::vector<EntityPtr>& entities) {
 
 void EntitySystem::deregisterEntity(unsigned long id) {
 	mEntityMap.erase(mEntityMap.find(id));
+	EntityDestroyedEventData eventData(id, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(&eventData);
 }
 
 void EntitySystem::clear() {
 	mEntityMap.clear();
-}
-
-
-void DefaultPhysicsNotifier::notifyPositionSet(unsigned long id) {
-	PhysicsSystemPtr physicsSystem(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr body(physicsSystem->getBody(id));
-	physicsSystem->quadTree->removeBody(body);
-	if (body->collider != nullptr) {
-		physicsSystem->quadTree->addBody(body);
-	}
-}
-
-void DefaultPhysicsNotifier::notifyColliderUpdate(unsigned long id) {
-	PhysicsSystemPtr physicsSystem(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr body(physicsSystem->getBody(id));
-	physicsSystem->quadTree->removeBody(body);
-	if (body->collider != nullptr) {
-		physicsSystem->quadTree->addBody(body);
-	}
 }
 
 void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
@@ -226,16 +211,19 @@ void PhysicsSystem::update(Uint32 delta) {
 
 	// TODO: add steering later.
 	for (auto element : mBodies) {
-		Vector2fPtr velocityCopy(element.second->getVelocity());
-		if (velocityCopy->x == 0 && velocityCopy->y == 0) {
+		Vector2f& velocity = Vector2f(element.second->getVelocity());
+		Vector2f velocityCopy;
+		velocityCopy.set(velocity);
+
+		if (velocityCopy.x == 0 && velocityCopy.y == 0) {
 			continue;
 		}
 
-		*velocityCopy *= element.second->getSpeed();
-		*velocityCopy *= step;
+		velocityCopy *= element.second->getSpeed();
+		velocityCopy *= step;
 
-		Vector2fPtr positionCopy(element.second->getPosition());
-		Vector2fPtr newPosition(&(*positionCopy + *velocityCopy));
+		Vector2f& positionCopy = Vector2f(element.second->getPosition());
+		Vector2f& newPosition = (positionCopy + velocityCopy);
 		
 		if (!element.second->isCollidable()) {
 			element.second->setPosition(newPosition);
@@ -255,11 +243,11 @@ void PhysicsSystem::update(Uint32 delta) {
 		}
 		
 		// Clean this up and move it into another method.
-		BodyPtr copyBody(element.second);
+		BodyPtr copyBody = element.second;
 		copyBody->setPosition(newPosition);
 		for (WeakBodyPtr collidingBodyPtr : collidingBodies) {
-			BodyPtr collidingBody(collidingBodyPtr);
-			if (!copyBody->collider->checkCollision(collidingBody->collider)) {
+			BodyPtr collidingBody = makeShared(collidingBodyPtr);
+			if (!copyBody->collider->checkCollision(*collidingBody->collider)) {
 				continue;
 			}
 
@@ -269,12 +257,12 @@ void PhysicsSystem::update(Uint32 delta) {
 				continue;
 			}
 
-			*velocityCopy *= collisionTime;
-			newPosition->set(&(*positionCopy + *velocityCopy));
+			Vector2f scaledVelocity = (velocityCopy * collisionTime);
+			newPosition.set(positionCopy + scaledVelocity);
 			copyBody->setPosition(newPosition);
 
-			collidingBody->collider->onCollision(element.second->collider);
-			element.second->collider->onCollision(collidingBody->collider);
+			collidingBody->collider->onCollision(*element.second->collider);
+			element.second->collider->onCollision(*collidingBody->collider);
 		}
 
 
@@ -386,30 +374,30 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 	keyEvent->ctrlDown = (evt.key.keysym.mod & KMOD_CTRL);
 	keyEvent->shiftDown = (evt.key.keysym.mod & KMOD_SHIFT);
 
-	EventPtr inputEvent(GCC_NEW Event());
+	EventPtr inputEvent(GCC_NEW InputEvent());
 	inputEvent->keyEvent = keyEvent;
 	inputEvent->mouseEvent = mouseEvent;
 
-	EventType type = EventType::NONE;
+	InputEventType type = InputEventType::NONE;
 	switch (evt.type) {
 	case SDL_KEYDOWN:
-		type = EventType::KEY_DOWN;
+		type = InputEventType::KEY_DOWN;
 		break;
 	case SDL_KEYUP:
-		type = EventType::KEY_UP;
+		type = InputEventType::KEY_UP;
 		break;
 	case SDL_MOUSEBUTTONDOWN:
-		type = EventType::MOUSE_BUTTON_DOWN;
+		type = InputEventType::MOUSE_BUTTON_DOWN;
 		break;
 	case SDL_MOUSEBUTTONUP:
-		type = EventType::MOUSE_BUTTON_UP;
+		type = InputEventType::MOUSE_BUTTON_UP;
 		break;
 	case SDL_MOUSEMOTION:
-		type = EventType::MOUSE_MOVE;
+		type = InputEventType::MOUSE_MOVE;
 		break;
 
 	}
-	if (type == EventType::NONE) {
+	if (type == InputEventType::NONE) {
 		return;
 	}
 

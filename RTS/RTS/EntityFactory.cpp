@@ -12,14 +12,13 @@ EntityPtr EntityFactory::createDefault() {
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(0, 0, 16, 16));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
-	//ColliderPtr collider(GCC_NEW Collider(0, 0, 16, 16));
-	//physicsComponent->setCollider(collider);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+	physicsComponent->setCollider(GCC_NEW Collider(0, 0, 16, 16));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr blockDrawable(GCC_NEW BlockDrawable(16, 16, 255, 0, 0, 255));
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, blockDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, blockDrawable));
 
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
@@ -41,13 +40,13 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float tx, 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(0.0f, 0.0f, w, h));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	TexturePtr texture(GCC_NEW Texture(assetTag, tx, ty, w, h));
 	DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
@@ -69,13 +68,13 @@ EntityPtr EntityFactory::createAnimatedEntity(const string& path, float width, f
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(0.0f, 0.0f, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	TexturePtr texture(GCC_NEW Texture(""));
 	shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
@@ -125,7 +124,7 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 			graphicsSystem->registerDrawable(entity->id, makeShared(comp->getDrawable()));
 		}
 		else if (componentId == ComponentType::PHYSICS_COMPONENT) {
-			PhysicsComponentPtr comp(GCC_NEW PhysicsComponent(entity->id, component, physicsSystem->physicsNotifier));
+			PhysicsComponentPtr comp(GCC_NEW PhysicsComponent(entity->id, component));
 			entity->addComponent(ComponentPtr(comp));
 			physicsSystem->registerBody(entity->id, makeShared(comp->getBody()));
 		}
@@ -148,9 +147,8 @@ EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, floa
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
-	ColliderPtr collider(GCC_NEW Collider(x, y, width, height));
-	physicsComponent->setCollider(collider);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
 
 	entity->addComponent(ComponentPtr(physicsComponent));
 

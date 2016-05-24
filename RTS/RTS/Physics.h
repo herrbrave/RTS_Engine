@@ -2,6 +2,7 @@
 #define __PHYSICS_H__
 
 #include"Component.h"
+#include"Event.h"
 #include"Vector2f.h"
 
 #include<functional>
@@ -17,10 +18,6 @@ struct Extent {
 };
 typedef shared_ptr<Extent> ExtentPtr;
 typedef weak_ptr<Extent> WeakExtentPtr;
-
-class PhysicsNotifier;
-typedef shared_ptr<PhysicsNotifier> PhysicsNotifierPtr;
-typedef weak_ptr<PhysicsNotifier> WeakPhysicsNotifierPtr;
 
 class Collider;
 typedef shared_ptr<Collider> ColliderPtr;
@@ -58,16 +55,16 @@ public:
 
 	Collider(const Collider& copy);
 
-	void setOnCollisionCallback(std::function<void(ColliderPtr)>& callback);
+	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
 
-	bool checkCollision(ColliderPtr collider) const;
+	bool checkCollision(const Collider& collider) const;
 
-	void onCollision(ColliderPtr collider) const;
+	void onCollision(const Collider& collider) const;
 
 	ExtentPtr getExtent() const;
 
 private:
-	std::function<void(ColliderPtr)> onCollisionCallback;
+	std::function<void(const Collider&)> onCollisionCallback;
 };
 
 class Body {
@@ -92,13 +89,13 @@ public:
 
 	float getSpeed();
 
-	void setPosition(Vector2fPtr position);
-	WeakVector2fPtr getPosition();
+	void setPosition(const Vector2f& position);
+	const Vector2f& getPosition();
 
-	void setVelocity(Vector2fPtr vector);
-	WeakVector2fPtr getVelocity();
+	void setVelocity(const Vector2f& vector);
+	const Vector2f& getVelocity();
 
-	void setCollider(ColliderPtr collider);
+	void setCollider(Collider* collider);
 	WeakColliderPtr getCollider();
 	bool isCollidable();
 
@@ -175,23 +172,21 @@ private:
 
 class PhysicsComponent : public Component {
 public:
-	PhysicsComponent(unsigned long entityId, BodyPtr body, PhysicsNotifierPtr physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, BodyPtr body) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		mBody = body;
-		mPhysicsNotifier = physicsNotifier;
 	}
 
-	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root, PhysicsNotifierPtr physicsNotifier) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
+	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		const rapidjson::Value& body = root["mBody"];
 		mBody = BodyPtr(GCC_NEW Body(body));
-		mPhysicsNotifier = physicsNotifier;
 	}
 
-	void setCollider(ColliderPtr collider);
+	void setCollider(Collider* collider);
 	bool isCollidable();
-	void setPosition(Vector2fPtr position);
-	WeakVector2fPtr getPosition();
-	void setVelocity(Vector2fPtr velocity);
-	WeakVector2fPtr getVelocity();
+	void setPosition(const Vector2f& position);
+	const Vector2f& getPosition();
+	void setVelocity(const Vector2f& velocity);
+	const Vector2f& getVelocity();
 
 	void setSpeed(float speed);
 	float getSpeed();
@@ -217,7 +212,6 @@ public:
 
 private:
 	BodyPtr mBody;
-	PhysicsNotifierPtr mPhysicsNotifier;
 };
 
 #endif // !__PHYSICS_H__

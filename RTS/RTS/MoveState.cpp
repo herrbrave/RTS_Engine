@@ -8,9 +8,9 @@ void MoveState::update() {
 	auto unitComponent = makeShared(mEntity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
 	auto targetComponent = makeShared(mTarget->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
 
-	Vector2fPtr unitLocation = makeShared(unitComponent->getPosition());
-	Vector2fPtr targetLocation = makeShared(targetComponent->getPosition());
-	Vector2f delta = *targetLocation - *unitLocation;
+	Vector2f& unitLocation = Vector2f(unitComponent->getPosition());
+	Vector2f& targetLocation = Vector2f(targetComponent->getPosition());
+	Vector2f delta = targetLocation - unitLocation;
 
 	float dist = delta.magnitude();
 	if (dist == 0 || dist <= mSpeed) {

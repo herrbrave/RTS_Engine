@@ -109,7 +109,7 @@ public:
 					int cost = mCostMap[tileAt->id];
 					if (cost < shortest) {
 						shortest = cost;
-						nextDir.set(&dir);
+						nextDir.set(dir);
 					}
 				}
 
@@ -121,11 +121,8 @@ public:
 
 	void guideEntity(EntityPtr entity) {
 		auto physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-		EntityPtr tileAt = makeShared(tileAtPoint(makeShared(physicsComponent->getPosition())));
-		auto velocity = makeShared(getVectorForTile(tileAt->id));
-		if (velocity == nullptr) {
-			return;
-		}
+		EntityPtr tileAt = makeShared(tileAtPoint(physicsComponent->getPosition()));
+		auto velocity = getVectorForTile(tileAt->id);
 
 		physicsComponent->setVelocity(velocity);
 	}
@@ -134,11 +131,11 @@ public:
 		return mMap->tileAtPoint(point);
 	}
 
-	WeakVector2fPtr getVectorForTile(unsigned const long tileId) const {
+	const Vector2f& getVectorForTile(unsigned const long tileId) const {
 		if (mVectorMap.find(tileId) == mVectorMap.end()) {
-			return WeakVector2fPtr();
+			return Vector2f(0, 0);
 		}
-		return WeakVector2fPtr(mVectorMap.at(tileId));
+		return mVectorMap.at(tileId);
 	}
 
 	EntityPtr mTargetTile;

@@ -84,6 +84,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="EntityFactory.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Flowfield.h" />
     <ClInclude Include="Game.h" />

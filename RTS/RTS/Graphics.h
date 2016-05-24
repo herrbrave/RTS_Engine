@@ -33,13 +33,6 @@ class DrawableComponent;
 typedef shared_ptr<DrawableComponent> DrawableComponentPtr; 
 typedef weak_ptr<DrawableComponent> WeakDrawableComponentPtr;
 
-class ZOrderNotifier {
-public:
-	virtual void notifyOfZOrderChange(unsigned long id) = 0;
-};
-typedef shared_ptr<ZOrderNotifier> ZOrderNotifierPtr;
-typedef weak_ptr<ZOrderNotifier> WeakZOrderNotifierPtr;
-
 class Drawable {
 public:
 	float width;
@@ -244,9 +237,8 @@ private:
 
 class DrawableComponent : public Component {
 public:
-	DrawableComponent(unsigned long entityId, DrawablePtr drawable, ZOrderNotifierPtr zOrderNotifier) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
+	DrawableComponent(unsigned long entityId, DrawablePtr drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
 		mDrawable = drawable;
-		mZOrderNotifier = zOrderNotifier;
 	}
 
 	DrawableComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
@@ -283,7 +275,6 @@ public:
 		serializer.writer.EndObject();
 	}
 private:
-	ZOrderNotifierPtr mZOrderNotifier;
 	DrawablePtr mDrawable;
 };
 

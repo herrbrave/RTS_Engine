@@ -28,9 +28,9 @@ public:
 		y = root["y"].GetDouble();
 	}
 
-	void set(Vector2f* vector) {
-		x = vector->x;
-		y = vector->y;
+	void set(const Vector2f& vector) {
+		x = vector.x;
+		y = vector.y;
 	}
 
 	void set(float x, float y) {

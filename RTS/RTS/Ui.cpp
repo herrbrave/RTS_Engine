@@ -258,12 +258,12 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr textureDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
 	ButtonComponentPtr buttonComponent(GCC_NEW ButtonComponent(entity->id));
 	buttonComponent->setCallback(callback);
@@ -283,12 +283,12 @@ EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody, physicsSystem->physicsNotifier));
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, *mPanelConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable, ZOrderNotifierPtr(GCC_NEW DefautZOrderNotifier(mSystemManager))));
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
 	entity->addComponent(physicsComponent);
 	entity->addComponent(drawableComponent);

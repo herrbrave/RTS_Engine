@@ -35,27 +35,27 @@ float Body::getSpeed() {
 	return speed;
 }
 
-void Body::setPosition(Vector2fPtr position) {
-	this->position->set(position.get());
+void Body::setPosition(const Vector2f& position) {
+	this->position->set(position);
 	if (collider != nullptr) {
-		collider->position->set(position.get());
+		collider->position->set(position);
 	}
 }
 
-WeakVector2fPtr Body::getPosition() {
-	return WeakVector2fPtr(position);
+const Vector2f& Body::getPosition() {
+	return position;
 }
 
-void Body::setVelocity(Vector2fPtr vector) {
-	this->velocity->set(position.get());
+void Body::setVelocity(const Vector2f& vector) {
+	this->velocity->set(vector);
 }
 
-WeakVector2fPtr Body::getVelocity() {
-	return WeakVector2fPtr(velocity);
+const Vector2f& Body::getVelocity() {
+	return velocity;
 }
 
-void Body::setCollider(ColliderPtr collider) {
-	this->collider = collider;
+void Body::setCollider(Collider* collider) {
+	this->collider = ColliderPtr(collider);
 }
 
 WeakColliderPtr Body::getCollider() {
@@ -108,13 +108,13 @@ Collider::Collider(const Collider& copy) {
 	this->height = copy.height;
 }
 
-void Collider::setOnCollisionCallback(std::function<void(ColliderPtr)>& callback) {
+void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& callback) {
 	onCollisionCallback = callback;
 }
 
-bool Collider::checkCollision(ColliderPtr collider) const {
+bool Collider::checkCollision(const Collider& collider) const {
 	ExtentPtr extent = getExtent();
-	ExtentPtr otherExtent = collider->getExtent();
+	ExtentPtr otherExtent = collider.getExtent();
 
 	bool collision(extent->x0 <= otherExtent->x1
 		&& extent->x1 >= otherExtent->x0
@@ -122,13 +122,13 @@ bool Collider::checkCollision(ColliderPtr collider) const {
 		&& extent->y1 >= otherExtent->y0);
 	if (collision) {
 		onCollision(collider);
-		collider->onCollision(ColliderPtr(const_cast<Collider*>(this)));
+		collider.onCollision(*this);
 	}
 
 	return collision;
 }
 
-void Collider::onCollision(ColliderPtr collider) const {
+void Collider::onCollision(const Collider& collider) const {
 	if (onCollisionCallback == nullptr) {
 		return;
 	}
@@ -152,11 +152,11 @@ ExtentPtr Collider::getExtent() const {
 
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
 	mBody.reset(GCC_NEW Body(x, y, width, height));
-	mBody->setCollider(ColliderPtr(GCC_NEW Collider(x, y, width, height)));
+	mBody->setCollider(GCC_NEW Collider(x, y, width, height));
 }
 
 bool QuadtreeNode::check(BodyPtr body) {
-	return mBody->collider->checkCollision(body->collider);
+	return mBody->collider->checkCollision(*body->collider);
 }
 
 void QuadtreeNode::add(BodyPtr body) {
@@ -300,7 +300,7 @@ void Quadtree::getCollidingBodies(BodyPtr body, std::vector<WeakBodyPtr>& bodies
 				continue;
 			}
 
-			if (otherBody->collider->checkCollision(body->collider)) {
+			if (otherBody->collider->checkCollision(*body->collider)) {
 				bodies.push_back(otherBody);
 			}
 		}
@@ -346,29 +346,33 @@ void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 	}
 }
 
-void PhysicsComponent::setPosition(Vector2fPtr position) {
+void PhysicsComponent::setPosition(const Vector2f& position) {
 	mBody->setPosition(position);
-	mPhysicsNotifier->notifyPositionSet(entityId);
+
+	EntityPositionSetEventData eventData(entityId, position, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(&eventData);
 }
 
-void PhysicsComponent::setCollider(ColliderPtr collider) {
+void PhysicsComponent::setCollider(Collider* collider) {
 	mBody->setCollider(collider);
-	mPhysicsNotifier->notifyColliderUpdate(entityId);
+
+	EntityCollisionSetEventData eventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(&eventData);
 }
 
 bool PhysicsComponent::isCollidable() {
 	return (mBody->collider != nullptr);
 }
 
-WeakVector2fPtr PhysicsComponent::getPosition() {
+const Vector2f& PhysicsComponent::getPosition() {
 	return mBody->getPosition();
 }
 
-void PhysicsComponent::setVelocity(Vector2fPtr velocity) {
+void PhysicsComponent::setVelocity(const Vector2f& velocity) {
 	mBody->setVelocity(velocity);
 }
 
-WeakVector2fPtr PhysicsComponent::getVelocity()  {
+const Vector2f& PhysicsComponent::getVelocity()  {
 	return mBody->getVelocity();
 }
 

@@ -9,6 +9,7 @@
 #include"Animation.h"
 #include"Asset.h"
 #include"Entity.h"
+#include"Event.h"
 #include"Input.h"
 #include"Graphics.h"
 #include"Physics.h"
@@ -158,6 +159,12 @@ public:
 		mCamera->position.reset(GCC_NEW Vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;
 		mCamera->height = mGraphicsConfig->mHeight;
+
+		EventDelegate zOrderChangeDelegate([this](const EventData& eventData){
+			sortDrawableList();
+		});
+		EventListenerDelegate zOrderChanged(zOrderChangeDelegate);
+		EventManager::getInstance().addDelegate(zOrderChanged, EventType::ENTITY_ZORDER_SET);
 	}
 
 	void registerDrawable(const unsigned long, DrawablePtr drawable);
@@ -184,22 +191,6 @@ private:
 	std::list<DrawablePtr> mDrawableList;
 };
 
-class DefautZOrderNotifier : public ZOrderNotifier {
-public:
-
-	DefautZOrderNotifier(SystemManagerPtr systemManager) {
-		mSystemManager = systemManager;
-	}
-
-	void notifyOfZOrderChange(unsigned long id) override {
-		GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		graphicsSystem->sortDrawableList();
-	}
-
-private:
-	SystemManagerPtr mSystemManager;
-}; 
-
 class EntitySystem : public System {
 public:
 	EntitySystem(SystemManagerPtr systemManager) : System(SystemType::ENTITY, systemManager) {}
@@ -221,30 +212,38 @@ public:
 
 private:
 	unordered_map<unsigned long, EntityPtr> mEntityMap;
-};
-
-class DefaultPhysicsNotifier : public PhysicsNotifier {
-public:
-
-	DefaultPhysicsNotifier(SystemManagerPtr systemManager) {
-		this->systemManager = systemManager;
-	}
-
-	void notifyPositionSet(unsigned long id) override;
-	void notifyColliderUpdate(unsigned long id) override;
-
-private:
-	SystemManagerPtr systemManager;
-};
+}; 
 
 class PhysicsSystem : public System {
 public:
 	QuadtreePtr quadTree{ nullptr };
-	PhysicsNotifierPtr physicsNotifier{ nullptr };
 
 	PhysicsSystem(SystemManagerPtr systemManager) : System(SystemType::PHYSICS, systemManager) {
 		quadTree.reset(GCC_NEW Quadtree(512, 384, 1024, 768));
-		physicsNotifier.reset(GCC_NEW DefaultPhysicsNotifier(systemManager));
+
+		EventListenerDelegate positionChangeListener([this](const EventData& eventData) {
+			EventData& nonConstEventData = const_cast<EventData&>(eventData);
+			EntityPositionSetEventData& positionData = reinterpret_cast<EntityPositionSetEventData&>(nonConstEventData);
+
+			BodyPtr body = makeShared(getBody(positionData.getEntityId()));
+			quadTree->removeBody(body);
+			if (body->collider != nullptr) {
+				quadTree->addBody(body);
+			}
+		});
+		EventManager::getInstance().addDelegate(positionChangeListener, EventType::ENTITY_POSITION_SET);
+
+		EventListenerDelegate collisionChangeListener([this](const EventData& eventData) {
+			EventData& nonConstEventData = const_cast<EventData&>(eventData);
+			EntityCollisionSetEventData& collisionData = reinterpret_cast<EntityCollisionSetEventData&>(nonConstEventData);
+
+			BodyPtr body = makeShared(getBody(collisionData.getEntityId()));
+			quadTree->removeBody(body);
+			if (body->collider != nullptr) {
+				quadTree->addBody(body);
+			}
+		});
+		EventManager::getInstance().addDelegate(collisionChangeListener, EventType::ENTITY_COLLISION_SET);
 	}
 
 	~PhysicsSystem() = default;

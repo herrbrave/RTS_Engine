@@ -11,6 +11,6 @@ typedef struct {
 typedef shared_ptr<Camera> CameraPtr;
 typedef weak_ptr<Camera> WeakCameraPtr;
 
-void translateToCamera(Vector2fPtr vector, CameraPtr camera);
+void translateToCamera(Vector2f& vector, CameraPtr camera);
 
 #endif // !__CAMERA_H__

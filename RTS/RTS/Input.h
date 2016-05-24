@@ -1,5 +1,5 @@
-#ifndef __EVENT_H__
-#define __EVENT_H__
+#ifndef __INPUT_H__
+#define __INPUT_H__
 
 #include<functional>
 #include<unordered_map>
@@ -43,14 +43,14 @@ struct KeyboardEvent {
 typedef shared_ptr<KeyboardEvent> KeyboardEventPtr;
 typedef weak_ptr<KeyboardEvent> WeakKeyboardEventPtr;
 
-struct Event {
+struct InputEvent {
 	MouseEventPtr mouseEvent;
 	KeyboardEventPtr keyEvent;
 };
-typedef shared_ptr<Event> EventPtr;
-typedef weak_ptr<Event> WeakEventPtr;
+typedef shared_ptr<InputEvent> EventPtr;
+typedef weak_ptr<InputEvent> WeakEventPtr;
 
-enum class EventType {
+enum class InputEventType {
 	MOUSE_MOVE = 0,
 	MOUSE_BUTTON_DOWN = 1,
 	MOUSE_BUTTON_UP = 2,
@@ -61,7 +61,7 @@ enum class EventType {
 	/* Add joystick stuff here later. */
 };
 
-enum class InputEvent {
+enum class Input {
 	ON_MOUSE_ENTER = 1,
 	ON_MOUSE_EXIT = 2,
 	ON_CLICK = 3,
@@ -92,14 +92,14 @@ public:
 	unsigned long id;
 	MouseState mouseState;
 	// TODO: Add Layers.
-	std::unordered_map<InputEvent, std::function<bool(EventPtr)>> eventCallbacks;
+	std::unordered_map<Input, std::function<bool(EventPtr)>> eventCallbacks;
 
 	InputListener(unsigned long id) {
 		this->id = id;
 		mouseState = MouseState::UP;
 	}
 
-	bool onEvent(EventType eventType, EventPtr evt, MouseMovementHandlerPtr mouseMovementHandler);
+	bool onEvent(InputEventType eventType, EventPtr evt, MouseMovementHandlerPtr mouseMovementHandler);
 };
 
 class InputComponent : public Component {
@@ -108,7 +108,7 @@ public:
 		mInputListener = inputListener;
 	}
 
-	void setInputCallback(InputEvent inputEvent, std::function<bool(EventPtr)>& callback);
+	void setInputCallback(Input inputEvent, std::function<bool(EventPtr)>& callback);
 
 	void serialize(Serializer& serializer) const override {
 
