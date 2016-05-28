@@ -349,15 +349,15 @@ void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 void PhysicsComponent::setPosition(const Vector2f& position) {
 	mBody->setPosition(position);
 
-	EntityPositionSetEventData eventData(entityId, position, SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	EntityPositionSetEventData* eventData = GCC_NEW EntityPositionSetEventData(entityId, position, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 }
 
 void PhysicsComponent::setCollider(Collider* collider) {
 	mBody->setCollider(collider);
 
-	EntityCollisionSetEventData eventData(entityId, SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	EntityCollisionSetEventData* eventData = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 }
 
 bool PhysicsComponent::isCollidable() {

@@ -193,7 +193,8 @@ public:
 			EventDataPtr eventData = mQueue.front();
 			mQueue.pop_front();
 
-			EventDelegateList eventDelegates = mEventListeners.at(eventData->getEventType());
+			const EventType& eventType = eventData->getEventType();
+			EventDelegateList eventDelegates = mEventListeners.at(eventType);
 			for (auto eventDelegate : eventDelegates) {
 				eventDelegate(*eventData);
 			}
@@ -201,7 +202,8 @@ public:
 	}
 
 	void pushEvent(EventData* eventData) {
-		mQueue.push_back(EventDataPtr(eventData));
+		EventDataPtr eventDatePtr(eventData);
+		mQueue.push_back(eventDatePtr);
 	}
 
 private:

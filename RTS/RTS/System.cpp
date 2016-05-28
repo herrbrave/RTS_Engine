@@ -161,8 +161,8 @@ void GraphicsSystem::clear() {
 
 void EntitySystem::addEntity(EntityPtr entity) {
 	mEntityMap.emplace(entity->id, entity);
-	EntityCreatedEventData eventData(entity->id, SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	EntityCreatedEventData* eventData = GCC_NEW EntityCreatedEventData(entity->id, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 }
 
 WeakEntityPtr EntitySystem::getEntityById(unsigned long id) {
@@ -183,8 +183,8 @@ void EntitySystem::getAllEntities(std::vector<EntityPtr>& entities) {
 
 void EntitySystem::deregisterEntity(unsigned long id) {
 	mEntityMap.erase(mEntityMap.find(id));
-	EntityDestroyedEventData eventData(id, SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	EntityDestroyedEventData* eventData = GCC_NEW EntityDestroyedEventData(id, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 }
 
 void EntitySystem::clear() {

@@ -63,8 +63,8 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), EntityVendorPtr(GCC_NEW EntitySystem::DefaultEntityVendor(entitySystem))));
 
-	MapLoadedSetEventData eventData(SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	MapLoadedSetEventData* eventData = GCC_NEW MapLoadedSetEventData(SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 
 	return map;
 }

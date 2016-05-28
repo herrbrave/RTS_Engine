@@ -50,6 +50,8 @@ void RTS::update() {
 	AnimationSystemPtr animationSystem(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	animationSystem->update(delta);
 
+	EventManager::getInstance().update();
+
 	mLastTime = lastTime;
 }
 

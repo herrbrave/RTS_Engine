@@ -246,6 +246,6 @@ Uint8 DrawableComponent::getZOrder() {
 void DrawableComponent::setZOrder(Uint8 zOrder) {
 	mDrawable->setDrawDepth(zOrder);
 
-	EntityZOrderSetEventData eventData(entityId, SDL_GetTicks());
-	EventManager::getInstance().pushEvent(&eventData);
+	EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
 }
