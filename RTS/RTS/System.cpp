@@ -211,20 +211,47 @@ void PhysicsSystem::update(Uint32 delta) {
 
 	// TODO: add steering later.
 	for (auto element : mBodies) {
-		Vector2f& velocity = Vector2f(element.second->getVelocity());
-		Vector2f velocityCopy;
-		velocityCopy.set(velocity);
+		Vector2f velocity = Vector2f(element.second->getVelocity());
 
-		if (velocityCopy.x == 0 && velocityCopy.y == 0) {
+		if (velocity.x == 0 && velocity.y == 0 && !element.second->hasTarget()) {
 			continue;
 		}
 
-		velocityCopy *= element.second->getSpeed();
-		velocityCopy *= step;
+		Vector2f position = element.second->getPosition();
+		Vector2f newPosition;
 
-		Vector2f& positionCopy = Vector2f(element.second->getPosition());
-		Vector2f& newPosition = (positionCopy + velocityCopy);
+		velocity *= element.second->getSpeed();
+		velocity *= step;
+
+		if (element.second->hasTarget()) {
+			TargetPtr target = makeShared(element.second->getTarget());
+
+			Vector2f targetPosition = target->getTargetPosition();
+
+			Vector2f desiredVelocity = targetPosition - position;
+			desiredVelocity.normalize();
+			desiredVelocity *= element.second->getSpeed();
+			desiredVelocity *= step;
+
+			Vector2f steering = desiredVelocity - velocity;
+			// TODO: Set a max force somewhere.
+			steering.truncate(8);
+			steering *=  float(1 / element.second->getMass());
+
+			velocity += steering;
+			velocity.truncate(element.second->getSpeed());
+
+			newPosition = position + velocity;
+			if ((newPosition - targetPosition).magnitude() < 1) {
+				element.second->setTarget(nullptr);
+				velocity.set(0, 0);
+			}
+		}
+		else {
+			newPosition = position + velocity;
+		}
 		
+		/*
 		if (!element.second->isCollidable()) {
 			element.second->setPosition(newPosition);
 			quadTree->removeBody(element.second);
@@ -264,9 +291,11 @@ void PhysicsSystem::update(Uint32 delta) {
 			collidingBody->collider->onCollision(*element.second->collider);
 			element.second->collider->onCollision(*collidingBody->collider);
 		}
-
+		*/
 
 		element.second->setPosition(newPosition);
+		velocity.normalize();
+		element.second->setVelocity(velocity);
 
 		// update the bodies location in the tree.
 		quadTree->removeBody(element.second);

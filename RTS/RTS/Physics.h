@@ -35,6 +35,10 @@ class Quadtree;
 typedef shared_ptr<Quadtree> QuadtreePtr;
 typedef weak_ptr<Quadtree> WeakQuadtreePtr;
 
+class Target;
+typedef shared_ptr<Target> TargetPtr;
+typedef weak_ptr<Target> WeakTargetPtr;
+
 class PhysicsComponent;
 typedef shared_ptr<PhysicsComponent> PhysicsComponentPtr;
 typedef weak_ptr<PhysicsComponent> WeakPhysicsComponentPtr;
@@ -70,12 +74,14 @@ private:
 class Body {
 public:
 
+	float mass;
 	float speed;
 	Vector2fPtr position{ nullptr };
 	Vector2fPtr velocity{ nullptr };
 	float width;
 	float height;
 	ColliderPtr collider;
+	TargetPtr target;
 
 	Body(float x, float y, float width, float height);
 
@@ -86,8 +92,10 @@ public:
 	bool checkPoint(const Vector2f& point);
 
 	void setSpeed(float speed);
-
 	float getSpeed();
+
+	void setMass(float mass);
+	float getMass();
 
 	void setPosition(const Vector2f& position);
 	const Vector2f& getPosition();
@@ -99,6 +107,10 @@ public:
 	WeakColliderPtr getCollider();
 	bool isCollidable();
 
+	void setTarget(TargetPtr target);
+	WeakTargetPtr getTarget();
+	bool hasTarget();
+
 	float getWidth();
 	float getHeight();
 	void setWidth(float width);
@@ -108,6 +120,9 @@ public:
 		serializer.writer.StartObject();
 
 		serializer.writer.String("speed");
+		serializer.writer.Double(speed);
+
+		serializer.writer.String("mass");
 		serializer.writer.Double(speed);
 
 		serializer.writer.String("position");
@@ -170,6 +185,31 @@ private:
 	vector<QuadtreeNodePtr> mLeaves;
 };
 
+class Target {
+public:
+	virtual const Vector2f& getTargetPosition() = 0;
+};
+
+class BodyTarget : public Target {
+public:
+	BodyTarget(BodyPtr body);
+
+	const Vector2f& getTargetPosition() override;
+
+private:
+	BodyPtr mBody;
+};
+
+class PositionTarget : public Target {
+public:
+	PositionTarget(Vector2fPtr position);
+
+	const Vector2f& getTargetPosition() override;
+
+private:
+	Vector2fPtr mPosition;
+};
+
 class PhysicsComponent : public Component {
 public:
 	PhysicsComponent(unsigned long entityId, BodyPtr body) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
@@ -196,6 +236,18 @@ public:
 	float getHeight();
 	WeakBodyPtr getBody() {
 		return WeakBodyPtr(mBody);
+	}
+
+	void setTarget(TargetPtr target) {
+		mBody->setTarget(target);
+	}
+
+	WeakTargetPtr getTarget() {
+		return mBody->getTarget();
+	}
+
+	bool hasTarget() {
+		return mBody->hasTarget();
 	}
 
 	void serialize(Serializer& serializer) const {

@@ -14,7 +14,7 @@ class EntityFactory {
 public:
 	EntityFactory(SystemManagerPtr systemManager);
 
-	EntityPtr createDefault();
+	EntityPtr createDefault(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 	EntityPtr createTexturedEntity(const string& assetTag, float tx, float ty, float w, float h);
 

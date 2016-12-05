@@ -85,6 +85,16 @@ public:
 		y /= mag;
 	}
 
+	void truncate(float max) {
+		if (this->magnitude() < max) {
+			return;
+		}
+
+		this->normalize();
+		this->x *= max;
+		this->y *= max;
+	}
+
 	float x, y;
 
 	void serialize(Serializer& serializer) const {

@@ -50,10 +50,10 @@ public:
 		width = root["width"].GetDouble();
 		height = root["height"].GetDouble();
 		mColor.reset(new SDL_Color{ 
-			root["r"].GetUint(), 
-			root["g"].GetUint(),
-			root["b"].GetUint(),
-			root["a"].GetUint()
+			(Uint8) root["r"].GetUint(), 
+			(Uint8) root["g"].GetUint(),
+			(Uint8) root["b"].GetUint(),
+			(Uint8) root["a"].GetUint()
 		});
 		mDrawDepth = 0;
 	}

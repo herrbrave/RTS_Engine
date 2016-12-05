@@ -4,19 +4,19 @@ EntityFactory::EntityFactory(SystemManagerPtr systemManager) {
 	mSystemManager = systemManager;
 }
 
-EntityPtr EntityFactory::createDefault() {
+EntityPtr EntityFactory::createDefault(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(0, 0, 16, 16));
+	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
-	physicsComponent->setCollider(GCC_NEW Collider(0, 0, 16, 16));
+	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	DrawablePtr blockDrawable(GCC_NEW BlockDrawable(16, 16, 255, 0, 0, 255));
+	DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
 	graphicsSystem->registerDrawable(entity->id, blockDrawable);
 	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, blockDrawable));
 

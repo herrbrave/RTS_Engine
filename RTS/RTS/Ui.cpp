@@ -72,8 +72,8 @@ SectionDrawable::SectionDrawable(float width, float height, const Vector2f& posi
 }
 
 void SectionDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
-	Vector2fPtr translated(&(position + *mPosOffset));
-	graphicsRef.renderTexture(mTexture, translated->x, translated->y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+	Vector2f translated = position + mPosOffset;
+	graphicsRef.renderTexture(mTexture, translated.x, translated.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) : Drawable(width, height) {

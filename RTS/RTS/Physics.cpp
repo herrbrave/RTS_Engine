@@ -2,6 +2,7 @@
 
 Body::Body(float x, float y, float width, float height) {
 	this->speed = 0;
+	this->mass = 10;
 	this->position.reset(GCC_NEW Vector2f(x, y));
 	this->velocity.reset(GCC_NEW Vector2f(0, 0));
 	this->width = width;
@@ -10,6 +11,7 @@ Body::Body(float x, float y, float width, float height) {
 
 Body::Body(const rapidjson::Value& root) {
 	this->speed = root["speed"].GetDouble();
+	this->mass = root["mass"].GetDouble();
 	this->position.reset(GCC_NEW Vector2f(root["position"]));
 	this->velocity.reset(GCC_NEW Vector2f(root["velocity"]));
 	this->width = root["width"].GetDouble();
@@ -18,6 +20,7 @@ Body::Body(const rapidjson::Value& root) {
 
 Body::Body(const Body& copy) {
 	this->speed = copy.speed;
+	this->mass = copy.mass;
 	this->position.reset(GCC_NEW Vector2f(*copy.position));
 	this->velocity.reset(GCC_NEW Vector2f(*copy.velocity));
 	this->width = copy.width;
@@ -33,6 +36,14 @@ void Body::setSpeed(float speed) {
 
 float Body::getSpeed() {
 	return speed;
+}
+
+void Body::setMass(float mass) {
+	this->mass = mass;
+}
+
+float Body::getMass() {
+	return this->mass;
 }
 
 void Body::setPosition(const Vector2f& position) {
@@ -64,6 +75,18 @@ WeakColliderPtr Body::getCollider() {
 
 bool Body::isCollidable() {
 	return (collider != nullptr);
+}
+
+void Body::setTarget(TargetPtr target) {
+	this->target = target;
+}
+
+WeakTargetPtr Body::getTarget() {
+	return WeakTargetPtr(this->target);
+}
+
+bool Body::hasTarget() {
+	return (target != nullptr);
 }
 
 float Body::getWidth() {
@@ -344,6 +367,22 @@ void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 			}
 		}
 	}
+}
+
+BodyTarget::BodyTarget(BodyPtr body) {
+	this->mBody = body;
+}
+
+const Vector2f& BodyTarget::getTargetPosition() {
+	return this->mBody->getPosition();
+}
+
+PositionTarget::PositionTarget(Vector2fPtr position) {
+	this->mPosition = position;
+}
+
+const Vector2f& PositionTarget::getTargetPosition() {
+	return this->mPosition;
 }
 
 void PhysicsComponent::setPosition(const Vector2f& position) {

@@ -29,7 +29,7 @@ typedef unordered_map<ComponentType, shared_ptr<Component>> Components;
 
 class Entity {
 public:
-	unsigned long parent{ -1 };
+	unsigned long parent = -1;
 	std::vector<unsigned long> children;
 
 	Entity(){}

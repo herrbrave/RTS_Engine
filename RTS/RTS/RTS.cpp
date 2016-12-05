@@ -21,6 +21,23 @@ void RTS::setup() {
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
 	mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
+
+	
+
+	mBlocks = mEntityFactory->createDefault(100, 100, 8, 8, 255, 0, 0, 255);
+	std::function<bool(EventPtr)> callback([=](EventPtr evt) {
+
+		PhysicsComponentPtr physicsComponent = makeShared(mBlocks->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+
+		TargetPtr target(new PositionTarget(Vector2fPtr(evt->mouseEvent->position)));
+		physicsComponent->setTarget(target);
+		physicsComponent->setSpeed(50);
+
+		return false;
+	});
+
+	InputComponentPtr inputComponent = makeShared(mBlocks->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
+	inputComponent->setInputCallback(Input::ON_KEY_UP, callback);
 }
 
 void RTS::handleEvents() {
