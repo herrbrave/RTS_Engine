@@ -480,54 +480,55 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 
 bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
 
-	Vector2f velocity = Vector2f(body->getVelocity());
+	Vector2f velocityCopy = Vector2f(body->getVelocity());
 
-	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
+	if (velocityCopy.x == 0 && velocityCopy.y == 0 && !body->hasTarget()) {
 		return false;
 	}
 
-
-	velocity *= body->getSpeed();
-	velocity *= step;
-
 	if (body->hasTarget()) {
-		velocity.set(this->applySteeringToVelocity(body, step));
+		velocityCopy.set(this->applySteeringToVelocity(body, step));
 	}
 
+	body->setVelocity(velocityCopy);
+
+	velocityCopy *= body->getSpeed();
+	velocityCopy *= step;
 
 	Vector2f position = body->getPosition();
-	Vector2f newPosition(position + velocity);
+	Vector2f newPosition(position + velocityCopy);
 
 	body->setPosition(newPosition);
-	body->setVelocity(velocity);
+	body->setVelocity(velocityCopy);
 
 	return true;
 }
 
 Vector2f SteeringBehavior::applySteeringToVelocity(BodyPtr& body, float step) {
 
-	TargetPtr target = makeShared(body->getTarget());
-
 	Vector2f velocity = body->getVelocity();
 	velocity *= body->getSpeed();
 
-	Vector2f position = body->getPosition();
+	TargetPtr target = makeShared(body->getTarget());
 	Vector2f targetPosition = target->getTargetPosition();
 
+	Vector2f position = body->getPosition();
 	Vector2f desiredVelocity = targetPosition - position;
 	desiredVelocity.truncate(body->getSpeed());
 
 	Vector2f steering = desiredVelocity - velocity;
 	// TODO: Set a max force somewhere.
-	steering.truncate(50);
+	steering.truncate(body->getSpeed() / 2.0f);
 	steering *= float(1 / body->getMass());
 
 	velocity += steering;
 	velocity.normalize();
-	velocity *= body->getSpeed();
-	velocity *= step;
 
-	Vector2f newPosition(position + velocity);
+	// figure out what position we're at to see if we're within the threshold.
+	Vector2f calculatedVelocity(velocity * body->getSpeed());
+	calculatedVelocity *= step;
+
+	Vector2f newPosition(position + calculatedVelocity);
 
 	Vector2f distanceVector = targetPosition - newPosition;
 	if (distanceVector.magnitude() < target->getThreshold()) {
