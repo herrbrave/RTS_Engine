@@ -244,6 +244,8 @@ public:
 			}
 		});
 		EventManager::getInstance().addDelegate(collisionChangeListener, EventType::ENTITY_COLLISION_SET);
+
+		mBehaviors.push_back(PhysicsBehaviorPtr(new SteeringBehavior()));
 	}
 
 	~PhysicsSystem() = default;
@@ -259,7 +261,7 @@ public:
 
 private:
 	unordered_map<unsigned long, BodyPtr> mBodies;
-	float sweptAABB(Body& incidentBody, Body& otherBody, const Vector2f& velocity, Vector2f& normal);
+	vector<PhysicsBehaviorPtr> mBehaviors;
 };
 
 class DefaultMouseMovementHandler : public MouseMovementHandler {

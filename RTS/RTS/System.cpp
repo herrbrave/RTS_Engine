@@ -211,174 +211,19 @@ void PhysicsSystem::update(Uint32 delta) {
 
 	// TODO: add steering later.
 	for (auto element : mBodies) {
-		Vector2f velocity = Vector2f(element.second->getVelocity());
-
-		if (velocity.x == 0 && velocity.y == 0 && !element.second->hasTarget()) {
-			continue;
-		}
-
-		Vector2f position = element.second->getPosition();
-		Vector2f newPosition;
-
-		velocity *= element.second->getSpeed();
-		velocity *= step;
-
-		if (element.second->hasTarget()) {
-			TargetPtr target = makeShared(element.second->getTarget());
-
-			Vector2f targetPosition = target->getTargetPosition();
-
-			Vector2f desiredVelocity = targetPosition - position;
-			desiredVelocity.normalize();
-			desiredVelocity *= element.second->getSpeed();
-			desiredVelocity *= step;
-
-			Vector2f steering = desiredVelocity - velocity;
-			// TODO: Set a max force somewhere.
-			steering.truncate(8);
-			steering *=  float(1 / element.second->getMass());
-
-			velocity += steering;
-			velocity.truncate(element.second->getSpeed());
-
-			newPosition = position + velocity;
-			if ((newPosition - targetPosition).magnitude() < 1) {
-				element.second->setTarget(nullptr);
-				velocity.set(0, 0);
+		for (auto behavior : mBehaviors) {
+			if (behavior->updateBehavior(step, element.second, quadTree)) {
+				// update the bodies location in the tree.
+				quadTree->removeBody(element.second);
+				quadTree->addBody(element.second);
 			}
 		}
-		else {
-			newPosition = position + velocity;
-		}
-		
-		/*
-		if (!element.second->isCollidable()) {
-			element.second->setPosition(newPosition);
-			quadTree->removeBody(element.second);
-			quadTree->addBody(element.second);
-			continue;
-		}
-		
-		vector<BodyPtr> collidingBodies;
-		quadTree->getNeigboringBodies(element.second, collidingBodies);
-
-		if (collidingBodies.size() == 0) {
-			element.second->setPosition(newPosition);
-			quadTree->removeBody(element.second);
-			quadTree->addBody(element.second);
-			continue;
-		}
-		
-		// Clean this up and move it into another method.
-		BodyPtr copyBody = element.second;
-		copyBody->setPosition(newPosition);
-		for (WeakBodyPtr collidingBodyPtr : collidingBodies) {
-			BodyPtr collidingBody = makeShared(collidingBodyPtr);
-			if (!copyBody->collider->checkCollision(*collidingBody->collider)) {
-				continue;
-			}
-
-			Vector2f normal(0, 0);
-			float collisionTime = sweptAABB(*element.second, *collidingBody, velocityCopy, normal);
-			if (collisionTime == 1.0f) {
-				continue;
-			}
-
-			Vector2f scaledVelocity = (velocityCopy * collisionTime);
-			newPosition.set(positionCopy + scaledVelocity);
-			copyBody->setPosition(newPosition);
-
-			collidingBody->collider->onCollision(*element.second->collider);
-			element.second->collider->onCollision(*collidingBody->collider);
-		}
-		*/
-
-		element.second->setPosition(newPosition);
-		velocity.normalize();
-		element.second->setVelocity(velocity);
-
-		// update the bodies location in the tree.
-		quadTree->removeBody(element.second);
-		quadTree->addBody(element.second);
 	}
 }
 
 void PhysicsSystem::clear() {
 	mBodies.clear();
 	quadTree->clear();
-}
-
-float PhysicsSystem::sweptAABB(Body& incidentBody, Body& otherBody, const Vector2f& velocity, Vector2f& normal) {
-	ExtentPtr incidentExtent = incidentBody.collider->getExtent();
-	ExtentPtr otherExtent = otherBody.collider->getExtent();
-
-	Vector2f inverseEntry;
-	Vector2f inverseExit;
-
-	if (velocity.x > 0.0f) {
-		inverseEntry.x = (otherExtent->x0 - incidentExtent->x1);
-		inverseExit.x = (otherExtent->x1 - incidentExtent->x0);
-	}
-	else {
-		inverseEntry.x = (otherExtent->x1 - incidentExtent->x0);
-		inverseExit.x = (otherExtent->x0 - incidentExtent->x1);
-	}
-
-	if (velocity.y > 0.0f) {
-		inverseEntry.y = (otherExtent->y0 - incidentExtent->y1);
-		inverseExit.y = (otherExtent->y1 - incidentExtent->y0);
-	}
-	else {
-		inverseEntry.y = (otherExtent->y1 - incidentExtent->y0);
-		inverseExit.y = (otherExtent->y0 - incidentExtent->y1);
-	}
-
-	Vector2f entry;
-	Vector2f exit;
-
-	if (velocity.x == 0.0f) {
-		entry.x = -std::numeric_limits<float>::infinity();
-		exit.x = std::numeric_limits<float>::infinity();
-	}
-	else {
-		entry.x = (inverseEntry.x / velocity.x);
-		exit.x = (inverseExit.x / velocity.x);
-	}
-
-	if (velocity.y == 0.0f) {
-		entry.y = -std::numeric_limits<float>::infinity();
-		exit.y = std::numeric_limits<float>::infinity();
-	}
-	else {
-		entry.y = (inverseEntry.y / velocity.y);
-		exit.y = (inverseExit.y / velocity.y);
-	}
-
-	float entryTime = std::max(entry.x, entry.y);
-	float exitTime = std::min(exit.x, exit.y);
-	if (entryTime > exitTime || entry.x < 0.0f && entry.y < 0.0f || entry.x > 1.0f || entry.y > 1.0f) {
-		normal.set(0.0f, 0.0f);
-		return 1.0f;
-	}
-
-	if (entry.x > entry.y) {
-		if (inverseEntry.x < 0.0f) {
-			normal.set(1.0f, 0.0f);
-		}
-		else {
-			normal.set(-1.0f, 0.0f);
-		}
-	}
-	else {
-		if (inverseEntry.y < 0.0f) {
-			normal.set(0.0f, 1.0f);
-		}
-		else {
-			normal.set(0.0f, -1.0f);
-		}
-	}
-
-	return entryTime;
 }
 
 void InputSystem::registerEventListener(InputListenerPtr inputListener) {

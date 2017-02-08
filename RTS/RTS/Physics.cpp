@@ -2,7 +2,7 @@
 
 Body::Body(float x, float y, float width, float height) {
 	this->speed = 0;
-	this->mass = 10;
+	this->mass = 3;
 	this->position.reset(GCC_NEW Vector2f(x, y));
 	this->velocity.reset(GCC_NEW Vector2f(0, 0));
 	this->width = width;
@@ -434,4 +434,107 @@ float PhysicsComponent::getWidth() {
 
 float PhysicsComponent::getHeight() {
 	return mBody->getHeight();
+}
+
+bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
+	Vector2f velocity = Vector2f(body->getVelocity());
+
+	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
+		return false;
+	}
+
+	Vector2f position = body->getPosition();
+
+	velocity *= body->getSpeed();
+	velocity *= step;
+
+	if (body->hasTarget()) {
+
+		TargetPtr target = makeShared(body->getTarget());
+
+		Vector2f targetPosition = target->getTargetPosition();
+
+		Vector2f desiredVelocity = targetPosition - position;
+		desiredVelocity.normalize();
+		desiredVelocity *= body->getSpeed();
+		desiredVelocity *= step;
+
+		velocity.set(desiredVelocity);
+
+		Vector2f newPosition(position + velocity);
+		Vector2f distanceVector = targetPosition - newPosition;
+		if (distanceVector.magnitude() < target->getThreshold()) {
+			body->setTarget(nullptr);
+			body->setSpeed(0);
+		}
+	}
+
+
+	Vector2f newPosition(position + velocity);
+
+ 	body->setPosition(newPosition);
+	body->setVelocity(velocity);
+
+	return true;
+}
+
+bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
+
+	Vector2f velocity = Vector2f(body->getVelocity());
+
+	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
+		return false;
+	}
+
+
+	velocity *= body->getSpeed();
+	velocity *= step;
+
+	if (body->hasTarget()) {
+		velocity.set(this->applySteeringToVelocity(body, step));
+	}
+
+
+	Vector2f position = body->getPosition();
+	Vector2f newPosition(position + velocity);
+
+	body->setPosition(newPosition);
+	body->setVelocity(velocity);
+
+	return true;
+}
+
+Vector2f SteeringBehavior::applySteeringToVelocity(BodyPtr& body, float step) {
+
+	TargetPtr target = makeShared(body->getTarget());
+
+	Vector2f velocity = body->getVelocity();
+	velocity *= body->getSpeed();
+
+	Vector2f position = body->getPosition();
+	Vector2f targetPosition = target->getTargetPosition();
+
+	Vector2f desiredVelocity = targetPosition - position;
+	desiredVelocity.truncate(body->getSpeed());
+
+	Vector2f steering = desiredVelocity - velocity;
+	// TODO: Set a max force somewhere.
+	steering.truncate(50);
+	steering *= float(1 / body->getMass());
+
+	velocity += steering;
+	velocity.normalize();
+	velocity *= body->getSpeed();
+	velocity *= step;
+
+	Vector2f newPosition(position + velocity);
+
+	Vector2f distanceVector = targetPosition - newPosition;
+	if (distanceVector.magnitude() < target->getThreshold()) {
+		body->setTarget(nullptr);
+		body->setVelocity(Vector2f());
+		body->setSpeed(0);
+	}
+
+	return velocity;
 }

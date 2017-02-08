@@ -1,6 +1,9 @@
 #ifndef __RTS__
 #define __RTS__
 
+#include<stdlib.h>
+#include<time.h>
+
 #include<memory>
 #include<vector>
 
@@ -25,7 +28,8 @@ private:
 	MapPtr mMap{ nullptr };
 
 	// test 
-	EntityPtr mBlocks;
+	vector<EntityPtr> mBlocks;
+	vector<EntityPtr> mOtherBlocks;
 
 	WidgetFactoryPtr mWidgetFactory{ nullptr };
 

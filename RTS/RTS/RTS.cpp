@@ -20,24 +20,32 @@ void RTS::setup() {
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
-	mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
+	//mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
 
-	
+	srand(time(nullptr));
 
-	mBlocks = mEntityFactory->createDefault(100, 100, 8, 8, 255, 0, 0, 255);
-	std::function<bool(EventPtr)> callback([=](EventPtr evt) {
+	for (int i = 0; i < 50; i++) {
+		mOtherBlocks.push_back(mEntityFactory->createDefault(rand() % 800, rand() % 600, 8, 8, 0, 0, 255, 255));
+	}
 
-		PhysicsComponentPtr physicsComponent = makeShared(mBlocks->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+	for (int i = 0; i < 2; i++) {
+		EntityPtr newEntity(mEntityFactory->createDefault(rand() % 800, rand() % 600, 8, 8, 255, 0, 0, 255));
+		std::function<bool(EventPtr)> callback([=](EventPtr evt) {
 
-		TargetPtr target(new PositionTarget(Vector2fPtr(evt->mouseEvent->position)));
-		physicsComponent->setTarget(target);
-		physicsComponent->setSpeed(50);
+			PhysicsComponentPtr physicsComponent = makeShared(newEntity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
 
-		return false;
-	});
+			TargetPtr target(new PositionTarget(Vector2fPtr(evt->mouseEvent->position)));
+			physicsComponent->setTarget(target);
+			physicsComponent->setSpeed(50);
 
-	InputComponentPtr inputComponent = makeShared(mBlocks->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
-	inputComponent->setInputCallback(Input::ON_KEY_UP, callback);
+			return false;
+		});
+
+		InputComponentPtr inputComponent = makeShared(newEntity->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
+		inputComponent->setInputCallback(Input::ON_KEY_UP, callback);
+
+		mBlocks.push_back(newEntity);
+	}
 }
 
 void RTS::handleEvents() {

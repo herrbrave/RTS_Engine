@@ -43,6 +43,10 @@ class PhysicsComponent;
 typedef shared_ptr<PhysicsComponent> PhysicsComponentPtr;
 typedef weak_ptr<PhysicsComponent> WeakPhysicsComponentPtr;
 
+class PhysicsBehavior;
+typedef shared_ptr<PhysicsBehavior> PhysicsBehaviorPtr;
+typedef weak_ptr<PhysicsBehavior> WeakPhysicsBehaviorPtr;
+
 class PhysicsNotifier {
 public:
 	virtual void notifyPositionSet(unsigned long id) = 0;
@@ -188,6 +192,17 @@ private:
 class Target {
 public:
 	virtual const Vector2f& getTargetPosition() = 0;
+
+	void setThreshold(float threshold) {
+		this->mThreshold = threshold;
+	}
+
+	float getThreshold() {
+		return this->mThreshold;
+	}
+
+private:
+	float mThreshold = 2;
 };
 
 class BodyTarget : public Target {
@@ -264,6 +279,24 @@ public:
 
 private:
 	BodyPtr mBody;
+};
+
+class PhysicsBehavior {
+public:
+	/* return true if the body was updated. */
+	virtual bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) = 0;
+};
+
+class BasicBehavior : public PhysicsBehavior {
+public:
+	bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) override;
+};
+
+class SteeringBehavior : public PhysicsBehavior {
+public:
+	bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) override;
+private:
+	Vector2f applySteeringToVelocity(BodyPtr& body, float step);
 };
 
 #endif // !__PHYSICS_H__
