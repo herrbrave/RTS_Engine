@@ -200,7 +200,7 @@ void parseState(const std::string& tag, const rapidjson::Value& button, std::uno
 
 class SectionDrawable : Drawable {
 public:
-	SectionDrawable(float width, float height, const Vector2f& positionOffset, TexturePtr texture);
+	SectionDrawable(float width, float height, Vector2f* positionOffset, TexturePtr texture);
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
@@ -230,13 +230,43 @@ private:
 	TexturePtr mButtonTexture{ nullptr };
 };
 
-class ButtonComponent : public Component {
+class ButtonComponent : public InputComponent {
 public:
-	ButtonComponent(unsigned long entityId) : Component(entityId, ComponentType::BUTTON_COMPONENT){}
+	ButtonComponent(unsigned long entityId, DrawablePtr drawable, InputListenerPtr inputListener) 
+		: InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT) {
+
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_ENTER,
+			[drawable](EventPtr evt) {
+			ButtonDrawable* buttonDrawable = (ButtonDrawable*) drawable.get();
+			buttonDrawable->state = ButtonState::OVER;
+			return true;
+		});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_EXIT,
+			[drawable](EventPtr evt) {
+			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
+			buttonDrawable->state = ButtonState::UP;
+			return true;
+		});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_DOWN,
+			[drawable](EventPtr evt) {
+			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
+			buttonDrawable->state = ButtonState::DOWN;
+			return true;
+		});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_CLICK,
+			[drawable, this](EventPtr evt) {
+			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
+			buttonDrawable->state = ButtonState::OVER;
+			this->getCallback()();
+			return true;
+		});
+	}
 
 	void onMouseEvent(const MouseEvent& mouseEvent, SystemManagerPtr systemManager);
-
-	void setCallback(const std::function<void()>& callback);
 
 	void serialize(Serializer& serializer) const override {/* no op */}
 
@@ -246,9 +276,15 @@ public:
 
 	void setIcon(TexturePtr texture, SystemManagerPtr systemManager);
 
+	void setCallback(function<void()>& callback);
+
 private:
-	std::function<void()> mCallback;
 	std::string mText;
+	function<void()> mCallback;
+
+	function<void()>& getCallback() {
+		return mCallback;
+	}
 };
 
 void setButtonText(EntityPtr entity, const std::string& text, SystemManagerPtr systemManager);

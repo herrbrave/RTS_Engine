@@ -24,7 +24,7 @@ enum class MouseAction {
 struct MouseEvent {
 	MouseButton button; 
 	MouseAction action;
-	Vector2fPtr position{ new Vector2f(0, 0) };
+	Vector2fPtr position{ GCC_NEW Vector2f(0, 0) };
 };
 typedef shared_ptr<MouseEvent> MouseEventPtr;
 typedef weak_ptr<MouseEvent> WeakMouseEventPtr;
@@ -64,10 +64,11 @@ enum class InputEventType {
 enum class Input {
 	ON_MOUSE_ENTER = 1,
 	ON_MOUSE_EXIT = 2,
-	ON_CLICK = 3,
-	ON_DRAG = 4,
-	ON_KEY_DOWN = 5,
-	ON_KEY_UP = 6,
+	ON_MOUSE_DOWN = 3,
+	ON_CLICK = 4,
+	ON_DRAG = 5,
+	ON_KEY_DOWN = 6,
+	ON_KEY_UP = 7,
 };
 
 class MouseMovementHandler;
@@ -104,7 +105,7 @@ public:
 
 class InputComponent : public Component {
 public:
-	InputComponent(unsigned long entityId, InputListenerPtr inputListener) : Component(entityId, ComponentType::INPUT_COMPONENT) {
+	InputComponent(unsigned long entityId, InputListenerPtr inputListener, ComponentType type=ComponentType::INPUT_COMPONENT) : Component(entityId, type) {
 		mInputListener = inputListener;
 	}
 
@@ -114,7 +115,7 @@ public:
 
 	}
 
-private:
+protected:
 	InputListenerPtr mInputListener;
 };
 

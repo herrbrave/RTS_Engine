@@ -274,7 +274,7 @@ public:
 
 		serializer.writer.EndObject();
 	}
-private:
+protected:
 	DrawablePtr mDrawable;
 };
 

@@ -46,6 +46,16 @@ bool InputListener::onEvent(InputEventType eventType, EventPtr evt, MouseMovemen
 	else if (eventType == InputEventType::MOUSE_BUTTON_DOWN) {
 		if (mouseState == MouseState::OVER) {
 			mouseState = MouseState::DOWN;
+			if (eventCallbacks.find(Input::ON_MOUSE_DOWN) == eventCallbacks.end()) {
+				return false;
+			}
+			
+			auto clickCallback = eventCallbacks.at(Input::ON_MOUSE_DOWN);
+			if (clickCallback != nullptr) {
+				if (clickCallback(evt)) {
+					return true;
+				}
+			}
 		}
 	}
 	else if (eventType == InputEventType::MOUSE_BUTTON_UP) {

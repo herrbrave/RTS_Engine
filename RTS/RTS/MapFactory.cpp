@@ -41,7 +41,7 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(imagePath, assetTag);
 
-	MapConfig* mapConfig = new MapConfig();
+	MapConfig* mapConfig = GCC_NEW MapConfig();
 	mapConfig->mapWidth = width;
 	mapConfig->mapHeight = height;
 	mapConfig->tileWidth = tileWidth;

@@ -27,11 +27,9 @@ private:
 	MapFactoryPtr mMapFactory{ nullptr };
 	MapPtr mMap{ nullptr };
 
-	// test 
-	vector<EntityPtr> mBlocks;
-	vector<EntityPtr> mOtherBlocks;
-
 	WidgetFactoryPtr mWidgetFactory{ nullptr };
+
+	EntityPtr mButton{ nullptr };
 
 	SoundControllerFactoryPtr mSoundControllerFactory{ nullptr };
 

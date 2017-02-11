@@ -5,7 +5,7 @@ void RTS::setup() {
 		throw std::exception("Failed to initialize TTF");
 	}
 
-	GraphicsConfig* config = new GraphicsConfig();
+	GraphicsConfig* config = GCC_NEW GraphicsConfig();
 	config->setWindowWidth(1024);
 	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
@@ -15,37 +15,14 @@ void RTS::setup() {
 	mSystemManager.reset(GCC_NEW SystemManager(config));
 	mEntityFactory.reset(GCC_NEW EntityFactory(mSystemManager));
 	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager));
-	mSoundControllerFactory.reset(new SoundControllerFactory(mSystemManager));
+	mSoundControllerFactory.reset(GCC_NEW SoundControllerFactory(mSystemManager));
 
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
 	//mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
 
-	srand(time(nullptr));
-
-	for (int i = 0; i < 50; i++) {
-		mOtherBlocks.push_back(mEntityFactory->createDefault(rand() % 800, rand() % 600, 8, 8, 0, 0, 255, 255));
-	}
-
-	for (int i = 0; i < 2; i++) {
-		EntityPtr newEntity(mEntityFactory->createDefault(rand() % 800, rand() % 600, 8, 8, 255, 0, 0, 255));
-		std::function<bool(EventPtr)> callback([=](EventPtr evt) {
-
-			PhysicsComponentPtr physicsComponent = makeShared(newEntity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-
-			TargetPtr target(new PositionTarget(Vector2fPtr(evt->mouseEvent->position)));
-			physicsComponent->setTarget(target);
-			physicsComponent->setSpeed(50);
-
-			return false;
-		});
-
-		InputComponentPtr inputComponent = makeShared(newEntity->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
-		inputComponent->setInputCallback(Input::ON_KEY_UP, callback);
-
-		mBlocks.push_back(newEntity);
-	}
+	mButton = EntityPtr(mWidgetFactory->createButton(function<void()>([](){}), 100, 100, 100, 50));
 }
 
 void RTS::handleEvents() {
