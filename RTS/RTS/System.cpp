@@ -182,9 +182,14 @@ void EntitySystem::getAllEntities(std::vector<EntityPtr>& entities) {
 }
 
 void EntitySystem::deregisterEntity(unsigned long id) {
-	mEntityMap.erase(mEntityMap.find(id));
 	EntityDestroyedEventData* eventData = GCC_NEW EntityDestroyedEventData(id, SDL_GetTicks());
 	EventManager::getInstance().pushEvent(eventData);
+}
+
+void EntitySystem::update(Uint32 delta) {
+	for (auto entity : mEntityMap) {
+		entity.second->update();
+	}
 }
 
 void EntitySystem::clear() {
@@ -208,14 +213,25 @@ WeakBodyPtr PhysicsSystem::getBody(const unsigned long id) {
 void PhysicsSystem::update(Uint32 delta) {
 	float step(float(delta) / float(1000));
 
-
 	// TODO: add steering later.
 	for (auto element : mBodies) {
 		for (auto behavior : mBehaviors) {
-			if (behavior->updateBehavior(step, element.second, quadTree)) {
-				// update the bodies location in the tree.
-				quadTree->removeBody(element.second);
-				quadTree->addBody(element.second);
+			if (!behavior->updateBehavior(step, element.second, quadTree) || !element.second->isCollidable()) {
+				continue;
+			}
+
+			// update the bodies location in the tree.
+			quadTree->removeBody(element.second);
+			quadTree->addBody(element.second);
+
+			vector<WeakBodyPtr> collidingBodies;
+			quadTree->getCollidingBodies(element.second, collidingBodies);
+
+			for (WeakBodyPtr weakBody : collidingBodies) {
+				BodyPtr body = makeShared(weakBody);
+
+				EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(element.second->id, body->id, SDL_GetTicks());
+				EventManager::getInstance().pushEvent(eventData);
 			}
 		}
 	}

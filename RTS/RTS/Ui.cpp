@@ -254,7 +254,7 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
@@ -282,7 +282,7 @@ EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 

@@ -1,6 +1,7 @@
 #include"Physics.h"
 
-Body::Body(float x, float y, float width, float height) {
+Body::Body(int id, float x, float y, float width, float height) {
+	this->id = id;
 	this->speed = 0;
 	this->mass = 3;
 	this->position.reset(GCC_NEW Vector2f(x, y));
@@ -174,7 +175,7 @@ ExtentPtr Collider::getExtent() const {
 }
 
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
-	mBody.reset(GCC_NEW Body(x, y, width, height));
+	mBody.reset(GCC_NEW Body(-1, x, y, width, height));
 	mBody->setCollider(GCC_NEW Collider(x, y, width, height));
 }
 
@@ -465,7 +466,7 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 		Vector2f distanceVector = targetPosition - newPosition;
 		if (distanceVector.magnitude() < target->getThreshold()) {
 			body->setTarget(nullptr);
-			body->setSpeed(0);
+			body->setVelocity(Vector2f());
 		}
 	}
 
@@ -473,6 +474,8 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 	Vector2f newPosition(position + velocity);
 
  	body->setPosition(newPosition);
+
+	velocity.normalize();
 	body->setVelocity(velocity);
 
 	return true;
@@ -499,6 +502,8 @@ bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr qua
 	Vector2f newPosition(position + velocityCopy);
 
 	body->setPosition(newPosition);
+
+	velocityCopy.normalize();
 	body->setVelocity(velocityCopy);
 
 	return true;
@@ -534,7 +539,6 @@ Vector2f SteeringBehavior::applySteeringToVelocity(BodyPtr& body, float step) {
 	if (distanceVector.magnitude() < target->getThreshold()) {
 		body->setTarget(nullptr);
 		body->setVelocity(Vector2f());
-		body->setSpeed(0);
 	}
 
 	return velocity;

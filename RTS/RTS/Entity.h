@@ -52,6 +52,10 @@ public:
 		return weak_ptr<ClassType>(converted);
 	}
 
+	Components& getComponents() {
+		return mComponents;
+	}
+
 	void addComponent(ComponentPtr component); 
 
 	void serialize(Serializer& serializer) const {

@@ -78,6 +78,7 @@ private:
 class Body {
 public:
 
+	int id;
 	float mass;
 	float speed;
 	Vector2fPtr position{ nullptr };
@@ -87,7 +88,7 @@ public:
 	ColliderPtr collider;
 	TargetPtr target;
 
-	Body(float x, float y, float width, float height);
+	Body(int id, float x, float y, float width, float height);
 
 	Body(const rapidjson::Value& root);
 

@@ -16,7 +16,7 @@ public:
 
 	EntityPtr createDefault(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-	EntityPtr createTexturedEntity(const string& assetTag, float tx, float ty, float w, float h);
+	EntityPtr createTexturedEntity(const string& assetTag, float x, float y, float width, float height, float tx, float ty, float w, float h, bool isCollidable);
 
 	EntityPtr createAnimatedEntity(const string& path, float width, float height);
 

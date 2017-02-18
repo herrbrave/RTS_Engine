@@ -20,6 +20,7 @@ enum class EventType : Uint8 {
 	ENTITY_COLLISION_SET = 2,
 	MAP_LOADED = 3,
 	ENTITY_ZORDER_SET = 4,
+	ENTITY_COLLISION_EVENT = 5,
 	ENTITY_DESTROYED = 99
 };
 
@@ -135,6 +136,30 @@ private:
 	unsigned long mEntityId;
 };
 
+class EntityCollisionEventData : public EventData {
+public:
+	EntityCollisionEventData(unsigned long colliderEntityId, unsigned long collidedEntityId, Uint32 timestamp) : EventData(timestamp) {
+		this->mColliderEntityId = colliderEntityId;
+		this->mCollidedEntityId = collidedEntityId;
+	}
+
+	const EventType getEventType() override {
+		return EventType::ENTITY_COLLISION_EVENT;
+	}
+
+	const unsigned long getColliderEntityId() {
+		return mColliderEntityId;
+	}
+
+	const unsigned long getCollidedEntityId() {
+		return mCollidedEntityId;
+	}
+
+private:
+	unsigned long mColliderEntityId;
+	unsigned long mCollidedEntityId;
+};
+
 class MapLoadedSetEventData : public EventData {
 public:
 	MapLoadedSetEventData(Uint32 timestamp) : EventData(timestamp) {}
@@ -211,6 +236,7 @@ private:
 	EventDataListeners mEventListeners;
 
 	EventManager() {
+		mEventListeners.emplace(EventType::ENTITY_COLLISION_EVENT, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_CREATED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_COLLISION_SET, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_POSITION_SET, EventDelegateList());

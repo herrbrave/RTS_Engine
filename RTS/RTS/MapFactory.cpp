@@ -1,13 +1,10 @@
 #include"MapFactory.h"
 
 EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height) {
-	EntityPtr entity = createTexturedEntity(assetTag, tx, ty, width, height);
+	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, width, height, tx, ty, width, height, false);
 
 	TileComponentPtr tileComponent(GCC_NEW TileComponent(entity->id, xIndex, yIndex));
 	entity->addComponent(tileComponent);
-
-	PhysicsComponentPtr physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-	physicsComponent->setPosition(Vector2fPtr(GCC_NEW Vector2f(position)));
 
 	return entity;
 }

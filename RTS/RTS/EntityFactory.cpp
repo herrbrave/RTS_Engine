@@ -10,7 +10,7 @@ EntityPtr EntityFactory::createDefault(float x, float y, float width, float heig
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
@@ -32,15 +32,18 @@ EntityPtr EntityFactory::createDefault(float x, float y, float width, float heig
 	return entity;
 }
 
-EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float tx, float ty, float w, float h) {
+EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, float y, float width, float height, float tx, float ty, float w, float h, bool isCollidable) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(0.0f, 0.0f, w, h));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+	if (isCollidable) {
+		physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
+	}
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	TexturePtr texture(GCC_NEW Texture(assetTag, tx, ty, w, h));
@@ -66,7 +69,7 @@ EntityPtr EntityFactory::createAnimatedEntity(const string& path, float width, f
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(0.0f, 0.0f, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, 0.0f, 0.0f, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
@@ -145,7 +148,7 @@ EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, floa
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(x, y, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));

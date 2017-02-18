@@ -21,8 +21,6 @@ void RTS::setup() {
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
 	//mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
-
-	mButton = EntityPtr(mWidgetFactory->createButton(function<void()>([](){}), 100, 100, 100, 50));
 }
 
 void RTS::handleEvents() {
@@ -51,6 +49,9 @@ void RTS::update() {
 
 	AnimationSystemPtr animationSystem(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	animationSystem->update(delta);
+
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	entitySystem->update(delta);
 
 	EventManager::getInstance().update();
 

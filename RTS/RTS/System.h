@@ -98,7 +98,16 @@ protected:
 
 class AnimationSystem : public System {
 public:
-	AnimationSystem(SystemManagerPtr systemManager) : System(SystemType::ANIMATION, systemManager) {}
+	AnimationSystem(SystemManagerPtr systemManager) : System(SystemType::ANIMATION, systemManager) {
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+			deregisterAnimation(data.getEntityId());
+		});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+	}
 
 	void update(Uint32 delta);
 
@@ -165,6 +174,15 @@ public:
 		});
 		EventListenerDelegate zOrderChanged(zOrderChangeDelegate);
 		EventManager::getInstance().addDelegate(zOrderChanged, EventType::ENTITY_ZORDER_SET);
+
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+			deregisterDrawable(data.getEntityId());
+		});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 	}
 
 	void registerDrawable(const unsigned long, DrawablePtr drawable);
@@ -193,12 +211,23 @@ private:
 
 class EntitySystem : public System {
 public:
-	EntitySystem(SystemManagerPtr systemManager) : System(SystemType::ENTITY, systemManager) {}
+	EntitySystem(SystemManagerPtr systemManager) : System(SystemType::ENTITY, systemManager) {
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+			mEntityMap.erase(mEntityMap.find(data.getEntityId()));
+		});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+	}
 
 	void addEntity(EntityPtr entity);
 	WeakEntityPtr getEntityById(unsigned long id);
 	void deregisterEntity(unsigned long id);
 	void getAllEntities(std::vector<EntityPtr>& entity);
+	
+	void update(Uint32 delta);
 
 	void clear() override;
 
@@ -245,7 +274,16 @@ public:
 		});
 		EventManager::getInstance().addDelegate(collisionChangeListener, EventType::ENTITY_COLLISION_SET);
 
-		mBehaviors.push_back(PhysicsBehaviorPtr(new SteeringBehavior()));
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+			deregisterBody(data.getEntityId());
+		});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+
+		mBehaviors.push_back(PhysicsBehaviorPtr(new BasicBehavior()));
 	}
 
 	~PhysicsSystem() = default;
@@ -280,6 +318,15 @@ class InputSystem : public System {
 public:
 	InputSystem(SystemManagerPtr systemManager) : System(SystemType::INPUT, systemManager) {
 		mMouseMovementHandler.reset(GCC_NEW DefaultMouseMovementHandler(systemManager));
+
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+			deregisterEventListener(data.getEntityId());
+		});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 	}
 
 	void registerEventListener(InputListenerPtr inputListener);
