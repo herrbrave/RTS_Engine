@@ -20,7 +20,7 @@ void RTS::setup() {
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
-	//mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
+	mMap = mMapFactory->createMap("Maps/test_map_with_collision.json");
 }
 
 void RTS::handleEvents() {
