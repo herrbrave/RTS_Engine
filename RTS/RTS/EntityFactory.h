@@ -18,7 +18,7 @@ public:
 
 	EntityPtr createTexturedEntity(const string& assetTag, float x, float y, float width, float height, float tx, float ty, float w, float h, bool isCollidable);
 
-	EntityPtr createAnimatedEntity(const string& path, float width, float height);
+	EntityPtr createAnimatedEntity(const string& path, float x, float y, float width, float height);
 
 	EntityPtr createFromSerialization(const string& path);
 

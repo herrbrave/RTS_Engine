@@ -18,7 +18,7 @@ void AnimationSystem::update(Uint32 delta) {
 }
 
 void AnimationSystem::registerAnimation(unsigned long id, AnimationHandlerPtr animationHandler) {
-	if (mAnimations.find(id) == mAnimations.end()) {
+	if (mAnimations.find(id) != mAnimations.end()) {
 		return;
 	}
 
@@ -56,6 +56,8 @@ AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 	AnimationSetPtr animationSet(GCC_NEW AnimationSet());
 	animationSet->defaultAnimationName = defaultAnimationName;
 	animationSet->fps = fps;
+	animationSet->spritesheet = imagePath;
+	animationSet->name = name;
 	auto animations = doc["animations"].GetArray();
 	for (int index = 0; index < animations.Size(); index++) {
 		auto animation = animations[index].GetObject();

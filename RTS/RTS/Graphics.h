@@ -29,6 +29,10 @@ class Drawable;
 typedef shared_ptr<Drawable> DrawablePtr;
 typedef weak_ptr<Drawable> WeakDrawablePtr;
 
+class TextureDrawable;
+typedef shared_ptr<TextureDrawable> TextureDrawablePtr;
+typedef weak_ptr<TextureDrawable> WeakTextureDrawablePtr;
+
 class DrawableComponent;
 typedef shared_ptr<DrawableComponent> DrawableComponentPtr; 
 typedef weak_ptr<DrawableComponent> WeakDrawableComponentPtr;
@@ -157,15 +161,11 @@ public:
 
 protected:
 	virtual void onSerialize(Serializer& serializer) const {
-		serializer.writer.StartObject();
-
 		serializer.writer.String("drawableType");
 		serializer.writer.String("TextureDrawable");
 
 		serializer.writer.String("mTexture");
 		mTexture->serialize(serializer);
-
-		serializer.writer.EndObject();
 	}
 
 private:

@@ -125,7 +125,8 @@ private:
 
 class AssetSystem : public System {
 public:
-	AssetSystem(SystemManagerPtr systemManager) : System(SystemType::ASSET, systemManager) {}
+	AssetSystem(SystemManagerPtr systemManager) : System(SystemType::ASSET, systemManager) {
+	}
 
 	void registerAsset(AssetPtr asset) {
 		mAssets.emplace(asset->tag, asset);
@@ -180,6 +181,15 @@ public:
 
 			deregisterDrawable(data.getEntityId());
 		});
+
+		EventDelegate loadAsset([this](const EventData& eventData) {
+			LoadAssetEventData loadAssetEvent = dynamic_cast<const LoadAssetEventData&>(eventData);
+			if (loadAssetEvent.path.find(".png") != std::string::npos) {
+				this->addTexture(loadAssetEvent.path, loadAssetEvent.assetTag);
+			}
+		});
+		EventListenerDelegate loadAssetDelegate(loadAsset);
+		EventManager::getInstance().addDelegate(loadAssetDelegate, EventType::LOAD_ASSET);
 
 		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);

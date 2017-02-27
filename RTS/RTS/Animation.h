@@ -11,18 +11,11 @@ enum class AnimationState {
 	STOPPED = 1,
 };
 
-typedef struct {
-	std::vector<TexturePtr>  frames;
-	std::string name;
-} Animation;
+class Animation;
 typedef shared_ptr<Animation> AnimationPtr;
 typedef weak_ptr<Animation> WeakAnimationPtr;
 
-typedef struct {
-	std::unordered_map<std::string, AnimationPtr> animations;
-	std::string defaultAnimationName;
-	int fps;
-} AnimationSet;
+class AnimationSet;
 typedef shared_ptr<AnimationSet> AnimationSetPtr;
 typedef weak_ptr<AnimationSet> WeakAnimationSetPtr;
 
@@ -34,71 +27,192 @@ class AnimationComponent;
 typedef shared_ptr<AnimationComponent> AnimationComponentPtr;
 typedef weak_ptr<AnimationComponent> WeakAnimationComponentPtr;
 
-class AnimationHandler {
+class Animation : public Serializable {
 public:
-	AnimationHandler(shared_ptr<TextureDrawable> textureDrawable, AnimationSetPtr animationSet, int fps) {
-		mTextureDrawable = textureDrawable;
-		mFps = fps;
-		mState = AnimationState::STOPPED;
-		mTimePerFrame = (1000 / mFps);
+	std::vector<TexturePtr>  frames;
+	std::string name;
 
-		setAnimationSet(animationSet);
+	Animation() {}
+
+	Animation(const rapidjson::Value& root) {
+		this->name = root["name"].GetString();
+
+		for (rapidjson::SizeType index = 0; index < root["frames"].Size(); index++) {
+			const rapidjson::Value& frame = root["frames"][index];
+			this->frames.push_back(TexturePtr(GCC_NEW Texture(frame)));
+		}
+	}
+
+	void serialize(Serializer& serializer) const override {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("name");
+		serializer.writer.String(this->name.c_str());
+
+		serializer.writer.String("frames");
+		serializer.writer.StartArray();
+
+		for (auto texture : frames) {
+			texture->serialize(serializer);
+		}
+
+		serializer.writer.EndArray();
+
+		serializer.writer.EndObject();
+	}
+};
+
+class AnimationSet : public Serializable {
+public:
+	std::unordered_map<std::string, AnimationPtr> animations;
+	std::string spritesheet;
+	std::string name;
+	std::string defaultAnimationName;
+	int fps;
+
+	AnimationSet() {}
+
+	AnimationSet(const rapidjson::Value& root) {
+		this->spritesheet = root["spritesheet"].GetString();
+		this->name = root["name"].GetString();
+
+		LoadAssetEventData* eventData = GCC_NEW LoadAssetEventData(SDL_GetTicks(), this->spritesheet, this->name);
+		EventManager::getInstance().pushEvent(eventData);
+
+		this->defaultAnimationName = root["defaultAnimationName"].GetString();
+		this->fps = root["fps"].GetInt();
+
+		auto it = root["animations"].GetObject().begin();
+
+		while (it != root["animations"].GetObject().end()) {
+			const rapidjson::Value& animation = it->value;
+			this->animations[it->name.GetString()] = AnimationPtr(GCC_NEW Animation(animation));
+			it++;
+		}
+	}
+
+	void serialize(Serializer& serializer) const override {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("spritesheet");
+		serializer.writer.String(this->spritesheet.c_str());
+
+		serializer.writer.String("name");
+		serializer.writer.String(this->name.c_str());
+
+		serializer.writer.String("defaultAnimationName");
+		serializer.writer.String(this->defaultAnimationName.c_str());
+
+		serializer.writer.String("fps");
+		serializer.writer.Int(this->fps);
+
+		serializer.writer.String("animations");
+		serializer.writer.StartObject();
+
+		for (auto entry : this->animations) {
+			serializer.writer.String(entry.second->name.c_str());
+			entry.second->serialize(serializer);
+		}
+
+		serializer.writer.EndObject();
+
+		serializer.writer.EndObject();
+	}
+};
+
+class AnimationHandler : public Serializable {
+public:
+	AnimationHandler(TextureDrawablePtr& textureDrawable, AnimationSetPtr animationSet, int fps) {
+		this->textureDrawable = textureDrawable;
+		this->fps = fps;
+		this->state = AnimationState::STOPPED;
+		this->timePerFrame = (1000 / fps);
+
+		this->setAnimationSet(animationSet);
+	}
+
+	AnimationHandler(const rapidjson::Value& root) {
+		this->textureDrawable = TextureDrawablePtr(GCC_NEW TextureDrawable(TexturePtr(GCC_NEW Texture(""))));
+
+		const rapidjson::Value& animationSet = root["animationSet"];
+		this->animationSet = AnimationSetPtr(GCC_NEW AnimationSet(animationSet));
+		this->fps = root["fps"].GetInt();
+
+		this->setAnimation(root["currentAnimtionName"].GetString());
+
+		this->timePerFrame = (1000 / this->fps);
+
+		this->state = AnimationState::STOPPED;
 	}
 
 	void setAnimation(std::string animationName) {
-		mCurrentAnimationName = animationName;
+		this->currentAnimtionName = animationName;
 
-		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
-		mTextureDrawable->setTexture(currentAnimation->frames[0]);
+		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
+		this->textureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
 	void setAnimationSet(AnimationSetPtr animationSet) {
-		mAnimationSet = animationSet;
-		mCurrentAnimationName = mAnimationSet->defaultAnimationName;
-		mCurrentFrame = 0;
-		mFrameTime = 0;
+		this->animationSet = animationSet;
+		this->currentAnimtionName = this->animationSet->defaultAnimationName;
+		this->currentFrame = 0;
+		this->frameTime = 0;
 
-		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
-		mTextureDrawable->setTexture(currentAnimation->frames[0]);
+		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
+		this->textureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
 	void play() {
-		mState = AnimationState::PLAYING;
+		this->state = AnimationState::PLAYING;
 	}
 
 	void stop() {
-		mCurrentFrame = 0;
-		mState = AnimationState::STOPPED;
+		this->currentFrame = 0;
+		this->state = AnimationState::STOPPED;
 	}
 
 	void update(Uint32 delta) {
-		if (AnimationState::STOPPED == mState) {
+		if (AnimationState::STOPPED == state) {
 			return;
 		}
 
-		mFrameTime += delta;
-		if (mFrameTime < mTimePerFrame) {
+		this->frameTime += delta;
+		if (this->frameTime < this->timePerFrame) {
 			return;
 		}
 
-		AnimationPtr currentAnimation = mAnimationSet->animations[mCurrentAnimationName];
+		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
 
-		if (++mCurrentFrame >= currentAnimation->frames.size()) {
-			mCurrentFrame = 0;
+		if (++this->currentFrame >= currentAnimation->frames.size()) {
+			this->currentFrame = 0;
 		}
-		mTextureDrawable->setTexture(currentAnimation->frames[mCurrentFrame]);
-		mFrameTime = 0;
+		this->textureDrawable->setTexture(currentAnimation->frames[currentFrame]);
+		this->frameTime = 0;
 	}
 
-private:
-	shared_ptr<TextureDrawable> mTextureDrawable;
-	AnimationSetPtr mAnimationSet;
-	int mFps;
-	int mCurrentFrame;
-	std::string mCurrentAnimationName;
-	AnimationState mState;
-	Uint32 mFrameTime;
-	Uint32 mTimePerFrame;
+	void serialize(Serializer& serializer) const override {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("animationSet");
+		this->animationSet->serialize(serializer);
+
+		serializer.writer.String("fps");
+		serializer.writer.Int(this->fps);
+
+		serializer.writer.String("currentAnimtionName");
+		serializer.writer.String(this->currentAnimtionName.c_str());;
+
+		serializer.writer.EndObject();
+	}
+
+	TextureDrawablePtr textureDrawable;
+	AnimationSetPtr animationSet;
+	int fps;
+	int currentFrame;
+	std::string currentAnimtionName;
+	AnimationState state;
+	Uint32 frameTime;
+	Uint32 timePerFrame;
 };
 
 class AnimationComponent : public Component {
@@ -109,8 +223,21 @@ public:
 		this->animationHandler = animationHandler;
 	}
 
+	AnimationComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
+		this->animationHandler = AnimationHandlerPtr(new AnimationHandler(root["animationHandler"]));
+	}
+
 	void serialize(Serializer& serializer) const override {
 
+		serializer.writer.StartObject();
+
+		serializer.writer.String("componentId");
+		serializer.writer.Uint((Uint8) this->componentId);
+
+		serializer.writer.String("animationHandler");
+		this->animationHandler->serialize(serializer);
+
+		serializer.writer.EndObject();
 	}
 };
 

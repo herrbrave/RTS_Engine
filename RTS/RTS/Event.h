@@ -21,6 +21,7 @@ enum class EventType : Uint8 {
 	MAP_LOADED = 3,
 	ENTITY_ZORDER_SET = 4,
 	ENTITY_COLLISION_EVENT = 5,
+	LOAD_ASSET = 6,
 	ENTITY_DESTROYED = 99
 };
 
@@ -187,6 +188,22 @@ private:
 	unsigned long mEntityId;
 };
 
+
+class LoadAssetEventData : public EventData {
+public:
+	string path;
+	string assetTag;
+
+	LoadAssetEventData(Uint32 timestamp, string& path, string& assetTag) : EventData(timestamp) {
+		this->path = path;
+		this->assetTag = assetTag;
+	}
+
+	const EventType getEventType() override {
+		return EventType::LOAD_ASSET;
+	}
+};
+
 class EventManager {
 public:
 	EventManager(EventManager const& eventManager) = delete;
@@ -243,6 +260,7 @@ private:
 		mEventListeners.emplace(EventType::MAP_LOADED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_DESTROYED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_ZORDER_SET, EventDelegateList());
+		mEventListeners.emplace(EventType::LOAD_ASSET, EventDelegateList());
 	}
 };
 

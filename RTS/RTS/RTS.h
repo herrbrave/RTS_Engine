@@ -33,6 +33,8 @@ private:
 
 	Uint32 mLastTime{ 0 };
 
+	EntityPtr entity;
+
 protected:
 	void setup() override;
 	void handleEvents() override;

@@ -63,13 +63,13 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, f
 	return entity;
 }
 
-EntityPtr EntityFactory::createAnimatedEntity(const string& path, float width, float height) {
+EntityPtr EntityFactory::createAnimatedEntity(const string& path, float x, float y, float width, float height) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	BodyPtr blockBody(GCC_NEW Body(entity->id, 0.0f, 0.0f, width, height));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
@@ -113,10 +113,11 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
-	const rapidjson::Value& componentContainer = doc["componentContainer"];
+	const rapidjson::Value& componentContainer = doc["components"];
 
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
+	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	for (rapidjson::SizeType index = 0; index < componentContainer.Size(); index++) {
 		const rapidjson::Value& component = componentContainer[index];
 		ComponentType componentId = (ComponentType) component["componentId"].GetUint();
@@ -133,6 +134,12 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 		}
 		else if (componentId == ComponentType::TILE_COMPONENT) {
 			entity->addComponent(ComponentPtr(GCC_NEW TileComponent(entity->id, component)));
+		}
+		else if (componentId == ComponentType::ANIMATION_COMPONENT) {
+			AnimationComponent* animationComponent = GCC_NEW AnimationComponent(entity->id, component);
+			entity->addComponent(ComponentPtr(animationComponent));
+			graphicsSystem->registerDrawable(entity->id, animationComponent->animationHandler->textureDrawable); 
+			animationSystem->registerAnimation(entity->id, animationComponent->animationHandler);
 		}
 		else {
 			assert(false);
