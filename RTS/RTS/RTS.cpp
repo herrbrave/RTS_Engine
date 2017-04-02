@@ -20,7 +20,13 @@ void RTS::setup() {
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
-	// mMap = mMapFactory->createMap("Maps/big_map.json");
+	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
+
+	luaScript = mLuaScriptFactory->create("hello_world.lua");
+
+	luaScript->invoke("default");
+	luaScript->invoke("textured", 200, 100);
+	luaScript->invoke("textured", 300, 100);
 }
 
 void RTS::handleEvents() {

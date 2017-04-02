@@ -12,6 +12,7 @@
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
+#include"Script.h"
 #include"SoundControllerFactory.h"
 #include"System.h"
 #include"Ui.h"
@@ -32,6 +33,9 @@ private:
 	SoundControllerFactoryPtr mSoundControllerFactory{ nullptr };
 
 	Uint32 mLastTime{ 0 };
+
+	LuaScriptFactoryPtr mLuaScriptFactory{ nullptr };
+	LuaScriptPtr luaScript{ nullptr };
 
 	EntityPtr entity;
 

@@ -1,11 +1,13 @@
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
+#include<iostream>
 #include<memory>
 using std::dynamic_pointer_cast;
 using std::shared_ptr;
 using std::static_pointer_cast;
 using std::weak_ptr;
+using std::cerr;
 
 #include<functional>
 using std::function;
@@ -41,6 +43,14 @@ shared_ptr<ClassType> makeShared(weak_ptr<ClassType> weakPtr) {
 	ASSERT_VALID<ClassType>(weakPtr);
 
 	return shared_ptr<ClassType>(weakPtr);
+}
+
+inline void LOG(const string& message) {
+	std::cout << "LOG:" + message << std::endl;
+}
+
+inline void ERR(const string& error) {
+	std::cerr << "ERR: " << error << std::endl;
 }
 
 #endif // !__CONSTANTS_H__
