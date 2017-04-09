@@ -23,7 +23,9 @@ void RTS::setup() {
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
 
 	luaScript = mLuaScriptFactory->create("game.lua");
-	luaScript->invoke("setup");
+
+	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
+	luaScriptSystem->registerLuaScript(0, luaScript);
 }
 
 void RTS::handleEvents() {
@@ -47,7 +49,8 @@ void RTS::update() {
 	Uint32 lastTime(SDL_GetTicks());
 	Uint32 delta(lastTime - mLastTime);
 
-	luaScript->invoke("update", (int)delta);
+	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
+	luaScriptSystem->update(delta);
 
 	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	physicsSystem->update(delta);

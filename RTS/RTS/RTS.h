@@ -12,7 +12,7 @@
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
-#include"Script.h"
+#include"ScriptFactory.h"
 #include"SoundControllerFactory.h"
 #include"System.h"
 #include"Ui.h"

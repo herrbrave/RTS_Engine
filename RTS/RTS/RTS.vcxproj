@@ -96,6 +96,7 @@
     <ClInclude Include="PathState.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Script.h" />
+    <ClInclude Include="ScriptFactory.h" />
     <ClInclude Include="SDL_Helpers.h" />
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="Sound.h" />
@@ -120,7 +121,7 @@
     <ClCompile Include="Physics.cpp" />
     <ClCompile Include="RTS.cpp" />
     <ClCompile Include="MoveState.cpp" />
-    <ClCompile Include="Script.cpp" />
+    <ClCompile Include="ScriptFactory.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="SoundControllerFactory.cpp" />
     <ClCompile Include="System.cpp" />

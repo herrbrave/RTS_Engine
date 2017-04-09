@@ -1,4 +1,4 @@
-#include"Script.h"
+#include"ScriptFactory.h"
 
 LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	LuaScriptPtr script(GCC_NEW LuaScript(scriptPath));
@@ -15,7 +15,7 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	script->state["SDLK_RIGHT"] = (int)SDLK_RIGHT;
 	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
 	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
-	
+
 	// TODO: Find a better way to do this!
 	EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
 	EntityPtr physicsEntity = entityFactory->createPhysicsEntity(0, 0, 1, 1);
@@ -33,6 +33,8 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
 	InputSystemPtr inputSystem = makeShared<InputSystem>(systemManager->getSystemByType<InputSystem>(SystemType::INPUT));
 	inputSystem->registerEventListener(inputListener);
+
+	script->invoke("setup");
 
 	return script;
 }
@@ -118,7 +120,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
 		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-		return (double) physicsComponent->getSpeed();
+		return (double)physicsComponent->getSpeed();
 	};
 
 	script->state["getPosition"] = [this](int entityId) -> LuaFriendlyVector2f& {
@@ -183,7 +185,7 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 
-		return (int) drawableComponent->getZOrder();
+		return (int)drawableComponent->getZOrder();
 	};
 
 	script->state["setZOrder"] = [this](int entityId, int order) {

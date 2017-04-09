@@ -13,6 +13,7 @@
 #include"Input.h"
 #include"Graphics.h"
 #include"Physics.h"
+#include"Script.h"
 #include"Sound.h"
 
 enum class SystemType : Uint8 {
@@ -23,6 +24,7 @@ enum class SystemType : Uint8 {
 	GRAPHICS = 4,
 	PHYSICS = 5,
 	SOUND = 6,
+	LUA_SCRIPT = 7,
 };
 
 /* Early class definitions. */
@@ -53,6 +55,10 @@ typedef weak_ptr<InputSystem> WeakInputSystemPtr;
 class GraphicsSystem;
 typedef shared_ptr<GraphicsSystem> GraphicsSystemPtr;
 typedef weak_ptr<GraphicsSystem> WeakGraphicsSystemPtr;
+
+class LuaScriptSystem;
+typedef shared_ptr<LuaScriptSystem> LuaScriptSystemPtr;
+typedef weak_ptr<LuaScriptSystem> WeakLuaScriptSystemPtr;
 
 class PhysicsSystem;
 typedef shared_ptr<PhysicsSystem> PhysicsSystemPtr;
@@ -251,7 +257,26 @@ public:
 
 private:
 	unordered_map<unsigned long, EntityPtr> mEntityMap;
-}; 
+};
+
+class LuaScriptSystem : public System {
+public:
+	LuaScriptSystem(SystemManagerPtr systemManager) : System(SystemType::LUA_SCRIPT, systemManager) {
+
+	}
+
+	void registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript);
+
+	void deregisterLuaScript(unsigned long id);
+
+	void update(Uint32 delta);
+
+	void clear() override;
+
+private:
+
+	LuaScripts mLuaScripts;
+};
 
 class PhysicsSystem : public System {
 public:

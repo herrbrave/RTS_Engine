@@ -9,6 +9,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(GraphicsConfigPtr(graphicsConfig), ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
 	systems.emplace(SystemType::SOUND, SoundSystemPtr(GCC_NEW SoundSystem(ptr)));
+	systems.emplace(SystemType::LUA_SCRIPT, LuaScriptSystemPtr(GCC_NEW LuaScriptSystem(ptr)));
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -196,6 +197,29 @@ void EntitySystem::update(Uint32 delta) {
 
 void EntitySystem::clear() {
 	mEntityMap.clear();
+}
+
+void LuaScriptSystem::registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript) {
+	mLuaScripts.emplace(id, luaScript);
+}
+
+void LuaScriptSystem::deregisterLuaScript(unsigned long id) {
+	if (mLuaScripts.find(id) == mLuaScripts.end()) {
+		return;
+	}
+
+	mLuaScripts.erase(id);
+}
+
+void LuaScriptSystem::update(Uint32 delta) {
+
+	for (auto entry : mLuaScripts) {
+		entry.second->invoke("update", (int)delta);
+	}
+}
+
+void LuaScriptSystem::clear() {
+	mLuaScripts.clear();
 }
 
 void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
