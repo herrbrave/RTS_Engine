@@ -55,7 +55,7 @@ void Body::setPosition(const Vector2f& position) {
 }
 
 const Vector2f& Body::getPosition() {
-	return position;
+	return *position.get();
 }
 
 void Body::setVelocity(const Vector2f& vector) {
@@ -63,7 +63,7 @@ void Body::setVelocity(const Vector2f& vector) {
 }
 
 const Vector2f& Body::getVelocity() {
-	return velocity;
+	return *velocity.get();
 }
 
 void Body::setCollider(Collider* collider) {

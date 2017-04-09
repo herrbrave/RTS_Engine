@@ -18,8 +18,6 @@ function setup()
 		table.insert(game["enemies"], createDefault(100 * index, 100, 50, 50, 0, 255, 0, 255))
 	end
 
-	print(#game["enemies"])
-
 	game["playerBullets"] = {}
 	game["enemyBullets"] = {}
 	game["playerId"] = createDefault(450, 600, 50, 50, 255, 255, 255, 255)
@@ -38,7 +36,8 @@ function onKeyDown(keyId)
 		setSpeed(playerId, 200.0)
 
 	elseif SDLK_SPACE == keyId then
-		local x = getXPosition(playerId)
+		local position = getPosition(game["playerId"])
+		local x = position:getX()
 		local bulletId = createDefault(x, 500, 20, 20, 125, 0, 0, 255)
 		table.insert(game["playerBullets"], bulletId)
 
@@ -108,8 +107,8 @@ end
 function update(delta)
 	if #game["enemyBullets"] < 5 then
 		local randomEnemy = math.random(#game["enemies"])
-		local x = getXPosition(randomEnemy)
-		local bulletId = createDefault(x, 150, 20, 20, 0, 127, 0, 255)
+		local position = getPosition(randomEnemy)
+		local bulletId = createDefault(position:getX(), 150, 20, 20, 0, 127, 0, 255)
 		table.insert(game["enemyBullets"], bulletId)
 
 		addVelocity(bulletId, 0.0, 1.0)

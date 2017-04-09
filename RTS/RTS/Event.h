@@ -126,7 +126,7 @@ public:
 	}
 
 	const EventType getEventType() override {
-		return EventType::ENTITY_COLLISION_SET;
+		return EventType::ENTITY_ZORDER_SET;
 	}
 
 	const unsigned long getEntityId() {
