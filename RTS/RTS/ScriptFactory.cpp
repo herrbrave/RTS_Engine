@@ -7,38 +7,12 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	this->registerEntity(script);
 	this->registerFactory(script);
 	this->registerPhysics(script);
-
-	// Find a better way to register KEY Events
-	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
-
-	script->state["SDLK_UP"] = (int)SDLK_UP;
-	script->state["SDLK_RIGHT"] = (int)SDLK_RIGHT;
-	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
-	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
-
-	// TODO: Find a better way to do this!
-	EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
-	EntityPtr physicsEntity = entityFactory->createPhysicsEntity(0, 0, 1, 1);
-
-	InputListenerPtr inputListener(GCC_NEW InputListener(physicsEntity->id));
-	inputListener->eventCallbacks[Input::ON_KEY_DOWN] = [script](EventPtr evt) {
-		script->invoke("onKeyDown", (int)evt->keyEvent->key);
-		return false;
-	};
-	inputListener->eventCallbacks[Input::ON_KEY_UP] = [script](EventPtr evt) {
-		script->invoke("onKeyUp", (int)evt->keyEvent->key);
-		return false;
-	};
-
-	SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
-	InputSystemPtr inputSystem = makeShared<InputSystem>(systemManager->getSystemByType<InputSystem>(SystemType::INPUT));
-	inputSystem->registerEventListener(inputListener);
+	this->registerAnimation(script);
 
 	script->invoke("setup");
 
 	return script;
 }
-
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
 	script->state["createDefault"] = [this](int x, int y, int w, int h, int r, int g, int b, int a) -> int {
