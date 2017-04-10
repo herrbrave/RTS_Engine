@@ -5,6 +5,10 @@
 #include"System.h"
 #include"Ui.h"
 
+class LuaScriptFactory;
+typedef shared_ptr<LuaScriptFactory> LuaScriptFactoryPtr;
+typedef weak_ptr<LuaScriptFactory> WeakLuaScriptFactoryPtr;
+
 class LuaScriptFactory {
 public:
 	LuaScriptFactory(
@@ -24,6 +28,7 @@ private:
 	void registerEntity(LuaScriptPtr& script);
 	void registerPhysics(LuaScriptPtr& script);
 	void registerDrawable(LuaScriptPtr& script);
+	void registerAnimation(LuaScriptPtr& script);
 
 	EventListenerDelegate destroyEntityListener{ nullptr };
 

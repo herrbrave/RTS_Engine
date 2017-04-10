@@ -208,3 +208,35 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		drawableComponent->setSize(w, h);
 	};
 }
+
+void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
+	script->state["setAnimation"] = [this](int entityId, string animationName) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+
+		animationComponent->animationHandler->setAnimation(animationName);
+	};
+
+	script->state["stopAnimation"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+
+		animationComponent->animationHandler->stop();
+	};
+
+	script->state["playAnimation"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+
+		animationComponent->animationHandler->play();
+	};
+}

@@ -8,7 +8,7 @@
 #include<vector>
 
 #include"Animation.h"
-#include"EntityFactory.h"
+#include"EntityBuilder.h"
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
@@ -35,9 +35,8 @@ private:
 	Uint32 mLastTime{ 0 };
 
 	LuaScriptFactoryPtr mLuaScriptFactory{ nullptr };
-	LuaScriptPtr luaScript{ nullptr };
 
-	EntityPtr entity;
+	EntityPtr entity{ nullptr };
 
 protected:
 	void setup() override;

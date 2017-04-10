@@ -22,10 +22,13 @@ void RTS::setup() {
 
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
 
-	luaScript = mLuaScriptFactory->create("game.lua");
+	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
-	luaScriptSystem->registerLuaScript(0, luaScript);
+	mEntity = entityBuilder
+		.withPhysics(500, 500, 60, 100, true)
+		.withAnimation("Assets/player_animations.json")
+		.withScript("player.lua")
+		.build();
 }
 
 void RTS::handleEvents() {
