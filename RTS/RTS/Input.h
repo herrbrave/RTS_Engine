@@ -35,6 +35,11 @@ enum class MouseState {
 	DOWN = 2,
 };
 
+enum class KeyAction {
+	UP = 0,
+	DOWN = 1,
+};
+
 struct KeyboardEvent {
 	Sint32 key;
 	bool ctrlDown;

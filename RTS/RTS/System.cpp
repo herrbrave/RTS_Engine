@@ -296,22 +296,42 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 
 	InputEventType type = InputEventType::NONE;
 	switch (evt.type) {
-	case SDL_KEYDOWN:
-		type = InputEventType::KEY_DOWN;
-		break;
-	case SDL_KEYUP:
-		type = InputEventType::KEY_UP;
-		break;
-	case SDL_MOUSEBUTTONDOWN:
-		type = InputEventType::MOUSE_BUTTON_DOWN;
-		break;
-	case SDL_MOUSEBUTTONUP:
-		type = InputEventType::MOUSE_BUTTON_UP;
-		break;
-	case SDL_MOUSEMOTION:
-		type = InputEventType::MOUSE_MOVE;
-		break;
+	case SDL_KEYDOWN: {
+			type = InputEventType::KEY_DOWN;
 
+			KeyEventData* keyDownEventData = GCC_NEW KeyEventData(SDL_GetTicks(), keyEvent->key,KeyAction::DOWN,  keyEvent->ctrlDown, keyEvent->shiftDown);
+			EventManager::getInstance().pushEvent(keyDownEventData);
+
+			break;
+		}
+	case SDL_KEYUP: {
+			type = InputEventType::KEY_UP;
+
+			KeyEventData* keyUpEventData = GCC_NEW KeyEventData(SDL_GetTicks(), keyEvent->key, KeyAction::UP, keyEvent->ctrlDown, keyEvent->shiftDown);
+			EventManager::getInstance().pushEvent(keyUpEventData);
+
+			break;
+		}
+	case SDL_MOUSEBUTTONDOWN: {
+			type = InputEventType::MOUSE_BUTTON_DOWN;
+
+			MouseEventData* mouseDownEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_DOWN);
+			EventManager::getInstance().pushEvent(mouseDownEventData);
+
+			break;
+		}
+	case SDL_MOUSEBUTTONUP: {
+			type = InputEventType::MOUSE_BUTTON_UP;
+
+			MouseEventData* mouseUpEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_UP);
+			EventManager::getInstance().pushEvent(mouseUpEventData);
+
+			break;
+		}
+	case SDL_MOUSEMOTION: {
+			type = InputEventType::MOUSE_MOVE;
+			break;
+		}
 	}
 	if (type == InputEventType::NONE) {
 		return;

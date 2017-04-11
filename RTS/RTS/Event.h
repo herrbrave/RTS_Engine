@@ -2,6 +2,7 @@
 #define __EVENT_H__
 
 #include"Constants.h"
+#include"Input.h"
 #include"SDL_Helpers.h"
 #include"vector2f.h"
 
@@ -22,6 +23,8 @@ enum class EventType : Uint8 {
 	ENTITY_ZORDER_SET = 4,
 	ENTITY_COLLISION_EVENT = 5,
 	LOAD_ASSET = 6,
+	MOUSE_EVENT = 7,
+	KEY_EVENT = 8,
 	ENTITY_DESTROYED = 99
 };
 
@@ -204,6 +207,43 @@ public:
 	}
 };
 
+class MouseEventData : public EventData {
+public:
+	float x, y;
+	MouseButton button;
+	MouseAction action;
+
+	MouseEventData(Uint32 timestamp, float x, float y, MouseButton button, MouseAction action) : EventData(timestamp) {
+		this->x = x;
+		this->y = y;
+		this->button = button;
+		this->action = action;
+	}
+
+	const EventType getEventType() override {
+		return EventType::MOUSE_EVENT;
+	}
+};
+
+class KeyEventData : public EventData {
+public:
+	Sint32 key;
+	KeyAction action;
+	bool ctrl;
+	bool shft;
+
+	KeyEventData(Uint32 timestamp, Sint32 key, KeyAction action, bool ctrl, bool shft) : EventData(timestamp) {
+		this->key = key;
+		this->action = action;
+		this->ctrl = ctrl;
+		this->shft = shft;
+	}
+
+	const EventType getEventType() override {
+		return EventType::KEY_EVENT;
+	}
+};
+
 class EventManager {
 public:
 	EventManager(EventManager const& eventManager) = delete;
@@ -261,6 +301,8 @@ private:
 		mEventListeners.emplace(EventType::ENTITY_DESTROYED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_ZORDER_SET, EventDelegateList());
 		mEventListeners.emplace(EventType::LOAD_ASSET, EventDelegateList());
+		mEventListeners.emplace(EventType::MOUSE_EVENT, EventDelegateList());
+		mEventListeners.emplace(EventType::KEY_EVENT, EventDelegateList());
 	}
 };
 

@@ -29,8 +29,7 @@ private:
 	void registerPhysics(LuaScriptPtr& script);
 	void registerDrawable(LuaScriptPtr& script);
 	void registerAnimation(LuaScriptPtr& script);
-
-	EventListenerDelegate destroyEntityListener{ nullptr };
+	void registerInput(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;

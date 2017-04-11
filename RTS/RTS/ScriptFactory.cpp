@@ -8,6 +8,7 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	this->registerFactory(script);
 	this->registerPhysics(script);
 	this->registerAnimation(script);
+	this->registerInput(script);
 
 	script->invoke("setup");
 
@@ -128,8 +129,12 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		script->invoke("onCollision", (int)data.getCollidedEntityId(), (int)data.getColliderEntityId());
 	});
 
-	destroyEntityListener = EventListenerDelegate(destroyEntityDelegate);
+	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_COLLISION_EVENT);
+
+	script->deleters.push_back([destroyEntityListener]() {
+		EventManager::getInstance().removeDelegate(destroyEntityListener, EventType::ENTITY_COLLISION_EVENT);
+	});
 }
 
 void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
@@ -213,4 +218,55 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		animationComponent->animationHandler->play();
 	};
+}
+
+void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
+
+	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
+	script->state["SDLK_UP"] = (int)SDLK_UP;
+	script->state["SDLK_RIGHT"] = (int)SDLK_RIGHT;
+	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
+	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
+
+	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::LEFT);
+	script->state["MOUSE_BUTTON_MIDDLE"] = static_cast<int>(MouseButton::MIDDLE);
+	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::RIGHT);
+
+	EventDelegate mouseEventDelegate([script](const EventData& eventData) {
+		MouseEventData data = dynamic_cast<const MouseEventData&>(eventData);
+
+		if (data.action == MouseAction::CLICK_UP) {
+			script->invoke("onMouseUp", (double)data.x, (double)data.y, static_cast<int>(data.button));
+		}
+		else {
+			script->invoke("onMouseDown", (double)data.x, (double)data.y, static_cast<int>(data.button));
+		}
+		return false;
+	});
+
+	EventListenerDelegate mouseEventListener(mouseEventDelegate);
+	EventManager::getInstance().addDelegate(mouseEventListener, EventType::MOUSE_EVENT);
+
+	script->deleters.push_back([mouseEventListener]() {
+		EventManager::getInstance().removeDelegate(mouseEventListener, EventType::MOUSE_EVENT);
+	});
+
+	EventDelegate keyEventDelegate([script](const EventData& eventData) {
+		KeyEventData data = dynamic_cast<const KeyEventData&>(eventData);
+
+		if (data.action == KeyAction::UP) {
+			script->invoke("onKeyUp", (int)data.key, data.ctrl, data.shft);
+		}
+		else {
+			script->invoke("onKeyDown", (int)data.key, data.ctrl, data.shft);
+		}
+		return false;
+	});
+
+	EventListenerDelegate keyEventListener(keyEventDelegate);
+	EventManager::getInstance().addDelegate(keyEventListener, EventType::KEY_EVENT);
+
+	script->deleters.push_back([keyEventListener]() {
+		EventManager::getInstance().removeDelegate(keyEventListener, EventType::KEY_EVENT);
+	});
 }

@@ -3,40 +3,40 @@ function setup()
 	print("setup");
 end
 
-function onMouseEnter()
-	print("onMouseEnter");
+-- Standard Mouse/Key events
+
+function onMouseUp(x, y, button)
+	print("onMouseUp", x, y, button)
 end
 
-function onMouseExit()
-	print("onMouseExit");
-end
-
-function onMouseDown()
-	print("onMouseDown")
-end
-
-function onClick()
-	print("onClick");
-end
-
-function onDrag()
-	print("onDrag");
+function onMouseDown(x, y, button)
+	print("onMouseDown", x, y , button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
 	print("onKeyDown", keyId, ctrl, shft);
-	if keyId == SDLK_RIGHT then
-		setAnimation(entityId, "walk")
-		playAnimation(entityId)
-	end
 end
 
 function onKeyUp(keyId, ctrl, shft)
 	print("onKeyUp", keyId, ctrl, shft);
-	if keyId == SDLK_RIGHT then
-		setAnimation(entityId, "walk")
-		stopAnimation(entityId)
-	end
+end
+
+-- Entity Mouse Events
+
+function onMouseEnterEntity()
+	print("onMouseEnter");
+end
+
+function onMouseExitEntity()
+	print("onMouseExit");
+end
+
+function onClickEntity(button)
+	print("onClickEntity", button);
+end
+
+function onDragEntity(button)
+	print("onDragEntity", button);
 end
 
 function update(delta) 

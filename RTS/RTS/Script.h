@@ -20,6 +20,12 @@ public:
 		this->path = scriptPath;
 	}
 
+	~LuaScript() {
+		for (auto deleter : deleters) {
+			deleter();
+		}
+	}
+
 	template<typename... Args>
 	const sel::Selector invoke(const string& funcName, Args&&... args) const {
 		return this->state[funcName.c_str()](std::forward<Args>(args)...);
@@ -27,6 +33,8 @@ public:
 
 	string path;
 	sel::State state{ true };
+
+	vector<function<void()>> deleters;
 };
 
 class LuaScriptComponent : public Component {
