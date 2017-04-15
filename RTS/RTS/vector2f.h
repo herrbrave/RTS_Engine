@@ -107,4 +107,6 @@ public:
 	}
 };
 
+static const Vector2fPtr ZERO_VECTOR{ GCC_NEW Vector2f(0, 0) };
+
 #endif // !__VECTOR_H__

@@ -7,6 +7,8 @@ end
 
 function onMouseUp(x, y, button)
 	print("onMouseUp", x, y, button)
+	setTarget(entityId, x, y, 5)
+	setSpeed(entityId, 500)
 end
 
 function onMouseDown(x, y, button)

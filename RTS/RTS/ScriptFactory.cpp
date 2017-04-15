@@ -123,6 +123,21 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
 	};
 
+	script->state["setTarget"] = [this](int entityId, double x, double y, double threshold) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		Vector2fPtr position(GCC_NEW Vector2f(x, y));
+		TargetPtr target(GCC_NEW PositionTarget(position));
+		target->setThreshold(threshold);
+
+		physicsComponent->setTarget(target);
+	};
+
 	EventDelegate destroyEntityDelegate([script](const EventData& eventData) {
 		EntityCollisionEventData data = dynamic_cast<const EntityCollisionEventData&>(eventData);
 

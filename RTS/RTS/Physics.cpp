@@ -438,38 +438,36 @@ float PhysicsComponent::getHeight() {
 }
 
 bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
-	Vector2f velocity = Vector2f(body->getVelocity());
+	Vector2f velocity(body->getVelocity());
 
 	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
 		return false;
 	}
 
-	Vector2f position = body->getPosition();
-
-	velocity *= body->getSpeed();
-	velocity *= step;
-
+	Vector2f position(body->getPosition());
 	if (body->hasTarget()) {
-
 		TargetPtr target = makeShared(body->getTarget());
+		
+		Vector2f targetPosition(target->getTargetPosition());
 
-		Vector2f targetPosition = target->getTargetPosition();
+		Vector2f velocityAtTarget = targetPosition - position;
+		float distance = velocityAtTarget.magnitude();
+		velocityAtTarget.normalize();
 
-		Vector2f desiredVelocity = targetPosition - position;
-		desiredVelocity.normalize();
-		desiredVelocity *= body->getSpeed();
-		desiredVelocity *= step;
-
-		velocity.set(desiredVelocity);
-
-		Vector2f newPosition(position + velocity);
-		Vector2f distanceVector = targetPosition - newPosition;
-		if (distanceVector.magnitude() < target->getThreshold()) {
-			body->setTarget(nullptr);
-			body->setVelocity(Vector2f());
+		Vector2f velocityDiff = velocityAtTarget - velocity;
+		if (velocityDiff.magnitude() > 0.1f) {
+			velocity.set(velocityAtTarget);
 		}
-	}
+		
+		velocity *= body->getSpeed();
+		velocity *= step;
 
+		velocity.truncate(distance);
+	}
+	else {
+		velocity *= body->getSpeed();
+		velocity *= step;
+	}
 
 	Vector2f newPosition(position + velocity);
 
@@ -478,33 +476,80 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 	velocity.normalize();
 	body->setVelocity(velocity);
 
+	if (body->hasTarget()) {
+		TargetPtr target = makeShared(body->getTarget());
+
+		Vector2f targetPosition = target->getTargetPosition();
+
+		Vector2f distanceVector = targetPosition - newPosition;
+		if (distanceVector.magnitude() < target->getThreshold()) {
+			body->setTarget(nullptr);
+			body->setVelocity(ZERO_VECTOR);
+		}
+	}
+
 	return true;
 }
 
 bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
 
-	Vector2f velocityCopy = Vector2f(body->getVelocity());
+	Vector2f velocity(body->getVelocity());
 
-	if (velocityCopy.x == 0 && velocityCopy.y == 0 && !body->hasTarget()) {
+	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
 		return false;
 	}
 
+	Vector2f position(body->getPosition());
+
 	if (body->hasTarget()) {
-		velocityCopy.set(this->applySteeringToVelocity(body, step));
+		TargetPtr target = makeShared(body->getTarget());
+		Vector2f targetPosition(target->getTargetPosition());
+
+		Vector2f velocityAtTarget = targetPosition - position;
+		float distance = velocityAtTarget.magnitude();
+		velocityAtTarget.normalize();
+
+		Vector2f steering = velocityAtTarget - velocity;
+		// TODO: Set a max force somewhere.
+		steering *= float(1 / body->getMass());
+
+		Vector2f velocityDiff = velocityAtTarget - velocity;
+		if (steering.magnitude() > 0.1f) {
+			velocity += steering;
+			velocity.normalize();
+		}
+		else if (velocityDiff.magnitude() > 0.1f) {
+			velocity.set(velocityAtTarget);
+		}
+
+		velocity *= body->getSpeed();
+		velocity *= step;
+
+		velocity.truncate(distance);
+	}
+	else {
+		velocity *= body->getSpeed();
+		velocity *= step;
 	}
 
-	body->setVelocity(velocityCopy);
-
-	velocityCopy *= body->getSpeed();
-	velocityCopy *= step;
-
-	Vector2f position = body->getPosition();
-	Vector2f newPosition(position + velocityCopy);
+	Vector2f newPosition(position + velocity);
 
 	body->setPosition(newPosition);
 
-	velocityCopy.normalize();
-	body->setVelocity(velocityCopy);
+	velocity.normalize();
+	body->setVelocity(velocity);
+
+	if (body->hasTarget()) {
+		TargetPtr target = makeShared(body->getTarget());
+
+		Vector2f targetPosition = target->getTargetPosition();
+
+		Vector2f distanceVector = targetPosition - newPosition;
+		if (distanceVector.magnitude() < target->getThreshold()) {
+			body->setTarget(nullptr);
+			body->setVelocity(ZERO_VECTOR);
+		}
+	}
 
 	return true;
 }
