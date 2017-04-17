@@ -168,9 +168,15 @@ private:
 
 class GraphicsSystem : public System {
 public:
-	GraphicsSystem(GraphicsConfigPtr graphisConfig, SystemManagerPtr systemManager) : System(SystemType::GRAPHICS, systemManager) {
-		mGraphicsConfig = std::move(graphisConfig);
-		mGraphics.reset(GCC_NEW SDLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
+	GraphicsSystem(GraphicsConfig* graphicsConfig, SystemManagerPtr systemManager) : System(SystemType::GRAPHICS, systemManager) {
+		mGraphicsConfig.reset(graphicsConfig);
+
+		if (graphicsConfig->mFlags & SDL_WINDOW_OPENGL) {
+			mGraphics.reset(GCC_NEW SDLOpenGLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
+		}
+		else {
+			mGraphics.reset(GCC_NEW SDLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
+		}
 		mCamera.reset(GCC_NEW Camera());
 		mCamera->position.reset(GCC_NEW Vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;

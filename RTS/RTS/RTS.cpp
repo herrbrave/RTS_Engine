@@ -6,6 +6,7 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
+	config->withOpenGL();
 	config->setWindowWidth(1024);
 	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
@@ -24,11 +25,12 @@ void RTS::setup() {
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	mEntity = entityBuilder
-		.withPhysics(500, 500, 60, 100, true)
-		.withAnimation("Assets/player_animations.json")
-		.withScript("player.lua")
-		.build();
+	//mEntity = entityBuilder
+	//	.withPhysics(500, 500, 60, 100, true)
+	//	.withAnimation("Assets/player_animations.json")
+	//	.withScript("player.lua")
+	//	.build();
+	mEntity = mEntityFactory->createDefault(100, 100, 100, 100, 255, 0, 0, 0);
 }
 
 void RTS::handleEvents() {

@@ -40,8 +40,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Lua\src;C:\Selene\include;C:\rapid_json\rapidjson-master\include;C:\SDL\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Lua;C:\SDL\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\opengl\include;C:\Lua\src;C:\Selene\include;C:\rapid_json\rapidjson-master\include;C:\SDL\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\opengl\lib\x86;C:\Lua;C:\SDL\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>C:\SDL\include;$(IncludePath)</IncludePath>
@@ -53,10 +53,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;lua53.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;lua53.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;OpenGL32.lib;GLU32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <Profile>true</Profile>
     </Link>

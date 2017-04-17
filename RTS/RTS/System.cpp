@@ -6,7 +6,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::ASSET, AssetSystemPtr(GCC_NEW AssetSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
 	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
-	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(GraphicsConfigPtr(graphicsConfig), ptr)));
+	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
 	systems.emplace(SystemType::SOUND, SoundSystemPtr(GCC_NEW SoundSystem(ptr)));
 	systems.emplace(SystemType::LUA_SCRIPT, LuaScriptSystemPtr(GCC_NEW LuaScriptSystem(ptr)));
