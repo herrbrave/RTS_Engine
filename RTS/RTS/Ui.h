@@ -37,6 +37,10 @@ class PanelConfig;
 typedef shared_ptr<PanelConfig> PanelConfigPtr;
 typedef weak_ptr<PanelConfig> WeakPanelConfigPtr;
 
+class ProgressBarDrawable;
+typedef shared_ptr<ProgressBarDrawable> ProgressBarDrawablePtr;
+typedef weak_ptr<ProgressBarDrawable> WeakProgressBarDrawablePtr;
+
 class SectionDrawable;
 typedef shared_ptr<SectionDrawable> SectionDrawablePtr;
 typedef weak_ptr<SectionDrawable> WeakSectionDrawablePtr;
@@ -49,6 +53,10 @@ class PanelDrawable;
 typedef shared_ptr<PanelDrawable> PanelDrawablePtr;
 typedef weak_ptr<PanelDrawable> WeakPanelDrawablePtr;
 
+class LabelComponent;
+typedef shared_ptr<LabelComponent> LabelComponentPtr;
+typedef weak_ptr<LabelComponent> WeakLabelComponentPtr;
+
 class ButtonComponent;
 typedef shared_ptr<ButtonComponent> ButtonComponentPtr;
 typedef weak_ptr<ButtonComponent> WeakButtonComponentPtr;
@@ -57,132 +65,53 @@ class WidgetFactory;
 typedef shared_ptr<WidgetFactory> WidgetFactoryPtr;
 typedef weak_ptr<WidgetFactory> WeakWidgetFactoryPtr;
 
-class ProgressBar {
-private:
-	Location mLocation;
-	int mMaxProgress;
-	int mProgress;
+
+
+class ProgressBarDrawable : public Drawable {
 public:
-	ProgressBar(int maxProgress) : ProgressBar(maxProgress, MIDDLE) {}
-	ProgressBar(int maxProgress, Location location) {
-		mMaxProgress = mProgress = maxProgress;
-		mLocation = location;
+	unsigned int progressMax;
+	unsigned int currentProgress;
+	ProgressBarDrawable(float width, float height, unsigned int progressMax, unsigned int currentProgress) : Drawable(width, height) {
+		this->progressMax = progressMax;
+		this->currentProgress = currentProgress;
 	}
 
-	int getProgress() {
-		return mProgress;
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+
+	void setProgress(unsigned int progress) {
+		this->currentProgress = std::min(progress, this->progressMax);
 	}
 
-	int getMaxProgress() {
-		return mMaxProgress;
+	unsigned int getProgress() {
+		return this->currentProgress;
 	}
 
-	void setProgress(int progress) {
-		mProgress = std::min(std::max(0, progress), mMaxProgress);
+	void setProgressMax(unsigned int progressMax) {
+		this->progressMax = progressMax;
 	}
 
-	void draw(SDL_Renderer* renderer, SDL_Rect* rect) {
-		// padding is two pixels.
-		int padding(2);
-		int width(rect->w);
-		int height(8);
-		float percentile((float)mProgress / (float)mMaxProgress);
-		int innerwidth((width - 2 * padding) * percentile);
-		SDL_Rect outerRect{ 0, 0, 0, 0 };
-		SDL_Rect innerRect{ 0, 0, 0, 0 };
-
-		if (mLocation == MIDDLE) {
-			outerRect.x = rect->x;
-			outerRect.y = rect->y + (rect->h / 2) - (height / 2);
-			outerRect.w = width;
-			outerRect.h = height;
-
-			innerRect.x = rect->x;
-			innerRect.y = rect->y + (rect->h / 2) - (height / 2) + padding;
-			innerRect.w = innerwidth;
-			innerRect.h = height - 2 * padding;
-		}
-		else {
-			outerRect.x = rect->x - (rect->w / 2);
-			outerRect.y = rect->y - (rect->h / 2) - height;
-			outerRect.w = width;
-			outerRect.h = height;
-
-			innerRect.x = rect->x - (rect->w / 2) + padding;
-			innerRect.y = rect->y - (rect->h / 2) - height + padding;
-			innerRect.w = innerwidth;
-			innerRect.h = height - 2 * padding;
-		}
-
-		SDL_SetRenderDrawColor(renderer, 64, 64, 64, 255);
-		SDL_RenderFillRect(renderer, &outerRect);
-
-		float redScalar(((float)mMaxProgress - (float)mProgress) / (float)mMaxProgress);
-		float greenScalar((float)mProgress / (float)mMaxProgress);
-
-		SDL_SetRenderDrawColor(renderer, 255 * redScalar, 255 * greenScalar, 0, 255);
-		SDL_RenderFillRect(renderer, &innerRect);
+	unsigned int getProgressMax() {
+		return this->progressMax;
 	}
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
 };
 
-class Label {
-private:
-	std::unique_ptr<SDL_Texture, SDL_DELETERS> mTexture;
-	std::string mText;
-	Location mLocation;
-
+class LabelComponent : public Component {
 public:
-	Label(std::string text, TTF_Font* font, SDL_Renderer* renderer, Location location) {
-		mText = text;
-		mLocation = location;
-
-		SDL_Color textColor = { 255, 255, 255, 255 };
-		SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), textColor);
-		mTexture = std::unique_ptr<SDL_Texture, SDL_DELETERS>(
-			SDL_CreateTextureFromSurface(renderer, surface)
-			);
-		SDL_FreeSurface(surface);
+	LabelComponent(unsigned long entityId, DrawablePtr drawable)
+		: Component(entityId, ComponentType::LABEL_COMPONENT) {
 	}
 
-	void draw(SDL_Renderer* renderer, SDL_Rect* location) {
-		SDL_Rect textRect{ 0, 0, 0, 0 };
-		SDL_QueryTexture(mTexture.get(), nullptr, nullptr, &textRect.w, &textRect.h);
+	void serialize(Serializer& serializer) const override {/* no op */ }
 
-		SDL_Rect drawLocation;
-		switch (mLocation) {
-		case TOP:
-			drawLocation = {
-				location->x - textRect.w / 2,
-				location->y - textRect.h - 25,
-				textRect.w,
-				textRect.h
-			};
-			break;
-		case PAGE_START:
-			drawLocation = {
-				location->x,
-				location->y,
-				textRect.w,
-				textRect.h
-			};
-			break;
-		case MIDDLE:
-			drawLocation = {
-				location->x + (location->w / 2) - (textRect.w / 2),
-				location->y + (location->h / 2) - (textRect.h / 2),
-				textRect.w,
-				textRect.h
-			};
-			break;
-		default:
-			throw std::runtime_error("Invalid location for lable: " + mLocation);
-			break;
-		}
+	void setText(const std::string& text, SystemManagerPtr systemManager);
 
-		
+	std::string& getText();
 
-		SDL_RenderCopy(renderer, mTexture.get(), nullptr, &drawLocation);
-	}
+private:
+	std::string mText;
 };
 
 class ButtonConfig {
@@ -316,8 +245,11 @@ class WidgetFactory : public EntityFactory {
 public:
 	WidgetFactory(string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager);
 
+	EntityPtr createLabel(std::string text, float x, float y);
 	EntityPtr createButton(std::function<void()> callback, float x, float y, float width, float height);
+	EntityPtr createButtonWithText(std::string text, std::function<void()> callback, float x, float y, float width, float height);
 	EntityPtr createPanel(float x, float y, float width, float height);
+	EntityPtr createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress);
 
 private:
 	ButtonConfigPtr mButtonConfig{ nullptr };

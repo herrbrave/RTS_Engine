@@ -60,6 +60,7 @@
       <AdditionalDependencies>SDL2.lib;SDL2main.lib;lua53.lib;SDL2_ttf.lib;SDL2_image.lib;SDL2_mixer.lib;OpenGL32.lib;GLU32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
       <Profile>true</Profile>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

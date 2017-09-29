@@ -1,5 +1,43 @@
 #include"Ui.h"
 
+
+
+void ProgressBarDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+
+	// padding is two pixels.
+	int padding(2);
+	float percentile((float)this->currentProgress / (float)this->progressMax);
+	int innerwidth((this->width - 2 * padding) * percentile);
+
+	float redScalar(((float)this->progressMax - (float)this->currentProgress) / (float)this->progressMax);
+	float greenScalar((float)this->currentProgress / (float)this->progressMax);
+
+	float innerWidth = 0, xOffset = 0, innerX = 0;
+
+	if (this->currentProgress > 0) {
+		innerWidth = this->width * percentile - (2 * padding);
+		xOffset = (this->width - innerWidth) / 2;
+		innerX = position.x - xOffset + padding;
+	}
+
+	graphicsRef.drawSquare(position.x, position.y, this->width, this->height, 64, 64, 64, 255);
+	graphicsRef.drawSquare(innerX, position.y, innerWidth, this->height - (2 * padding), 255 * redScalar, 255 * greenScalar, 0, 255);
+}
+
+void LabelComponent::setText(const std::string& text, SystemManagerPtr systemManager) {
+	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
+	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
+	TexturePtr textTexture(GCC_NEW Texture(text));
+	mText = text;
+
+	TextureDrawablePtr drawable = static_pointer_cast<TextureDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
+	drawable->setTexture(textTexture);
+}
+
+string& LabelComponent::getText() {
+	return mText;
+}
+
 ButtonConfigPtr createButtonConfig(const std::string& path, SystemManagerPtr systemManager) {
 	std::ifstream file;
 	file.open(path);
@@ -248,6 +286,35 @@ WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConf
 	mPanelConfig = createPanelConfig(panelConfigPath, systemManager);
 }
 
+
+EntityPtr WidgetFactory::createLabel(std::string text, float x, float y) {
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
+
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, 0, 0));
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
+	TexturePtr texture = TexturePtr(GCC_NEW Texture(text));
+
+	TextureDrawablePtr textDrawable(GCC_NEW TextureDrawable(texture));
+	graphicsSystem->registerDrawable(entity->id, textDrawable);
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textDrawable));
+
+	LabelComponentPtr labelComponent(GCC_NEW LabelComponent(entity->id, textDrawable));
+
+	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
+	entity->addComponent(labelComponent);
+
+	return entity;
+}
+
 EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, float y, float width, float height) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
@@ -270,7 +337,38 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	buttonComponent->setCallback(callback);
 
 	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
 	entity->addComponent(buttonComponent);
+
+	return entity;
+}
+
+
+EntityPtr WidgetFactory::createButtonWithText(std::string text, std::function<void()> callback, float x, float y, float width, float height) {
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
+
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	ButtonDrawablePtr buttonDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
+	graphicsSystem->registerDrawable(entity->id, buttonDrawable);
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, buttonDrawable));
+
+	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
+	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
+	inputSystem->registerEventListener(inputListener);
+	ButtonComponentPtr buttonComponent(GCC_NEW ButtonComponent(entity->id, buttonDrawable, inputListener));
+	buttonComponent->setCallback(callback);
+
+	buttonComponent->setText(text, mSystemManager);
+
+	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
 	entity->addComponent(buttonComponent);
 
 	return entity;
@@ -288,6 +386,28 @@ EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, *mPanelConfig.get()));
+	graphicsSystem->registerDrawable(entity->id, textureDrawable);
+	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+
+	entity->addComponent(physicsComponent);
+	entity->addComponent(drawableComponent);
+
+	return entity;
+}
+
+
+EntityPtr WidgetFactory::createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress) {
+	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
+
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	DrawablePtr textureDrawable(GCC_NEW ProgressBarDrawable(width, height, progressMax, currentProgress));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 

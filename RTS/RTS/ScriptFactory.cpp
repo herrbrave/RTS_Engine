@@ -46,7 +46,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 
 	script->state["Vector2f"].SetClass<LuaFriendlyVector2f, double, double>(
 		"getX", &LuaFriendlyVector2f::getX,
-		"getX", &LuaFriendlyVector2f::getY,
+		"getY", &LuaFriendlyVector2f::getY,
 		"normalize", &LuaFriendlyVector2f::normalize,
 		"magnitude", &LuaFriendlyVector2f::magnitude,
 		"truncate", &LuaFriendlyVector2f::truncate,
@@ -242,6 +242,7 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 	script->state["SDLK_RIGHT"] = (int)SDLK_RIGHT;
 	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
 	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
+	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
 
 	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::LEFT);
 	script->state["MOUSE_BUTTON_MIDDLE"] = static_cast<int>(MouseButton::MIDDLE);
