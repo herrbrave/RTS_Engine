@@ -3,6 +3,12 @@
 LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	LuaScriptPtr script(GCC_NEW LuaScript(scriptPath));
 
+	this->initialize(script);
+
+	return script;
+}
+
+void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	this->registerDrawable(script);
 	this->registerEntity(script);
 	this->registerFactory(script);
@@ -11,8 +17,6 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 	this->registerInput(script);
 
 	script->invoke("setup");
-
-	return script;
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
@@ -29,6 +33,14 @@ void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
 		graphicsSystem->addTexture(tag, tag);
 
 		EntityPtr entity = entityFactory->createTexturedEntity(tag, x, y, width, height, tx, ty, w, h, collidable);
+		return (int)entity->id;
+	};
+
+	script->state["createSerialized"] = [this](string path) -> int {
+		EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
+
+		EntityPtr entity = entityFactory->createFromSerialization(path);
+
 		return (int)entity->id;
 	};
 }

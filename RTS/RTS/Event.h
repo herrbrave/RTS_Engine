@@ -5,6 +5,7 @@
 #include"Input.h"
 #include"SDL_Helpers.h"
 #include"vector2f.h"
+#include"Script.h"
 
 #include<list>
 
@@ -25,6 +26,7 @@ enum class EventType : Uint8 {
 	LOAD_ASSET = 6,
 	MOUSE_EVENT = 7,
 	KEY_EVENT = 8,
+	SCRIPT_LOADED = 9,	
 	ENTITY_DESTROYED = 99
 };
 
@@ -244,6 +246,21 @@ public:
 	}
 };
 
+class ScriptLoadedData : public EventData {
+public:
+	unsigned long id;
+	LuaScriptPtr script;
+
+	ScriptLoadedData(Uint32 timestamp, unsigned long id, const LuaScriptPtr& script) : EventData(timestamp) {
+		this->id;
+		this->script = script;
+	}
+
+	const EventType getEventType() override {
+		return EventType::SCRIPT_LOADED;
+	}
+};
+
 class EventManager {
 public:
 	EventManager(EventManager const& eventManager) = delete;
@@ -298,6 +315,7 @@ private:
 		mEventListeners.emplace(EventType::ENTITY_COLLISION_SET, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_POSITION_SET, EventDelegateList());
 		mEventListeners.emplace(EventType::MAP_LOADED, EventDelegateList());
+		mEventListeners.emplace(EventType::SCRIPT_LOADED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_DESTROYED, EventDelegateList());
 		mEventListeners.emplace(EventType::ENTITY_ZORDER_SET, EventDelegateList());
 		mEventListeners.emplace(EventType::LOAD_ASSET, EventDelegateList());

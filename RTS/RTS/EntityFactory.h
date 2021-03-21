@@ -5,6 +5,7 @@
 #include"Map.h"
 #include"Serializer.h"
 #include"System.h"
+#include"ScriptComponent.h"
 
 class EntityFactory;
 typedef shared_ptr<EntityFactory> EntityFactoryPtr;

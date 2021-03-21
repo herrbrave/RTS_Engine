@@ -128,7 +128,7 @@ public:
 		serializer.writer.Double(speed);
 
 		serializer.writer.String("mass");
-		serializer.writer.Double(speed);
+		serializer.writer.Double(mass);
 
 		serializer.writer.String("position");
 		position->serialize(serializer);

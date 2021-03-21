@@ -141,6 +141,34 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 			graphicsSystem->registerDrawable(entity->id, animationComponent->animationHandler->textureDrawable); 
 			animationSystem->registerAnimation(entity->id, animationComponent->animationHandler);
 		}
+		else if (componentId == ComponentType::LUA_SCRIPT_COMPONENT) {
+			InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
+			InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
+			inputSystem->registerEventListener(inputListener);
+
+			LuaScriptComponent* luaScriptComponent = GCC_NEW LuaScriptComponent(entity->id, component);
+			entity->addComponent(ComponentPtr(luaScriptComponent));
+
+			inputListener->eventCallbacks.emplace(Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onMouseEnterEntity");
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onMouseExitEntity");
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_CLICK, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_DRAG, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
+				return false;
+			}));
+		}
 		else {
 			assert(false);
 		}

@@ -269,6 +269,14 @@ class LuaScriptSystem : public System {
 public:
 	LuaScriptSystem(SystemManagerPtr systemManager) : System(SystemType::LUA_SCRIPT, systemManager) {
 
+		EventDelegate scriptLoadedDelegate([this](const EventData& eventData) {
+			ScriptLoadedData data = dynamic_cast<const ScriptLoadedData&>(eventData);
+			registerLuaScript(data.id, data.script);
+		});
+
+		EventListenerDelegate scriptLoadedListener(scriptLoadedDelegate);
+		EventManager::getInstance().addDelegate(scriptLoadedListener, EventType::SCRIPT_LOADED);
+
 		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
 			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
 

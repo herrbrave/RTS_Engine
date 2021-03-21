@@ -21,17 +21,8 @@ void RTS::setup() {
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
-	
-	//LuaScriptSystemPtr scriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
-	//scriptSystem->registerLuaScript(-1, mLuaScriptFactory->create("pong.lua"));
 
-	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
-
-	mEntity = entityBuilder
-		.withPhysics(500, 500, 60, 100, true)
-		.withAnimation("Assets/player_animations.json")
-		.withScript("player.lua")
-		.build();
+	mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 }
 
 void RTS::handleEvents() {

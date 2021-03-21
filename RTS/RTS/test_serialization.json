@@ -1,0 +1,189 @@
+{
+    "components": [
+        {
+            "componentId": 2,
+            "mBody": {
+                "speed": 0.0,
+                "mass": 3.0,
+                "position": {
+                    "x": 500.0,
+                    "y": 500.0
+                },
+                "velocity": {
+                    "x": 0.0,
+                    "y": 0.0
+                },
+                "width": 60.0,
+                "height": 100.0
+            }
+        },
+        {
+            "componentId": 1,
+            "mDrawable": {
+                "width": 4294967295,
+                "height": 4294967295,
+                "r": 255,
+                "g": 255,
+                "b": 255,
+                "a": 255,
+                "drawableType": "TextureDrawable",
+                "mTexture": {
+                    "x": 0.0,
+                    "y": 0.0,
+                    "w": 72.0,
+                    "h": 97.0,
+                    "assetTag": "Player"
+                }
+            }
+        },
+        {
+            "componentId": 7,
+            "animationHandler": {
+                "animationSet": {
+                    "spritesheet": "Assets/p1_spritesheet.png",
+                    "name": "Player",
+                    "defaultAnimationName": "walk",
+                    "fps": 12,
+                    "animations": {
+                        "walk": {
+                            "name": "walk",
+                            "frames": [
+                                {
+                                    "x": 0.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 73.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 146.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 0.0,
+                                    "y": 98.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 73.0,
+                                    "y": 98.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 146.0,
+                                    "y": 98.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 219.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 292.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 219.0,
+                                    "y": 98.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 365.0,
+                                    "y": 0.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                },
+                                {
+                                    "x": 292.0,
+                                    "y": 98.0,
+                                    "w": 72.0,
+                                    "h": 97.0,
+                                    "assetTag": "Player"
+                                }
+                            ]
+                        },
+                        "hurt": {
+                            "name": "hurt",
+                            "frames": [
+                                {
+                                    "x": 438.0,
+                                    "y": 0.0,
+                                    "w": 69.0,
+                                    "h": 92.0,
+                                    "assetTag": "Player"
+                                }
+                            ]
+                        },
+                        "front": {
+                            "name": "front",
+                            "frames": [
+                                {
+                                    "x": 0.0,
+                                    "y": 196.0,
+                                    "w": 66.0,
+                                    "h": 92.0,
+                                    "assetTag": "Player"
+                                }
+                            ]
+                        },
+                        "duck": {
+                            "name": "duck",
+                            "frames": [
+                                {
+                                    "x": 365.0,
+                                    "y": 98.0,
+                                    "w": 69.0,
+                                    "h": 71.0,
+                                    "assetTag": "Player"
+                                }
+                            ]
+                        },
+                        "jump": {
+                            "name": "jump",
+                            "frames": [
+                                {
+                                    "x": 438.0,
+                                    "y": 93.0,
+                                    "w": 67.0,
+                                    "h": 92.0,
+                                    "assetTag": "Player"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "fps": 12,
+                "currentAnimtionName": "walk"
+            }
+        },
+        {
+            "componentId": 8,
+            "script": "player.lua"
+        }
+    ]
+}

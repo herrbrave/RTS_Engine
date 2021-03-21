@@ -99,6 +99,7 @@
     <ClInclude Include="PathState.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Script.h" />
+    <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="ScriptFactory.h" />
     <ClInclude Include="SDL_Helpers.h" />
     <ClInclude Include="Serializer.h" />

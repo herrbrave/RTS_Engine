@@ -19,11 +19,21 @@ public:
 		this->mEntityFactory = entityFactory;
 		this->mWidgetFactory = widgetFactory;
 		this->mSystemManager = systemManager;
+
+		EventDelegate scriptLoadedDelegate([this](const EventData& eventData) {
+			ScriptLoadedData data = dynamic_cast<const ScriptLoadedData&>(eventData);
+
+			initialize(data.script);
+		});
+
+		EventListenerDelegate scriptLoadedListener(scriptLoadedDelegate);
+		EventManager::getInstance().addDelegate(scriptLoadedListener, EventType::SCRIPT_LOADED);
 	}
 
 	LuaScriptPtr create(const string& scriptPath);
 
 private:
+	void initialize(LuaScriptPtr& script);
 	void registerFactory(LuaScriptPtr& script);
 	void registerEntity(LuaScriptPtr& script);
 	void registerPhysics(LuaScriptPtr& script);

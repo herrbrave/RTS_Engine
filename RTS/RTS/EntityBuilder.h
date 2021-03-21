@@ -3,6 +3,7 @@
 #include"Entity.h"
 #include"ScriptFactory.h"
 #include"System.h"
+#include"ScriptComponent.h"
 
 class EntityBuilder;
 typedef shared_ptr<EntityBuilder> EntityBuilderPtr;
