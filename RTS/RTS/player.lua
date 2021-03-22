@@ -1,4 +1,13 @@
 
+registrar = {
+	DRAWABLE = 0,
+	ENTITY = 0,
+	FACTORY = 0,
+	PHYSICS = 1,
+	ANIMATION = 0,
+	INPUT = 1
+}
+
 function setup()
 	print("setup");
 end

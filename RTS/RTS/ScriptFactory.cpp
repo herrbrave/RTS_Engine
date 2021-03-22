@@ -9,14 +9,33 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
 }
 
 void LuaScriptFactory::initialize(LuaScriptPtr& script) {
-	this->registerDrawable(script);
-	this->registerEntity(script);
-	this->registerFactory(script);
-	this->registerPhysics(script);
-	this->registerAnimation(script);
-	this->registerInput(script);
+	int DRAWABLE = script->state["registrar"]["DRAWABLE"];
+	int ENTITY = script->state["registrar"]["ENTITY"];
+	int FACTORY = script->state["registrar"]["FACTORY"];
+	int PHYSICS = script->state["registrar"]["PHYSICS"];
+	int ANIMATION = script->state["registrar"]["ANIMATION"];
+	int INPUT = script->state["registrar"]["INPUT"];
 
-	script->invoke("setup");
+	if (DRAWABLE) {
+		this->registerDrawable(script);
+	}
+	if (ENTITY) {
+		this->registerEntity(script);
+	}
+	if (FACTORY) {
+		this->registerFactory(script);
+	}
+	if (PHYSICS) {
+		this->registerPhysics(script);
+	}
+	if (ANIMATION) {
+		this->registerAnimation(script);
+	}
+	if (INPUT) {
+		this->registerInput(script);
+	}
+
+	auto output = script->invoke("setup");
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {

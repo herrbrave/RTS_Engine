@@ -4,7 +4,7 @@
             "componentId": 2,
             "mBody": {
                 "speed": 0.0,
-                "mass": 3.0,
+                "mass": 6.0,
                 "position": {
                     "x": 500.0,
                     "y": 500.0
