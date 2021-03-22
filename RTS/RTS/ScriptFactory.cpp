@@ -169,6 +169,28 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		physicsComponent->setTarget(target);
 	};
 
+	script->state["setTag"] = [this](int entityId, string tag) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		physicsComponent->setTag(tag);
+	};
+
+	script->state["getTag"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		return physicsComponent->getTag();
+	};
+
 	EventDelegate destroyEntityDelegate([script](const EventData& eventData) {
 		EntityCollisionEventData data = dynamic_cast<const EntityCollisionEventData&>(eventData);
 

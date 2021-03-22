@@ -87,6 +87,7 @@ public:
 	float height;
 	ColliderPtr collider;
 	TargetPtr target;
+	string tag;
 
 	Body(int id, float x, float y, float width, float height);
 
@@ -121,6 +122,9 @@ public:
 	void setWidth(float width);
 	void setHeight(float height);
 
+	const string& getTag();
+	void setTag(const string& tag);
+
 	void serialize(Serializer& serializer) const {
 		serializer.writer.StartObject();
 
@@ -141,6 +145,9 @@ public:
 
 		serializer.writer.String("height");
 		serializer.writer.Double(height);
+
+		serializer.writer.String("tag");
+		serializer.writer.String(tag.c_str());
 
 		serializer.writer.EndObject();
 	}
@@ -250,6 +257,10 @@ public:
 	void setSize(float width, float height);
 	float getWidth();
 	float getHeight();
+
+	const string& getTag();
+	void setTag(const string& tag);
+
 	WeakBodyPtr getBody() {
 		return WeakBodyPtr(mBody);
 	}

@@ -17,6 +17,9 @@ Body::Body(const rapidjson::Value& root) {
 	this->velocity.reset(GCC_NEW Vector2f(root["velocity"]));
 	this->width = root["width"].GetDouble();
 	this->height = root["height"].GetDouble();
+	if (root.FindMember("tag") != root.MemberEnd()) {
+		this->tag = root["tag"].GetString();
+	}
 }
 
 Body::Body(const Body& copy) {
@@ -102,6 +105,12 @@ void Body::setWidth(float width) {
 }
 void Body::setHeight(float height) {
 	this->height = height;
+}
+const string& Body::getTag() {
+	return this->tag;
+}
+void Body::setTag(const string& tag) {
+	this->tag = tag;
 }
 
 bool Body::checkPoint(const Vector2f& point) {
@@ -435,6 +444,13 @@ float PhysicsComponent::getWidth() {
 
 float PhysicsComponent::getHeight() {
 	return mBody->getHeight();
+}
+
+const string& PhysicsComponent::getTag() {
+	return mBody->getTag();
+}
+void PhysicsComponent::setTag(const string& tag) {
+	this->mBody->setTag(tag);
 }
 
 bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
