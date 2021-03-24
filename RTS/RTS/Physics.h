@@ -242,6 +242,7 @@ public:
 	PhysicsComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::PHYSICS_COMPONENT) {
 		const rapidjson::Value& body = root["mBody"];
 		mBody = BodyPtr(GCC_NEW Body(body));
+		mBody->id = entityId;
 	}
 
 	void setCollider(Collider* collider);

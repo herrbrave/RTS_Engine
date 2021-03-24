@@ -40,6 +40,7 @@ private:
 	void registerDrawable(LuaScriptPtr& script);
 	void registerAnimation(LuaScriptPtr& script);
 	void registerInput(LuaScriptPtr& script);
+	void registerScript(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;

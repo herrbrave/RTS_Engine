@@ -130,7 +130,10 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 		else if (componentId == ComponentType::PHYSICS_COMPONENT) {
 			PhysicsComponentPtr comp(GCC_NEW PhysicsComponent(entity->id, component));
 			entity->addComponent(ComponentPtr(comp));
-			physicsSystem->registerBody(entity->id, makeShared(comp->getBody()));
+
+			BodyPtr body = makeShared(comp->getBody());
+			physicsSystem->registerBody(entity->id, body);
+			comp->setCollider(GCC_NEW Collider(body->getPosition().x, body->getPosition().y, body->getWidth(), body->getHeight()));
 		}
 		else if (componentId == ComponentType::TILE_COMPONENT) {
 			entity->addComponent(ComponentPtr(GCC_NEW TileComponent(entity->id, component)));
@@ -166,6 +169,11 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 
 			inputListener->eventCallbacks.emplace(Input::ON_DRAG, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
 				luaScriptComponent->script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onMouseMove", static_cast<int>(evt->mouseEvent->position->x), static_cast<int>(evt->mouseEvent->position->y), static_cast<int>(evt->mouseEvent->button));
 				return false;
 			}));
 		}

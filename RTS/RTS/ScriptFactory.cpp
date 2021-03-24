@@ -15,6 +15,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	int PHYSICS = script->state["registrar"]["PHYSICS"];
 	int ANIMATION = script->state["registrar"]["ANIMATION"];
 	int INPUT = script->state["registrar"]["INPUT"];
+	int SCRIPT = script->state["registrar"]["SCRIPT"];
 
 	if (DRAWABLE) {
 		this->registerDrawable(script);
@@ -33,6 +34,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	}
 	if (INPUT) {
 		this->registerInput(script);
+	}
+	if (SCRIPT) {
+		this->registerScript(script);
 	}
 
 	auto output = script->invoke("setup");
@@ -194,7 +198,13 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	EventDelegate destroyEntityDelegate([script](const EventData& eventData) {
 		EntityCollisionEventData data = dynamic_cast<const EntityCollisionEventData&>(eventData);
 
-		script->invoke("onCollision", (int)data.getCollidedEntityId(), (int)data.getColliderEntityId());
+		int id = script->state["entityId"];
+		if (id == (int)data.getCollidedEntityId()) {
+			script->invoke("onCollision", static_cast<int>((int)data.getColliderEntityId()));
+		}
+		else if (id == (int)data.getColliderEntityId()) {
+			script->invoke("onCollision", static_cast<int>((int)data.getCollidedEntityId()));
+		}
 	});
 
 	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
@@ -338,4 +348,28 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 	script->deleters.push_back([keyEventListener]() {
 		EventManager::getInstance().removeDelegate(keyEventListener, EventType::KEY_EVENT);
 	});
+}
+
+
+void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
+
+	script->state["setScript"] = [this](int entityId, string path) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		LuaScriptPtr luaScript(GCC_NEW LuaScript(path));
+
+		LuaScriptComponentPtr scriptComponent;
+		if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) == entity->getComponents().end()) {
+			scriptComponent.reset(GCC_NEW LuaScriptComponent(entityId, luaScript));
+		}
+		else {
+			scriptComponent = makeShared<LuaScriptComponent>(entity->getComponentByType<LuaScriptComponent>(ComponentType::INPUT_COMPONENT));
+		}
+
+		luaScript->state["entityId"] = (int)entityId;
+		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, luaScript);
+		EventManager::getInstance().pushEvent(scriptLoaded);
+	};
 }

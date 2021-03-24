@@ -74,6 +74,7 @@ enum class Input {
 	ON_DRAG = 5,
 	ON_KEY_DOWN = 6,
 	ON_KEY_UP = 7,
+	ON_MOUSE_MOVE,
 };
 
 class MouseMovementHandler;

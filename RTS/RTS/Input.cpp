@@ -42,6 +42,11 @@ bool InputListener::onEvent(InputEventType eventType, EventPtr evt, MouseMovemen
 				}
 			}
 		}
+
+		if (eventCallbacks.find(Input::ON_MOUSE_MOVE) != eventCallbacks.end()) {
+			auto mouseMove = eventCallbacks.at(Input::ON_MOUSE_MOVE);
+			mouseMove(evt);
+		}
 	}
 	else if (eventType == InputEventType::MOUSE_BUTTON_DOWN) {
 		if (mouseState == MouseState::OVER) {

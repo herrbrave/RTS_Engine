@@ -2,17 +2,26 @@
 registrar = {
 	DRAWABLE = 0,
 	ENTITY = 0,
-	FACTORY = 0,
+	FACTORY = 1,
 	PHYSICS = 1,
 	ANIMATION = 0,
-	INPUT = 1
+	INPUT = 1,
+	SCRIPT = 1
 }
 
 function setup()
 	print("setup");
+
+	temp = createDefault(100, 100, 50, 50, 255, 0, 255, 255)
+	setTag(temp, "block")
+	setScript(temp, "block.lua")
 end
 
 -- Standard Mouse/Key events
+
+function onMouseMove(x, y, button)
+	
+end
 
 function onMouseUp(x, y, button)
 	print("onMouseUp", x, y, button)
@@ -48,6 +57,13 @@ end
 
 function onDragEntity(button)
 	print("onDragEntity", button);
+end
+
+-- Collition Callback --
+
+function onCollision(id)
+	tag = getTag(id)
+	print("Collsion ", id, tag)
 end
 
 function update(delta) 
