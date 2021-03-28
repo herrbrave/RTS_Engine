@@ -235,8 +235,11 @@ public:
 	EntitySystem(SystemManagerPtr systemManager) : System(SystemType::ENTITY, systemManager) {
 		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
 			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
-
-			mEntityMap.erase(mEntityMap.find(data.getEntityId()));
+			
+			auto val = mEntityMap.find(data.getEntityId());
+			if (val != mEntityMap.end()) {
+				mEntityMap.erase(val);
+			}
 		});
 
 		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);

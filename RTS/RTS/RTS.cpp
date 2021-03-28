@@ -14,7 +14,7 @@ void RTS::setup() {
 
 	mSystemManager.reset(GCC_NEW SystemManager(config));
 	mEntityFactory.reset(GCC_NEW EntityFactory(mSystemManager));
-	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager));
+	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/BlueButton.json", "Assets/Panel.json", mSystemManager));
 	mSoundControllerFactory.reset(GCC_NEW SoundControllerFactory(mSystemManager));
 
 	makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS))->addFont("Digital_tech.otf", "Digital_tech", 20);
@@ -27,6 +27,8 @@ void RTS::setup() {
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
 	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("player.lua").build();
+
+	mWidgetFactory->createButtonWithText("Win", "Digital_tech", []() {}, 400, 550, 190, 49);
 }
 
 void RTS::handleEvents() {

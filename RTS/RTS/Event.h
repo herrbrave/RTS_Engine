@@ -277,17 +277,19 @@ public:
 	}
 
 	void removeDelegate(const EventListenerDelegate& eventDelegate, EventType eventType) {
-		EventDelegateList& eventDelegates = mEventListeners.at(eventType);
-
-		for (auto it = eventDelegates.begin(); it != eventDelegates.end(); ++it) {
-			if (it->id == eventDelegate.id) {
-				eventDelegates.erase(it);
-				break;
-			}
-		}
+		this->mRemoveList.push_back(std::pair<const EventListenerDelegate&, EventType>(eventDelegate, eventType));
 	}
 
 	void update() {
+		// remove event listeners in the remove list.
+		for (auto it = mRemoveList.begin(); it != mRemoveList.end(); ++it) {
+			EventDelegateList& eventDelegates = mEventListeners.at(it->second);
+			auto del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [it](EventListenerDelegate val) { return val.id == it->first.id; });
+			if (del != eventDelegates.end()) {
+				eventDelegates.erase(del);
+			}
+		}
+
 		while (mQueue.size() > 0) {
 			EventDataPtr eventData = mQueue.front();
 			mQueue.pop_front();
@@ -308,6 +310,7 @@ public:
 private:
 	EventDataQueue mQueue;
 	EventDataListeners mEventListeners;
+	vector<std::pair<const EventListenerDelegate&, EventType>> mRemoveList;
 
 	EventManager() {
 		mEventListeners.emplace(EventType::ENTITY_COLLISION_EVENT, EventDelegateList());

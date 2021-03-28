@@ -105,11 +105,13 @@ void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawab
 }
 
 void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
-	for (DrawablePtr drawable : mDrawables.at(id)) {
-		mReverseLookup.erase(drawable);
-		mDrawableList.erase(std::find(mDrawableList.begin(), mDrawableList.end(), drawable));
+	if (mDrawables.find(id) != mDrawables.end()) {
+		for (DrawablePtr drawable : mDrawables.at(id)) {
+			mReverseLookup.erase(drawable);
+			mDrawableList.erase(std::find(mDrawableList.begin(), mDrawableList.end(), drawable));
+		}
+		mDrawables.erase(mDrawables.find(id));
 	}
-	mDrawables.erase(mDrawables.find(id));
 }
 
 void GraphicsSystem::sortDrawableList() {
@@ -235,8 +237,10 @@ void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
 }
 
 void PhysicsSystem::deregisterBody(const unsigned long id) {
-	quadTree->removeBody(mBodies.at(id));
-	mBodies.erase(mBodies.find(id));
+	if (mBodies.find(id) != mBodies.end()) {
+		quadTree->removeBody(mBodies.at(id));
+		mBodies.erase(mBodies.find(id));
+	}
 }
 
 
