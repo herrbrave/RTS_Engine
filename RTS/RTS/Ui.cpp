@@ -26,12 +26,18 @@ void ProgressBarDrawable::draw(Graphics& graphicsRef, const Vector2f& position) 
 
 void LabelComponent::setText(const std::string& text, SystemManagerPtr systemManager) {
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
-	TexturePtr textTexture(GCC_NEW Texture(text));
 	mText = text;
 
-	TextureDrawablePtr drawable = static_pointer_cast<TextureDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-	drawable->setTexture(textTexture);
+	vector<WeakDrawablePtr> drawables;
+	graphicsSystem->getDrawableById(entityId, drawables);
+	for (WeakDrawablePtr weakDrawablePtr : drawables) {
+		DrawablePtr drawable = weakDrawablePtr.lock();
+		if (drawable->getType() == DrawableType::TEXT) {
+			TextDrawablePtr drawable = dynamic_pointer_cast<TextDrawable>(weakDrawablePtr.lock());
+			drawable->setText(text);
+			break;
+		}
+	}
 }
 
 string& LabelComponent::getText() {
@@ -114,8 +120,10 @@ void SectionDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	graphicsRef.renderTexture(mTexture, translated.x, translated.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
-ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) : Drawable(width, height) {
-	isUi = true;
+ButtonDrawable::ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig) {
+	Drawable::width = width;
+	Drawable::height = height;
+
 	state = ButtonState::UP;
 	mSections[ButtonState::UP] = vector<SectionDrawablePtr>();
 	mSections[ButtonState::OVER] = vector<SectionDrawablePtr>();
@@ -161,52 +169,69 @@ void ButtonDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	for (auto drawable : mSections[state]) {
 		drawable->draw(graphicsRef, position);
 	}
-
-	if (mButtonTexture != nullptr) {
-		graphicsRef.renderTexture(mButtonTexture, position.x, position.y, -1, -1, 255, 255, 255, 255);
+	if (this->mTexture != nullptr) {
+		TextureDrawable::draw(graphicsRef, position);
 	}
-}
-
-void ButtonDrawable::setButtonTexture(TexturePtr texture) {
-	mButtonTexture = texture;
+	if (this->text.size() > 0) {
+		TextDrawable::draw(graphicsRef, position);
+	}
 }
 
 void ButtonComponent::onMouseEvent(const MouseEvent& mouseEvent, SystemManagerPtr systemManager) {
 	PhysicsSystemPtr physicsSystem = makeShared(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+	ButtonDrawablePtr buttonDrawable;
+	vector<WeakDrawablePtr> drawables;
+	graphicsSystem->getDrawableById(entityId, drawables);
+	for (WeakDrawablePtr weakDrawablePtr : drawables) {
+		DrawablePtr drawable = weakDrawablePtr.lock();
+		if (drawable->getType() == DrawableType::BUTTON) {
+			buttonDrawable = dynamic_pointer_cast<ButtonDrawable>(weakDrawablePtr.lock());
+			break;
+		}
+	}
+	assert(buttonDrawable != nullptr);
+
 	if (mouseEvent.action == MouseAction::MOVE) {
 		BodyPtr body = makeShared(physicsSystem->getBody(entityId));
 		if (body->checkPoint(*mouseEvent.position)) {
-			ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-			drawable->state = ButtonState::OVER;
+			buttonDrawable->state = ButtonState::OVER;
 		}
 		else {
-			ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-			drawable->state = ButtonState::UP;
+			buttonDrawable->state = ButtonState::UP;
 		}
 	}
 	else if (mouseEvent.action == MouseAction::CLICK_DOWN) {
-		ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-		if (drawable->state == ButtonState::OVER) {
-			drawable->state = ButtonState::DOWN;
+		if (buttonDrawable->state == ButtonState::OVER) {
+			buttonDrawable->state = ButtonState::DOWN;
 		}
 	}
 	else {
-		ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-		if (drawable->state == ButtonState::DOWN) {
-			drawable->state = ButtonState::OVER;
+		if (buttonDrawable->state == ButtonState::DOWN) {
+			buttonDrawable->state = ButtonState::OVER;
 		}
 	}
 }
 
-void ButtonComponent::setText(const std::string& text, SystemManagerPtr systemManager) {
+void ButtonComponent::setText(const std::string& text, const std::string& font, SystemManagerPtr systemManager) {
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
-	TexturePtr textTexture(GCC_NEW Texture(text));
 	mText = text;
 
-	ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-	drawable->setButtonTexture(textTexture);
+	ButtonDrawablePtr buttonDrawable;
+	vector<WeakDrawablePtr> drawables;
+	graphicsSystem->getDrawableById(entityId, drawables);
+	for (WeakDrawablePtr weakDrawablePtr : drawables) {
+		DrawablePtr drawable = weakDrawablePtr.lock();
+		if (drawable->getType() == DrawableType::BUTTON) {
+			buttonDrawable = dynamic_pointer_cast<ButtonDrawable>(weakDrawablePtr.lock());
+			break;
+		}
+	}
+	assert(buttonDrawable != nullptr);
+
+	buttonDrawable->setText(text);
+	buttonDrawable->setFont(font);
 }
 
 string& ButtonComponent::getText() {
@@ -215,18 +240,30 @@ string& ButtonComponent::getText() {
 
 void ButtonComponent::setIcon(TexturePtr texture, SystemManagerPtr systemManager) {
 	GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	ButtonDrawablePtr drawable = static_pointer_cast<ButtonDrawable>(makeShared(graphicsSystem->getDrawableById(entityId)));
-	drawable->setButtonTexture(texture);
+
+	ButtonDrawablePtr buttonDrawable;
+	vector<WeakDrawablePtr> drawables;
+	graphicsSystem->getDrawableById(entityId, drawables);
+	for (WeakDrawablePtr weakDrawablePtr : drawables) {
+		DrawablePtr drawable = weakDrawablePtr.lock();
+		if (drawable->getType() == DrawableType::BUTTON) {
+			buttonDrawable = dynamic_pointer_cast<ButtonDrawable>(weakDrawablePtr.lock());
+			break;
+		}
+	}
+	assert(buttonDrawable != nullptr);
+
+	buttonDrawable->setTexture(texture);
 }
 
 void ButtonComponent::setCallback(function<void()>& callback) {
 	this->mCallback = callback;
 }
 
-void setButtonText(EntityPtr entity, const std::string& text, SystemManagerPtr systemManager) {
+void setButtonText(EntityPtr entity, const std::string& text, const std::string& font, SystemManagerPtr systemManager) {
 	weak_ptr<ButtonComponent> buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
 	if (auto ptr = buttonComponent.lock()) {
-		ptr->setText(text, systemManager);
+		ptr->setText(text, font, systemManager);
 	}
 }
 
@@ -287,7 +324,7 @@ WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConf
 }
 
 
-EntityPtr WidgetFactory::createLabel(std::string text, float x, float y) {
+EntityPtr WidgetFactory::createLabel(std::string text, std::string font, float x, float y) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
@@ -299,17 +336,13 @@ EntityPtr WidgetFactory::createLabel(std::string text, float x, float y) {
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 
-	graphicsSystem->createTextSurface(text, text, 0, 0, 0, 255);
-	TexturePtr texture = TexturePtr(GCC_NEW Texture(text));
-
-	TextureDrawablePtr textDrawable(GCC_NEW TextureDrawable(texture));
+	TextDrawablePtr textDrawable(GCC_NEW TextDrawable(text, font));
+	textDrawable->setColor(255, 0, 255, 255);
 	graphicsSystem->registerDrawable(entity->id, textDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textDrawable));
 
-	LabelComponentPtr labelComponent(GCC_NEW LabelComponent(entity->id, textDrawable));
+	LabelComponentPtr labelComponent(GCC_NEW LabelComponent(entity->id));
 
 	entity->addComponent(physicsComponent);
-	entity->addComponent(drawableComponent);
 	entity->addComponent(labelComponent);
 
 	return entity;
@@ -328,7 +361,6 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	ButtonDrawablePtr buttonDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
 	graphicsSystem->registerDrawable(entity->id, buttonDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, buttonDrawable));
 
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
@@ -337,14 +369,13 @@ EntityPtr WidgetFactory::createButton(std::function<void()> callback, float x, f
 	buttonComponent->setCallback(callback);
 
 	entity->addComponent(physicsComponent);
-	entity->addComponent(drawableComponent);
 	entity->addComponent(buttonComponent);
 
 	return entity;
 }
 
 
-EntityPtr WidgetFactory::createButtonWithText(std::string text, std::function<void()> callback, float x, float y, float width, float height) {
+EntityPtr WidgetFactory::createButtonWithText(std::string text, std::string font, std::function<void()> callback, float x, float y, float width, float height) {
 	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
@@ -356,8 +387,7 @@ EntityPtr WidgetFactory::createButtonWithText(std::string text, std::function<vo
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	ButtonDrawablePtr buttonDrawable(GCC_NEW ButtonDrawable(width, height, *mButtonConfig.get()));
-	graphicsSystem->registerDrawable(entity->id, buttonDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, buttonDrawable));
+	graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(buttonDrawable));
 
 	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
 	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
@@ -365,10 +395,9 @@ EntityPtr WidgetFactory::createButtonWithText(std::string text, std::function<vo
 	ButtonComponentPtr buttonComponent(GCC_NEW ButtonComponent(entity->id, buttonDrawable, inputListener));
 	buttonComponent->setCallback(callback);
 
-	buttonComponent->setText(text, mSystemManager);
+	buttonComponent->setText(text, font, mSystemManager);
 
 	entity->addComponent(physicsComponent);
-	entity->addComponent(drawableComponent);
 	entity->addComponent(buttonComponent);
 
 	return entity;

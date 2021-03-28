@@ -68,8 +68,18 @@ public:
 		return *this;
 	}
 
-	Vector2f dot(const Vector2f& other) const {
+	Vector2f operator*(const Vector2f& other) const {
 		return Vector2f(x * other.x, y * other.y);
+	}
+
+	Vector2f& operator*=(const Vector2f& other) {
+		this->x *= this->x * other.x;
+		this->y *= this->y * other.y;
+		return *this;
+	}
+
+	float dot(const Vector2f& other) {
+		return this->x * other.x + this->y * other.y;
 	}
 
 	float magnitude() {

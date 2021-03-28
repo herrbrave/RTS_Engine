@@ -213,20 +213,19 @@ public:
 
 	void sortDrawableList();
 
-	WeakDrawablePtr getDrawableById(unsigned long entityId);
+	void getDrawableById(unsigned long entityId, vector<WeakDrawablePtr>& drawables);
 
 	WeakCameraPtr getCamera();
 
 	void addTexture(const string& path, const string& assetTag);
-
-	void createTextSurface(const string& text, const string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+	void addFont(const string& path, const string&  assetTag, int fontsize);
 
 	void clear() override;
 private:
 	GraphicsConfigPtr mGraphicsConfig{ nullptr };
 	GraphicsPtr mGraphics{ nullptr };
 	CameraPtr mCamera;
-	unordered_map<unsigned long, DrawablePtr> mDrawables;
+	unordered_map<unsigned long, vector<DrawablePtr>> mDrawables;
 	unordered_map<DrawablePtr, unsigned long> mReverseLookup;
 	std::list<DrawablePtr> mDrawableList;
 };

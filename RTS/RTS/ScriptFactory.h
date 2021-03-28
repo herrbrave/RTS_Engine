@@ -41,6 +41,7 @@ private:
 	void registerAnimation(LuaScriptPtr& script);
 	void registerInput(LuaScriptPtr& script);
 	void registerScript(LuaScriptPtr& script);
+	void registerUi(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;
@@ -66,6 +67,14 @@ public:
 		return this->vector->y;
 	}
 
+	void setX(double x) {
+		this->vector->x = x;
+	}
+
+	void setY(double y) {
+		this->vector->y = y;
+	}
+
 	void normalize() {
 		this->vector->normalize();
 	}
@@ -88,9 +97,17 @@ public:
 		this->vector->y -= vec.getY();
 	}
 
+	void muliply(LuaFriendlyVector2f& vec) {
+		*this->vector *= *vec.vector;
+	}
+
 	void scale(double scaler) {
 		this->vector->x *= scaler;
 		this->vector->y *= scaler;
+	}
+
+	double dot(LuaFriendlyVector2f& vec) {
+		return this->vector->dot(vec.vector);
 	}
 
 	Vector2fPtr vector;

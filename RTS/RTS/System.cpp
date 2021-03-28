@@ -95,15 +95,20 @@ void AssetSystem::clear() {
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
-	mDrawables.emplace(id, drawable);
+	if (mDrawables.find(id) == mDrawables.end()) {
+		mDrawables.emplace(id, vector<DrawablePtr>());
+	}
+	mDrawables.at(id).push_back(drawable);
 	mReverseLookup.emplace(drawable, id);
 	mDrawableList.push_back(drawable);
 	sortDrawableList();
 }
 
 void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
-	mDrawableList.erase(std::find(mDrawableList.begin(), mDrawableList.end(), mDrawables.at(id)));
-	mReverseLookup.erase(mDrawables.at(id));
+	for (DrawablePtr drawable : mDrawables.at(id)) {
+		mReverseLookup.erase(drawable);
+		mDrawableList.erase(std::find(mDrawableList.begin(), mDrawableList.end(), drawable));
+	}
 	mDrawables.erase(mDrawables.find(id));
 }
 
@@ -134,8 +139,10 @@ WeakCameraPtr GraphicsSystem::getCamera() {
 	return mCamera;
 }
 
-WeakDrawablePtr GraphicsSystem::getDrawableById(unsigned long entityId) {
-	return WeakDrawablePtr(mDrawables.at(entityId));
+void GraphicsSystem::getDrawableById(unsigned long entityId, vector<WeakDrawablePtr>& drawables) {
+	for (DrawablePtr drawable : mDrawables.at(entityId)) {
+		drawables.push_back(WeakDrawablePtr(drawable));
+	}
 }
 
 void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
@@ -148,14 +155,15 @@ void GraphicsSystem::addTexture(const std::string& path, const std::string& asse
 	assetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
 }
 
-void GraphicsSystem::createTextSurface(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+
+void GraphicsSystem::addFont(const string& path, const string&  assetTag, int fontsize) {
 	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
 	if (assetSystem->contains(assetTag)) {
-		SDL_Log("Text already added.");
+		SDL_Log("Asset already loaded.");
 		return;
 	}
 
-	assetSystem->registerAsset(mGraphics->createTextAsset(text, assetTag, r, g, b, a));
+	assetSystem->registerAsset(mGraphics->createFontAsset(path, assetTag, fontsize));
 }
 
 void GraphicsSystem::clear() {

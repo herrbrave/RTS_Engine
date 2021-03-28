@@ -94,14 +94,17 @@ public:
 		return this->progressMax;
 	}
 
+	DrawableType getType() override {
+		return DrawableType::PROGRESS_BAR;
+	}
+
 protected:
 	void onSerialize(Serializer& serializer) const override {}
 };
 
 class LabelComponent : public Component {
 public:
-	LabelComponent(unsigned long entityId, DrawablePtr drawable)
-		: Component(entityId, ComponentType::LABEL_COMPONENT) {
+	LabelComponent(unsigned long entityId) : Component(entityId, ComponentType::LABEL_COMPONENT) {
 	}
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
@@ -133,6 +136,10 @@ public:
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
+	DrawableType getType() override {
+		return DrawableType::SECTION;
+	}
+
 protected:
 	void onSerialize(Serializer& serializer) const override {}
 
@@ -141,14 +148,20 @@ private:
 	Vector2fPtr mPosOffset;
 };
 
-class ButtonDrawable : public Drawable {
+class ButtonDrawable : public TextDrawable, public TextureDrawable {
 public:
 	ButtonState state;
 	ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig);
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
-	void setButtonTexture(TexturePtr);
+	DrawableType getType() override {
+		return DrawableType::BUTTON;
+	}
+
+	void setSize(float w, float h) override {
+		Drawable::setSize(w, h);
+	}
 
 protected:
 	void onSerialize(Serializer& serializer) const override {}
@@ -156,40 +169,35 @@ protected:
 private:
 	ButtonConfigPtr mButtonConfig{ nullptr };
 	unordered_map<ButtonState, std::vector<SectionDrawablePtr>> mSections;
-	TexturePtr mButtonTexture{ nullptr };
 };
 
 class ButtonComponent : public InputComponent {
 public:
-	ButtonComponent(unsigned long entityId, DrawablePtr drawable, InputListenerPtr inputListener) 
+	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener) 
 		: InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT) {
 
 		inputListener->eventCallbacks.emplace(
 			Input::ON_MOUSE_ENTER,
 			[drawable](EventPtr evt) {
-			ButtonDrawable* buttonDrawable = (ButtonDrawable*) drawable.get();
-			buttonDrawable->state = ButtonState::OVER;
+			drawable->state = ButtonState::OVER;
 			return true;
 		});
 		inputListener->eventCallbacks.emplace(
 			Input::ON_MOUSE_EXIT,
 			[drawable](EventPtr evt) {
-			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
-			buttonDrawable->state = ButtonState::UP;
+			drawable->state = ButtonState::UP;
 			return true;
 		});
 		inputListener->eventCallbacks.emplace(
 			Input::ON_MOUSE_DOWN,
 			[drawable](EventPtr evt) {
-			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
-			buttonDrawable->state = ButtonState::DOWN;
+			drawable->state = ButtonState::DOWN;
 			return true;
 		});
 		inputListener->eventCallbacks.emplace(
 			Input::ON_CLICK,
 			[drawable, this](EventPtr evt) {
-			ButtonDrawable* buttonDrawable = (ButtonDrawable*)drawable.get();
-			buttonDrawable->state = ButtonState::OVER;
+			drawable->state = ButtonState::OVER;
 			this->getCallback()();
 			return true;
 		});
@@ -199,7 +207,7 @@ public:
 
 	void serialize(Serializer& serializer) const override {/* no op */}
 
-	void setText(const std::string& text, SystemManagerPtr systemManager);
+	void setText(const std::string& text, const std::string& font, SystemManagerPtr systemManager);
 
 	std::string& getText();
 
@@ -216,7 +224,7 @@ private:
 	}
 };
 
-void setButtonText(EntityPtr entity, const std::string& text, SystemManagerPtr systemManager);
+void setButtonText(EntityPtr entity, const std::string& text, std::string& font, SystemManagerPtr systemManager);
 void setIcon(EntityPtr entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManagerPtr systemManager);
 
 class PanelConfig {
@@ -233,6 +241,10 @@ public:
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
+	DrawableType getType() override {
+		return DrawableType::PANEL;
+	}
+
 protected:
 	void onSerialize(Serializer& serializer) const override {}
 
@@ -245,9 +257,9 @@ class WidgetFactory : public EntityFactory {
 public:
 	WidgetFactory(string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager);
 
-	EntityPtr createLabel(std::string text, float x, float y);
+	EntityPtr createLabel(std::string text, std::string font, float x, float y);
 	EntityPtr createButton(std::function<void()> callback, float x, float y, float width, float height);
-	EntityPtr createButtonWithText(std::string text, std::function<void()> callback, float x, float y, float width, float height);
+	EntityPtr createButtonWithText(std::string text, std::string font, std::function<void()> callback, float x, float y, float width, float height);
 	EntityPtr createPanel(float x, float y, float width, float height);
 	EntityPtr createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress);
 

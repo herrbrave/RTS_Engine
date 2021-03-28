@@ -16,6 +16,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	int ANIMATION = script->state["registrar"]["ANIMATION"];
 	int INPUT = script->state["registrar"]["INPUT"];
 	int SCRIPT = script->state["registrar"]["SCRIPT"];
+	int UI = script->state["registrar"]["UI"];
 
 	if (DRAWABLE) {
 		this->registerDrawable(script);
@@ -37,6 +38,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	}
 	if (SCRIPT) {
 		this->registerScript(script);
+	}
+	if (UI) {
+		this->registerUi(script);
 	}
 
 	auto output = script->invoke("setup");
@@ -82,10 +86,14 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["Vector2f"].SetClass<LuaFriendlyVector2f, double, double>(
 		"getX", &LuaFriendlyVector2f::getX,
 		"getY", &LuaFriendlyVector2f::getY,
+		"setX", &LuaFriendlyVector2f::setX,
+		"setY", &LuaFriendlyVector2f::setY,
 		"normalize", &LuaFriendlyVector2f::normalize,
 		"magnitude", &LuaFriendlyVector2f::magnitude,
 		"truncate", &LuaFriendlyVector2f::truncate,
 		"scale", &LuaFriendlyVector2f::scale,
+		"multiply", &LuaFriendlyVector2f::muliply,
+		"dot", &LuaFriendlyVector2f::dot,
 		"add", &LuaFriendlyVector2f::add,
 		"subtract", &LuaFriendlyVector2f::subtract);
 
@@ -97,7 +105,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
 		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-		physicsComponent->setVelocity(Vector2f(x, y));
+		Vector2f velocity(x, y);
+		velocity.normalize();
+		physicsComponent->setVelocity(velocity);
 	};
 
 	script->state["addVelocity"] = [this](int entityId, double x, double y) {
@@ -371,5 +381,44 @@ void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
 		luaScript->state["entityId"] = (int)entityId;
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, luaScript);
 		EventManager::getInstance().pushEvent(scriptLoaded);
+	};
+}
+
+void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
+
+	script->state["setText"] = [this](int entityId, string text, string font, int r, int g, int b) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent;
+		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) == entity->getComponents().end()) {
+			PhysicsSystemPtr physicsSystem = makeShared(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+			BodyPtr blockBody(GCC_NEW Body(entity->id, 0, 0, 0, 0));
+			physicsSystem->registerBody(entity->id, blockBody);
+			physicsComponent.reset(GCC_NEW PhysicsComponent(entity->id, blockBody));
+			entity->addComponent(physicsComponent);
+		}
+		else {
+			physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		}
+		LabelComponentPtr labelComponent;
+		if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) == entity->getComponents().end()) {
+			GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+			TextDrawablePtr drawable(GCC_NEW TextDrawable(text, font));
+			drawable->setDrawDepth(100);
+			drawable->setColor(r, g, b, 255);
+			graphicsSystem->registerDrawable(entity->id, drawable);
+
+			labelComponent.reset(GCC_NEW LabelComponent(entity->id));
+			entity->addComponent(labelComponent);
+		}
+		else {
+			labelComponent = makeShared<LabelComponent>(entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT));
+		}
+
+		labelComponent->setText(text, systemManager);
 	};
 }

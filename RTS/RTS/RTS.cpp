@@ -6,8 +6,8 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(1024);
-	config->setWindowHeight(768);
+	config->setWindowWidth(800);
+	config->setWindowHeight(600);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 	config->setFont("Digital_tech.otf");
@@ -17,12 +17,16 @@ void RTS::setup() {
 	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/Button.json", "Assets/Panel.json", mSystemManager));
 	mSoundControllerFactory.reset(GCC_NEW SoundControllerFactory(mSystemManager));
 
+	makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS))->addFont("Digital_tech.otf", "Digital_tech", 20);
+
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
 
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
 
-	mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
+	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
+
+	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("player.lua").build();
 }
 
 void RTS::handleEvents() {

@@ -6,27 +6,72 @@ registrar = {
 	PHYSICS = 1,
 	ANIMATION = 0,
 	INPUT = 1,
-	SCRIPT = 1
+	SCRIPT = 1,
+	UI = 0
 }
 
 function setup()
 	print("setup");
 
-	temp = createDefault(100, 100, 50, 50, 255, 0, 255, 255)
-	setTag(temp, "block")
-	setScript(temp, "block.lua")
+	boundaryTop = createDefault(400, 5, 800, 10, 255, 255, 255, 255)
+	setTag(boundaryTop, "bound")
+
+	boundaryLeft = createDefault(5, 300, 10, 600, 255, 255, 255, 255)
+	setTag(boundaryLeft, "bound")
+
+	boundaryBottom = createDefault(400, 595, 800, 10, 255, 255, 255, 255)
+	setTag(boundaryBottom, "bound")
+
+	boundaryRight = createDefault(795, 300, 10, 600, 255, 255, 255, 255)
+	setTag(boundaryRight, "bound")
+
+	map = {
+		{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1},
+		{1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1},
+		{1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1}
+	}
+
+	offset = 32
+	for y=1,13 do
+		for x=1,22 do
+			if map[y][x] == 1 then
+				x0 = 32 * (x - 1) + offset
+				y0 = 32 * (y - 1) + offset
+				temp = createDefault(x0, y0, 32, 32, 255, 255, 255, 255)
+				setTag(temp, "block")
+				setScript(temp, "block.lua")
+			end
+		end
+	end
 end
 
 -- Standard Mouse/Key events
 
 function onMouseMove(x, y, button)
-	
+
 end
 
 function onMouseUp(x, y, button)
 	print("onMouseUp", x, y, button)
-	setTarget(entityId, x, y, 5)
-	setSpeed(entityId, 500)
+
+	vecX = x - 400
+	vecY = y - 580
+
+	bullet = createDefault(400, 580, 8, 8, 255, 0, 0, 255)
+	setScript(bullet, "bullet.lua")
+	setVelocity(bullet, vecX, vecY)
+	setSpeed(bullet, 350)
+
 end
 
 function onMouseDown(x, y, button)

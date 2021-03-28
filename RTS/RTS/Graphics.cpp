@@ -86,6 +86,10 @@ void TextureDrawable::setSize(float width, float height) {
 	mTexture->h = height;
 }
 
+void TextDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	graphicsRef.renderText(this->text, this->font, position.x, position.y, this->mColor->r, this->mColor->g, this->mColor->b, this->mColor->a);
+}
+
 SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(assetVendor) {
 	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
@@ -112,13 +116,6 @@ SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetV
 	mRenderer.reset(
 		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED)
 	);
-
-	if (graphicsConfig->mFontPath.length() == 0) {
-		return;
-	}
-
-	TTF_Font* font(TTF_OpenFont(graphicsConfig->mFontPath.c_str(), graphicsConfig->mFontSize));
-	mFont.reset(font);
 }
 
 void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
@@ -197,6 +194,41 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 	}
 }
 
+void SDLGraphics::renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+
+	AssetPtr asset(mAssetVendor->getAsset(font));
+	shared_ptr<TTF_Font> fontPtr = makeShared(asset->getAsset<TTF_Font>());
+
+	SDL_Color color{ r, g, b, a };
+
+	SDL_Surface* sdlSurface = TTF_RenderText_Solid(fontPtr.get(), text.c_str(), color);
+	SDL_Texture* sdlTexture = SDL_CreateTextureFromSurface(mRenderer.get(), sdlSurface);
+
+	if (a < 255) {
+		SDL_SetTextureAlphaMod(sdlTexture, a);
+	}
+
+	int w = -1;
+	int h = -1;
+	SDL_QueryTexture(sdlTexture, nullptr, nullptr, &w, &h);
+
+	SDL_Rect src{ 0, 0, w, h };
+	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };
+
+	SDL_RenderCopy(mRenderer.get(), sdlTexture, &src, &dest);
+
+	SDL_DestroyTexture(sdlTexture);
+	SDL_FreeSurface(sdlSurface);
+
+	if (__DEBUG__) {
+		SDL_SetRenderDrawColor(mRenderer.get(), 255, 0, 0, 255);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x, dest.y, dest.x + dest.w, dest.y);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x + dest.w, dest.y, dest.x + dest.w, dest.y + dest.h);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x + dest.w, dest.y + dest.h, dest.x, dest.y + dest.h);
+		SDL_RenderDrawLine(mRenderer.get(), dest.x, dest.y + dest.h, dest.x, dest.y);
+	}
+}
+
 void SDLGraphics::onBeforeDraw() {
 	SDL_SetRenderDrawColor(mRenderer.get(), 0x00, 0x00, 0x00, 0x00);
 	SDL_RenderClear(mRenderer.get());
@@ -216,17 +248,13 @@ AssetPtr SDLGraphics::createTexture(const string& path, const string& assetTag) 
 	return asset;
 }
 
-AssetPtr SDLGraphics::createTextAsset(const string& text, const string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	SDL_Color textColor{ r, g, b, a };
-	SDL_Surface* surface = TTF_RenderText_Solid(mFont.get(), text.c_str(), textColor);
-	SDL_Texture* sdlTexture = SDL_CreateTextureFromSurface(mRenderer.get(), surface);
-	SDL_FreeSurface(surface);
+AssetPtr SDLGraphics::createFontAsset(const string& path, const string& assetTag, int fontsize) {
+	TTF_Font* font(TTF_OpenFont(path.c_str(), fontsize));
 
-	AssetPtr asset(GCC_NEW Asset(shared_ptr<void>(sdlTexture, SDL_DELETERS()), "", assetTag));
+	AssetPtr asset(GCC_NEW Asset(shared_ptr<void>(font, SDL_DELETERS()), path, assetTag));
 
 	return asset;
 }
-
 
 SDLOpenGLGraphics::SDLOpenGLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(assetVendor) {
 
@@ -272,9 +300,6 @@ SDLOpenGLGraphics::SDLOpenGLGraphics(GraphicsConfigPtr graphicsConfig, AssetVend
 	if (graphicsConfig->mFontPath.length() == 0) {
 		return;
 	}
-
-	TTF_Font* font(TTF_OpenFont(graphicsConfig->mFontPath.c_str(), graphicsConfig->mFontSize));
-	mFont.reset(font);
 
 	SDL_GLContext context = SDL_GL_CreateContext(mWindow.get());
 	mGLContext.reset(
@@ -370,6 +395,10 @@ void SDLOpenGLGraphics::renderTexture(TexturePtr texture, float x, float y, floa
 		glTexCoord2f(x0, y0); glVertex2f(-width / 2, -height / 2);
 	glEnd();
 	glPopMatrix();
+}
+
+void SDLOpenGLGraphics::renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	// no op.
 }
 
 void SDLOpenGLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
@@ -485,24 +514,12 @@ AssetPtr SDLOpenGLGraphics::createTexture(const std::string& path, const std::st
 	return asset;
 
 }
-AssetPtr SDLOpenGLGraphics::createTextAsset(const std::string& text, const std::string& assetTag, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	SDL_Color textColor{ r, g, b, a };
-	SDL_Surface* surface = TTF_RenderText_Solid(mFont.get(), text.c_str(), textColor);
-	GLuint texId;
-	glGenTextures(1, &texId);
 
-	glBindTexture(GL_TEXTURE_2D, texId);
+AssetPtr SDLOpenGLGraphics::createFontAsset(const string& path, const string& assetTag, int fontsize) {
+	TTF_Font* font(TTF_OpenFont(path.c_str(), fontsize));
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	AssetPtr asset(GCC_NEW Asset(shared_ptr<void>(font, SDL_DELETERS()), path, assetTag));
 
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
-
-	if (surface) {
-		SDL_FreeSurface(surface);
-	}
-
-	AssetPtr asset(GCC_NEW Asset(VoidPtr(&texId), "", assetTag));
 	return asset;
 }
 
