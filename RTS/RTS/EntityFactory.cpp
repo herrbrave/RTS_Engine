@@ -51,14 +51,8 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, f
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
 	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
-	InputSystemPtr inputSystem = makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT));
-	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
-	inputSystem->registerEventListener(inputListener);
-	InputComponentPtr inputComponent(GCC_NEW InputComponent(entity->id, inputListener));
-
 	entity->addComponent(ComponentPtr(physicsComponent));
 	entity->addComponent(ComponentPtr(drawableComponent));
-	entity->addComponent(ComponentPtr(inputComponent));
 
 	return entity;
 }
@@ -77,23 +71,14 @@ EntityPtr EntityFactory::createAnimatedEntity(const string& path, float x, float
 	TexturePtr texture(GCC_NEW Texture(""));
 	shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
-
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
 	AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
 	animationSystem->registerAnimation(entity->id, animationHandler);
 	AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(entity->id, animationHandler));
 
-	InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
-	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
-	inputSystem->registerEventListener(inputListener);
-	InputComponentPtr inputComponent(GCC_NEW InputComponent(entity->id, inputListener));
-
 	entity->addComponent(ComponentPtr(physicsComponent));
-	entity->addComponent(ComponentPtr(drawableComponent));
 	entity->addComponent(ComponentPtr(animationComponent));
-	entity->addComponent(ComponentPtr(inputComponent));
 
 	return entity;
 }

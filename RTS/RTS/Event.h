@@ -252,7 +252,7 @@ public:
 	LuaScriptPtr script;
 
 	ScriptLoadedData(Uint32 timestamp, unsigned long id, const LuaScriptPtr& script) : EventData(timestamp) {
-		this->id;
+		this->id = id;
 		this->script = script;
 	}
 

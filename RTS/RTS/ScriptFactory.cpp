@@ -17,6 +17,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	int INPUT = script->state["registrar"]["INPUT"];
 	int SCRIPT = script->state["registrar"]["SCRIPT"];
 	int UI = script->state["registrar"]["UI"];
+	int ASSET = script->state["registrar"]["ASSET"];
 
 	if (DRAWABLE) {
 		this->registerDrawable(script);
@@ -42,6 +43,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	if (UI) {
 		this->registerUi(script);
 	}
+	if (ASSET) {
+		this->registerAsset(script);
+	}
 
 	auto output = script->invoke("setup");
 }
@@ -60,6 +64,13 @@ void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
 		graphicsSystem->addTexture(tag, tag);
 
 		EntityPtr entity = entityFactory->createTexturedEntity(tag, x, y, width, height, tx, ty, w, h, collidable);
+		return (int)entity->id;
+	};
+
+	script->state["createAnimated"] = [this](string path, int x, int y, int width, int height) -> int {
+		EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
+
+		EntityPtr entity = entityFactory->createAnimatedEntity(path, x, y, width, height);
 		return (int)entity->id;
 	};
 
@@ -155,6 +166,18 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(position);
 
 		return *vec;
+	};
+
+	script->state["setPosition"] = [this](int entityId, double x, double y) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		Vector2f position(x, y);
+		physicsComponent->setPosition(position);
 	};
 
 	script->state["getVelocity"] = [this](int entityId) -> LuaFriendlyVector2f& {
@@ -274,6 +297,38 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 		drawableComponent->setSize(w, h);
 	};
+
+	script->state["setAngle"] = [this](int entityId, double angle) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+
+			drawableComponent->setAngle(angle);
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			animationComponent->setAngle(angle);
+		}
+	};
+
+	script->state["getAngle"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+
+			return (double) drawableComponent->getAngle();
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			return (double) animationComponent->animationHandler->textureDrawable->getAngle();
+		}
+	};
 }
 
 void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
@@ -305,6 +360,26 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
 		animationComponent->animationHandler->play();
+	};
+
+	script->state["loopAnimation"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+
+		animationComponent->animationHandler->loop();
+	};
+
+	script->state["isAnimationPlaying"] = [this](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+
+		return animationComponent->animationHandler->state == AnimationState::PLAYING || animationComponent->animationHandler->state == AnimationState::LOOPING;
 	};
 }
 
@@ -368,8 +443,10 @@ void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
+		LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
 		LuaScriptPtr luaScript(GCC_NEW LuaScript(path));
 
+		luaScript->state["entityId"] = (int)entityId;
 		LuaScriptComponentPtr scriptComponent;
 		if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) == entity->getComponents().end()) {
 			scriptComponent.reset(GCC_NEW LuaScriptComponent(entityId, luaScript));
@@ -377,8 +454,6 @@ void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
 		else {
 			scriptComponent = makeShared<LuaScriptComponent>(entity->getComponentByType<LuaScriptComponent>(ComponentType::INPUT_COMPONENT));
 		}
-
-		luaScript->state["entityId"] = (int)entityId;
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, luaScript);
 		EventManager::getInstance().pushEvent(scriptLoaded);
 	};
@@ -420,5 +495,20 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 		}
 
 		labelComponent->setText(text, systemManager);
+	};
+}
+
+void LuaScriptFactory::registerAsset(LuaScriptPtr& script) {
+	script->state["loadTexture"] = [this](string path, string tag) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+		graphicsSystem->addTexture(path, tag);
+	};
+	script->state["loadFont"] = [this](string path, string tag, int fontsize) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+		graphicsSystem->addFont(path, tag, fontsize);
 	};
 }

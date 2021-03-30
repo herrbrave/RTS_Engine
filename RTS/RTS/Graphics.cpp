@@ -64,6 +64,14 @@ void Drawable::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	mColor->a = a;
 }
 
+void Drawable::setAngle(float angle) {
+	this->angle = angle;
+}
+
+float Drawable::getAngle() {
+	return this->angle;
+}
+
 void Drawable::setSize(float width, float height) {
 	this->width = width;
 	this->height = height;
@@ -77,7 +85,7 @@ void BlockDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 }
 
 void TextureDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
-	graphicsRef.renderTexture(mTexture, position.x, position.y, width, height, mColor->r, mColor->g, mColor->b, mColor->a);
+	graphicsRef.renderTexture(mTexture, position.x, position.y, width, height, this->angle, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 void TextureDrawable::setSize(float width, float height) {
@@ -157,7 +165,7 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 	SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_NONE);
 }
 
-void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
 	shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
@@ -179,7 +187,7 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 		dest.h = src.h;
 	}
 
-	SDL_RenderCopy(mRenderer.get(), sdlTexture.get(), &src, &dest);
+	SDL_RenderCopyEx(mRenderer.get(), sdlTexture.get(), &src, &dest, angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
 
 	if (a < 255) {
 		SDL_SetTextureAlphaMod(sdlTexture.get(), 255);
@@ -365,7 +373,7 @@ void SDLOpenGLGraphics::onBeforeDraw() {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void SDLOpenGLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLOpenGLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
 	shared_ptr<GLTexture> textureId = makeShared(asset->getAsset<GLTexture>());
@@ -529,6 +537,14 @@ void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 void DrawableComponent::setSize(float width, float height) {
 	mDrawable->setSize(width, height);
+}
+
+void DrawableComponent::setAngle(float angle) {
+	mDrawable->setAngle(angle);
+}
+
+float DrawableComponent::getAngle() {
+	return mDrawable->getAngle();
 }
 
 Uint8 DrawableComponent::getZOrder() {

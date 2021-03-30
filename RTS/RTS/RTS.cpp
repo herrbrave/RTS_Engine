@@ -26,9 +26,7 @@ void RTS::setup() {
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("player.lua").build();
-
-	mWidgetFactory->createButtonWithText("Win", "Digital_tech", []() {}, 400, 550, 190, 49);
+	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/asteroids/asteroids.lua").build();
 }
 
 void RTS::handleEvents() {

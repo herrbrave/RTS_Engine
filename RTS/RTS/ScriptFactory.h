@@ -42,6 +42,7 @@ private:
 	void registerInput(LuaScriptPtr& script);
 	void registerScript(LuaScriptPtr& script);
 	void registerUi(LuaScriptPtr& script);
+	void registerAsset(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;

@@ -61,12 +61,14 @@ class Drawable {
 public:
 	float width;
 	float height;
+	float angle;
 	bool isUi{ false };
 
 	Drawable() : Drawable(32, 32) {}
 	Drawable(float width, float height) {
 		this->width = width;
 		this->height = height;
+		this->angle = 0;
 		mColor.reset(new SDL_Color{ 255, 255, 255, 255 });
 		mDrawDepth = 0;
 	}
@@ -80,6 +82,7 @@ public:
 			(Uint8) root["b"].GetUint(),
 			(Uint8) root["a"].GetUint()
 		});
+		angle = root["angle"].GetDouble();
 		mDrawDepth = 0;
 	}
 
@@ -90,6 +93,10 @@ public:
 	virtual void draw(Graphics& graphicsRef, const Vector2f& position) = 0;
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
+	void setAngle(float angleDegrees);
+
+	float getAngle();
 
 	virtual void setSize(float width, float height);
 
@@ -283,7 +290,7 @@ class Graphics {
 public:
 	Graphics(AssetVendorPtr assetVendor) { mAssetVendor = assetVendor; }
 	virtual void onBeforeDraw() = 0;
-	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
@@ -299,7 +306,7 @@ class SDLGraphics : public Graphics {
 public:
 	SDLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
 	void onBeforeDraw() override;
-	void renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
@@ -327,7 +334,7 @@ class SDLOpenGLGraphics : public Graphics {
 public:
 	SDLOpenGLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
 	void onBeforeDraw() override;
-	void renderTexture(TexturePtr texture, float x, float y, float w, float h, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
@@ -366,6 +373,8 @@ public:
 
 	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 	void setSize(float width, float height);
+	void setAngle(float angle);
+	float getAngle();
 	WeakDrawablePtr getDrawable() {
 		return mDrawable;
 	}

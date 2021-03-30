@@ -9,6 +9,7 @@
 enum class AnimationState {
 	PLAYING = 0,
 	STOPPED = 1,
+	LOOPING = 2,
 };
 
 class Animation;
@@ -166,6 +167,10 @@ public:
 		this->state = AnimationState::PLAYING;
 	}
 
+	void loop() {
+		this->state = AnimationState::LOOPING;
+	}
+
 	void stop() {
 		this->currentFrame = 0;
 		this->state = AnimationState::STOPPED;
@@ -185,6 +190,9 @@ public:
 
 		if (++this->currentFrame >= currentAnimation->frames.size()) {
 			this->currentFrame = 0;
+			if (this->state != AnimationState::LOOPING) {
+				stop();
+			}
 		}
 		this->textureDrawable->setTexture(currentAnimation->frames[currentFrame]);
 		this->frameTime = 0;
@@ -225,6 +233,10 @@ public:
 
 	AnimationComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
 		this->animationHandler = AnimationHandlerPtr(new AnimationHandler(root["animationHandler"]));
+	}
+
+	void setAngle(float angle) {
+		this->animationHandler->textureDrawable->setAngle(angle);
 	}
 
 	void serialize(Serializer& serializer) const override {
