@@ -6,6 +6,12 @@
 
 #include"EntityFactory.h"
 
+
+class Tile;
+typedef shared_ptr<Tile> TilePtr;
+typedef weak_ptr<Tile> WeakTilePtr;
+typedef unordered_map<unsigned int, TilePtr> Tileset;
+
 struct MapConfig {
 	int tileWidth;
 	int tileHeight;
@@ -13,6 +19,7 @@ struct MapConfig {
 	int mapHeight;
 	std::vector<unsigned long> tiles;
 	std::vector<unsigned long> objects;
+	Tileset tileset;
 };
 typedef shared_ptr<MapConfig> MapConfigPtr;
 typedef weak_ptr<MapConfig> WeakMapConfigPtr;
@@ -31,6 +38,23 @@ typedef weak_ptr<TileComponent> WeakTileComponentPtr;
 class Map;
 typedef shared_ptr<Map> MapPtr;
 typedef weak_ptr<Map> WeakMapPtr;
+
+class Tile {
+public:
+	string textureAssetTag;
+	int tx;
+	int ty;
+	int w;
+	int h;
+
+	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) {
+		this->textureAssetTag = std::move(textureAssetTag);
+		this->tx = tx;
+		this->ty = ty;
+		this->w = w;
+		this->h = h;
+	}
+};
 
 class TileComponent : public Component {
 public:

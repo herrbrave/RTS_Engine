@@ -2,6 +2,7 @@
 #define __MAP_FACTORY_H__
 
 #include<iostream>
+#include<cmath>
 
 #include"EntityFactory.h"
 #include"Map.h"
@@ -28,16 +29,19 @@ public:
 
 class MapFactory {
 public:
-	MapFactory(TileFactoryPtr tileFactory, SystemManagerPtr systemManager);
+	MapFactory(TileFactoryPtr tileFactory, EntityFactoryPtr entityFactory, SystemManagerPtr systemManager);
 
 	MapPtr createMap(const string& pathToMap);
 
 private:
-	void loadTileLayer(const rapidjson::Value& tileLayer, const string& assetTag, int offset, int width, int height, int tileWidth, int tileHeight, int columns, MapConfig& mapConfig);
+	void loadTileLayer(const rapidjson::Value& tileLayer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig);
 	void loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig);
+
+	void loadGridTileset(const rapidjson::Value& tileset, Tileset& tiles);
 
 	SystemManagerPtr mSystemManager{ nullptr };
 	TileFactoryPtr mTileFactory{ nullptr };
+	EntityFactoryPtr mEntityFactory{ nullptr };
 };
 
 #endif // !__MAP_FACTORY_H__

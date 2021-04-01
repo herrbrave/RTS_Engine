@@ -18,6 +18,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	int SCRIPT = script->state["registrar"]["SCRIPT"];
 	int UI = script->state["registrar"]["UI"];
 	int ASSET = script->state["registrar"]["ASSET"];
+	int CAMERA = script->state["registrar"]["CAMERA"];
 
 	if (DRAWABLE) {
 		this->registerDrawable(script);
@@ -45,6 +46,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	}
 	if (ASSET) {
 		this->registerAsset(script);
+	}
+	if (CAMERA) {
+		this->registerCamera(script);
 	}
 
 	auto output = script->invoke("setup");
@@ -369,7 +373,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->loop();
+		animationComponent->animationHandler->play();
 	};
 
 	script->state["isAnimationPlaying"] = [this](int entityId) {
@@ -510,5 +514,16 @@ void LuaScriptFactory::registerAsset(LuaScriptPtr& script) {
 		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 
 		graphicsSystem->addFont(path, tag, fontsize);
+	};
+}
+
+
+void LuaScriptFactory::registerCamera(LuaScriptPtr& script) {
+	script->state["moveCameraBy"] = [this](int dx, int dy) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+		CameraPtr camera = makeShared(graphicsSystem->getCamera());
+		*(camera->position) += Vector2f(dx, dy);
 	};
 }

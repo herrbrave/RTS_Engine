@@ -183,7 +183,7 @@
         },
         {
             "componentId": 8,
-            "script": "player.lua"
+            "script": "Games/rts/rts.lua"
         }
     ]
 }

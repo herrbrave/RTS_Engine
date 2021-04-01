@@ -20,13 +20,16 @@ void RTS::setup() {
 	makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS))->addFont("Digital_tech.otf", "Digital_tech", 20);
 
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
-	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mSystemManager));
+	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mEntityFactory, mSystemManager));
 
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/asteroids/asteroids.lua").build();
+	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/rts/rts.lua").build();
+	mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
+
+	mMap = mMapFactory->createMap("Assets/rts/rts_test_map.json");
 }
 
 void RTS::handleEvents() {

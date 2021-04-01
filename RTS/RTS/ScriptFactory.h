@@ -43,6 +43,7 @@ private:
 	void registerScript(LuaScriptPtr& script);
 	void registerUi(LuaScriptPtr& script);
 	void registerAsset(LuaScriptPtr& script);
+	void registerCamera(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;

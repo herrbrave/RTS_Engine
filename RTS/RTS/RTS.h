@@ -40,6 +40,8 @@ private:
 
 	EntityPtr entity{ nullptr };
 
+	MapPtr map{ nullptr };
+
 protected:
 	void setup() override;
 	void handleEvents() override;
