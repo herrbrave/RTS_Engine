@@ -107,6 +107,14 @@ public:
 		return mMapConfig->mapHeight;
 	}
 
+	int getTileWidth() {
+		return mMapConfig->tileWidth;
+	}
+
+	int getTileHeight() {
+		return mMapConfig->tileHeight;
+	}
+
 	WeakEntityPtr tileAtPoint(const Vector2f& point);
 
 private:

@@ -19,6 +19,7 @@ enum class ComponentType : Uint8 {
 	INPUT_COMPONENT = 6,
 	ANIMATION_COMPONENT = 7,
 	LUA_SCRIPT_COMPONENT = 8,
+	PROGRESS_COMPONENT = 9,
 };
 
 class Component;

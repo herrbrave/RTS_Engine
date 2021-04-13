@@ -6,8 +6,8 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(800);
-	config->setWindowHeight(600);
+	config->setWindowWidth(1024);
+	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 	config->setFont("Digital_tech.otf");
@@ -20,14 +20,14 @@ void RTS::setup() {
 	makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS))->addFont("Digital_tech.otf", "Digital_tech", 20);
 
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
-	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mEntityFactory, mSystemManager));
 
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
+	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mLuaScriptFactory, mSystemManager));
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/rts/rts.lua").build();
-	mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
+	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/rts/rts.lua").build();
+	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
 	mMap = mMapFactory->createMap("Assets/rts/rts_test_map.json");
 }

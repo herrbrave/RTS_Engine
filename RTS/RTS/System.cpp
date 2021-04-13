@@ -5,8 +5,8 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::ANIMATION, AnimationSystemPtr(GCC_NEW AnimationSystem(ptr)));
 	systems.emplace(SystemType::ASSET, AssetSystemPtr(GCC_NEW AssetSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
-	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
+	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
 	systems.emplace(SystemType::SOUND, SoundSystemPtr(GCC_NEW SoundSystem(ptr)));
 	systems.emplace(SystemType::LUA_SCRIPT, LuaScriptSystemPtr(GCC_NEW LuaScriptSystem(ptr)));
@@ -125,12 +125,30 @@ void  GraphicsSystem::draw() {
 
 	for (auto drawable : mDrawableList) {
 		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+		EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
 		BodyPtr body(physicsSystem->getBody(mReverseLookup.at(drawable)));
 		Vector2f& position = Vector2f(body->getPosition());
+
+		EntityPtr entity(entitySystem->getEntityById(body->id));
+		if (entity->parent != (unsigned long) ULLONG_MAX) {
+			EntityPtr parent(entitySystem->getEntityById(entity->parent));
+			while (parent != nullptr) {
+				BodyPtr body(physicsSystem->getBody(parent->id));
+				position += Vector2f(body->getPosition());
+				if (parent->parent == (unsigned long) ULLONG_MAX) {
+					parent = nullptr;
+				}
+				else {
+					parent = makeShared(entitySystem->getEntityById(parent->parent));
+				}
+			}
+		}
+
 		if (!drawable->isUi) {
 			translateToCamera(position, mCamera);
 		}
-
+		
 		drawable->draw(*mGraphics, position);
 	}
 
@@ -243,6 +261,18 @@ void PhysicsSystem::deregisterBody(const unsigned long id) {
 	}
 }
 
+void PhysicsSystem::setWorldSize(int width, int height) {
+	if (this->quadTree != nullptr) {
+		this->quadTree->clear();
+	}
+
+	quadTree.reset(GCC_NEW Quadtree(width / 2, height / 2, width, height));
+	for (auto& it = this->mBodies.begin(); it != this->mBodies.end(); it++) {
+		if (it->second->isCollidable()) {
+			this->quadTree->addBody(it->second);
+		}
+	}
+}
 
 WeakBodyPtr PhysicsSystem::getBody(const unsigned long id) {
 	return WeakBodyPtr(mBodies.at(id));
@@ -361,9 +391,15 @@ void InputSystem::clear() {
 }
 
 bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vector2f& position) {
+	GraphicsSystemPtr graphicsSystem(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	BodyPtr body(physicsSystem->getBody(id));
-	return body->checkPoint(position);
+
+	CameraPtr cam = makeShared(graphicsSystem->getCamera());
+	Vector2f pos(position);
+	pos += cam->position;
+
+	return body->checkPoint(pos);
 }
 
 void DefaultSoundController::play(int loop) {

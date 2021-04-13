@@ -28,8 +28,8 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":477.333333333333,
-                 "y":1026.66666666667
+                 "x":477.333,
+                 "y":1026.67
                 }, 
                 {
                  "gid":45,
@@ -53,7 +53,7 @@
                  "visible":true,
                  "width":64,
                  "x":256,
-                 "y":1082.66666666667
+                 "y":1082.67
                 }, 
                 {
                  "gid":55,
@@ -64,8 +64,8 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":481.333333333333,
-                 "y":1125.33333333333
+                 "x":481.333,
+                 "y":1125.33
                 }, 
                 {
                  "gid":51,
@@ -76,8 +76,8 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":321.333333333333,
-                 "y":1146.66666666667
+                 "x":321.333,
+                 "y":1146.67
                 }, 
                 {
                  "gid":68,
@@ -88,7 +88,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":573.333333333333,
+                 "x":573.333,
                  "y":1208
                 }, 
                 {
@@ -100,8 +100,8 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":614.666666666667,
-                 "y":1218.66666666667
+                 "x":614.667,
+                 "y":1218.67
                 }, 
                 {
                  "gid":67,
@@ -113,7 +113,7 @@
                  "visible":true,
                  "width":64,
                  "x":584,
-                 "y":1241.33333333333
+                 "y":1241.33
                 }, 
                 {
                  "gid":68,
@@ -125,7 +125,7 @@
                  "visible":true,
                  "width":64,
                  "x":640,
-                 "y":1242.66666666667
+                 "y":1242.67
                 }, 
                 {
                  "gid":60,
@@ -136,7 +136,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":689.333333333333,
+                 "x":689.333,
                  "y":768
                 }, 
                 {
@@ -160,7 +160,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":734.666666666667,
+                 "x":734.667,
                  "y":748
                 }, 
                 {
@@ -173,7 +173,7 @@
                  "visible":true,
                  "width":64,
                  "x":700,
-                 "y":338.666666666667
+                 "y":338.667
                 }, 
                 {
                  "gid":66,
@@ -184,8 +184,8 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":738.666666666667,
-                 "y":370.666666666667
+                 "x":738.667,
+                 "y":370.667
                 }, 
                 {
                  "gid":66,
@@ -196,7 +196,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":677.333333333333,
+                 "x":677.333,
                  "y":388
                 }, 
                 {
@@ -204,35 +204,53 @@
                  "height":64,
                  "id":16,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games/rts/worker.lua"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":437.333333333333,
-                 "y":1133.33333333333
+                 "x":437.333,
+                 "y":1133.33
                 }, 
                 {
                  "gid":84,
                  "height":64,
                  "id":17,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games/rts/worker.lua"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":481.333333333333,
-                 "y":1169.33333333333
+                 "x":481.333,
+                 "y":1169.33
                 }, 
                 {
                  "gid":84,
                  "height":64,
                  "id":18,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games/rts/worker.lua"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":525.333333333333,
+                 "x":525.333,
                  "y":1132
                 }, 
                 {
@@ -240,11 +258,17 @@
                  "height":64,
                  "id":19,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games/rts/worker.lua"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":574.666666666667,
+                 "x":574.667,
                  "y":1028
                 }, 
                 {
@@ -252,12 +276,18 @@
                  "height":64,
                  "id":20,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games/rts/worker.lua"
+                        }],
                  "rotation":0,
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":638.666666666667,
-                 "y":1093.33333333333
+                 "x":638.667,
+                 "y":1093.33
                 }, 
                 {
                  "gid":91,
@@ -268,7 +298,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":417.333333333333,
+                 "x":417.333,
                  "y":1192
                 }, 
                 {
@@ -280,7 +310,7 @@
                  "type":"",
                  "visible":true,
                  "width":64,
-                 "x":2057.33333333333,
+                 "x":2057.33,
                  "y":712
                 }],
          "opacity":1,

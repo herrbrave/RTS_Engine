@@ -1,8 +1,9 @@
 #include"ScriptFactory.h"
 
-LuaScriptPtr LuaScriptFactory::create(const string& scriptPath) {
+LuaScriptPtr LuaScriptFactory::create(const string& scriptPath, unsigned long entityId) {
 	LuaScriptPtr script(GCC_NEW LuaScript(scriptPath));
 
+	script->state["entityId"] = (int) entityId;
 	this->initialize(script);
 
 	return script;
@@ -19,6 +20,23 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	int UI = script->state["registrar"]["UI"];
 	int ASSET = script->state["registrar"]["ASSET"];
 	int CAMERA = script->state["registrar"]["CAMERA"];
+	int MOUSE_MOVE = script->state["registrar"]["MOUSE_MOVE"];
+
+
+	script->state["IntList"].SetClass<LuaFriendlyIntVector>(
+		"size", &LuaFriendlyIntVector::size,
+		"at", &LuaFriendlyIntVector::at,
+		"push", &LuaFriendlyIntVector::push);
+
+	script->state["StringList"].SetClass<LuaFriendlyStringVector>(
+		"size", &LuaFriendlyStringVector::size,
+		"at", &LuaFriendlyStringVector::at,
+		"push", &LuaFriendlyStringVector::push);
+
+	script->state["StringMap"].SetClass<LuaFriendlyStringMap>(
+		"size", &LuaFriendlyStringMap::size,
+		"at", &LuaFriendlyStringMap::at,
+		"put", &LuaFriendlyStringMap::put);
 
 	if (DRAWABLE) {
 		this->registerDrawable(script);
@@ -49,6 +67,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	}
 	if (CAMERA) {
 		this->registerCamera(script);
+	}
+	if (MOUSE_MOVE) {
+		this->registerMouseMove(script);
 	}
 
 	auto output = script->invoke("setup");
@@ -195,6 +216,39 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
 	};
 
+	script->state["checkCollisionsArea"] = [this](int x0, int y0, int x1, int y1) -> LuaFriendlyIntVector& {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		PhysicsSystemPtr physicsSystem = makeShared<PhysicsSystem>(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+
+		int upperLeftX = std::min(x0, x1);
+		int upperLeftY = std::min(y0, y1);
+		int lowerRightX = std::max(x0, x1);
+		int lowerRightY = std::max(y0, y1);
+
+		int width = lowerRightX - upperLeftX;
+		int height = lowerRightY - upperLeftY;
+
+		int posX = upperLeftX + (width / 2);
+		int posY = upperLeftY + (height / 2);
+
+		std::cout << "x0 " << x0 << " x1 " << x1 << " y0 " << y0 << " y1 " << y1 << std::endl;
+		std::cout << "xs " << upperLeftX << " ys " << upperLeftY << "width " << width << " height " << height << " posX " << posX << " posY " << posY << std::endl;
+
+		BodyPtr body(GCC_NEW Body(0, posX, posY, width, height));
+		body->setCollider(GCC_NEW Collider(posX, posY, width, height));
+
+		vector<WeakBodyPtr> bodies;
+		physicsSystem->quadTree->getCollidingBodies(body, bodies);
+
+		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
+		for (auto &bodyPtr : bodies) {
+			BodyPtr b = makeShared(bodyPtr);
+			ids->push(b->id);
+		}
+
+		return *ids;
+	};
+
 	script->state["setTarget"] = [this](int entityId, double x, double y, double threshold) {
 		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
 
@@ -269,6 +323,12 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		TexturePtr texture(GCC_NEW Texture(tag, tx, ty, w, h));
 
 		textureDrawable->setTexture(texture);
+	};
+
+	script->state["drawSquare"] = [this](int x0, int y0, int x1, int y1, int r, int g, int b, int a) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		GraphicsSystemPtr graphicsSystem = makeShared<GraphicsSystem>(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	};
 
 
@@ -398,7 +458,7 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 
 	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::LEFT);
 	script->state["MOUSE_BUTTON_MIDDLE"] = static_cast<int>(MouseButton::MIDDLE);
-	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::RIGHT);
+	script->state["MOUSE_BUTTON_RIGHT"] = static_cast<int>(MouseButton::RIGHT);
 
 	EventDelegate mouseEventDelegate([script](const EventData& eventData) {
 		MouseEventData data = dynamic_cast<const MouseEventData&>(eventData);
@@ -437,6 +497,20 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 	script->deleters.push_back([keyEventListener]() {
 		EventManager::getInstance().removeDelegate(keyEventListener, EventType::KEY_EVENT);
 	});
+}
+
+void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
+	script->state["enableMouseMove"] = [this, script](int entityId) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		InputSystemPtr inputSystem(makeShared(systemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
+		InputListenerPtr inputListener(GCC_NEW InputListener(entityId));
+		inputSystem->registerEventListener(inputListener);
+
+		inputListener->eventCallbacks.emplace(Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
+			script->invoke("onMouseMove", static_cast<int>(evt->mouseEvent->position->x), static_cast<int>(evt->mouseEvent->position->y), static_cast<int>(evt->mouseEvent->button));
+			return false;
+		}));
+	};
 }
 
 
@@ -500,6 +574,62 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 
 		labelComponent->setText(text, systemManager);
 	};
+
+	script->state["setProgress"] = [this](int entityId, string location, int progress, int maxProgress) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		EntityPtr progressEntity{ nullptr };
+		auto it = entity->children.begin();
+		while (it != entity->children.end()) {
+			EntityPtr temp = makeShared<Entity>(entitySystem->getEntityById(*it));
+			if (temp->getComponents().find(ComponentType::PROGRESS_COMPONENT) != temp->getComponents().end()) {
+				progressEntity = temp;
+				break;
+			}
+		}
+
+		if (progressEntity != nullptr) {
+			ProgressComponentPtr progressBar = makeShared(progressEntity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT));
+			progressBar->setProgress(progress, maxProgress);
+		}
+		else {
+			int x = 0;
+			int y = 0;
+			int w = 0;
+			int h = 8;
+			if (string("top").compare(location) == 0) {}
+			if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+				DrawableComponentPtr drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+				DrawablePtr drawable = makeShared(drawableComponent->getDrawable());
+				w = drawable->width;
+				if (string("top").compare(location) == 0) {
+					y -= (drawable->height / 2) + 4;
+				}
+				else if (string("bottom").compare(location) == 0) {
+					y += (drawable->height / 2) + 4;
+				}
+			}
+			else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+				AnimationComponentPtr drawableComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+				TextureDrawablePtr drawable = drawableComponent->animationHandler->textureDrawable;
+				w = drawable->width;
+				if (string("top").compare(location) == 0) {
+					y -= (drawable->height / 2) + 4;
+				}
+				else if (string("bottom").compare(location) == 0) {
+					y += (drawable->height / 2) + 4;
+				}
+			}
+
+			WidgetFactoryPtr  widgetFactory = makeShared(mWidgetFactory);
+			progressEntity = widgetFactory->createProgressBar(x, y, w, h, maxProgress, progress);
+			entity->children.push_back(progressEntity->id);
+			progressEntity->parent = entity->id;
+		}
+	};
 }
 
 void LuaScriptFactory::registerAsset(LuaScriptPtr& script) {
@@ -525,5 +655,14 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr& script) {
 
 		CameraPtr camera = makeShared(graphicsSystem->getCamera());
 		*(camera->position) += Vector2f(dx, dy);
+	};
+
+
+	script->state["getCameraPosition"] = [this]() -> LuaFriendlyVector2f& {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+		CameraPtr camera = makeShared(graphicsSystem->getCamera());
+		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(*camera->position)));
 	};
 }

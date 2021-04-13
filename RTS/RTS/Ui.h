@@ -61,6 +61,10 @@ class ButtonComponent;
 typedef shared_ptr<ButtonComponent> ButtonComponentPtr;
 typedef weak_ptr<ButtonComponent> WeakButtonComponentPtr;
 
+class ProgressComponent;
+typedef shared_ptr<ProgressComponent> ProgressComponentPtr;
+typedef weak_ptr<ProgressComponent> WeakProgressComponentPtr;
+
 class WidgetFactory;
 typedef shared_ptr<WidgetFactory> WidgetFactoryPtr;
 typedef weak_ptr<WidgetFactory> WeakWidgetFactoryPtr;
@@ -226,6 +230,24 @@ private:
 
 void setButtonText(EntityPtr entity, const std::string& text, std::string& font, SystemManagerPtr systemManager);
 void setIcon(EntityPtr entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManagerPtr systemManager);
+
+class ProgressComponent : public Component {
+public:
+	ProgressComponent(unsigned long id, WeakProgressBarDrawablePtr progressBarDrawable) : Component(id, ComponentType::PROGRESS_COMPONENT) {
+		progressBar = progressBarDrawable;
+	}
+
+	void serialize(Serializer& serializer) const override {/* no op */ }
+
+	void setProgress(int progress, int maxProgress) {
+		ProgressBarDrawablePtr prog = makeShared(progressBar);
+		prog->setProgress(progress);
+		prog->setProgressMax(progress);
+	}
+
+private:
+	WeakProgressBarDrawablePtr progressBar;
+};
 
 class PanelConfig {
 public:

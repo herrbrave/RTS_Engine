@@ -1,28 +1,36 @@
 registrar = {
 	ASSET = 0,
-	DRAWABLE = 0,
+	DRAWABLE = 1,
 	ENTITY = 0,
-	FACTORY = 0,
-	PHYSICS = 0,
+	FACTORY = 1,
+	PHYSICS = 1,
 	ANIMATION = 0,
 	INPUT = 1,
 	SCRIPT = 0,
 	ASSET = 0,
-	CAMERA = 1
+	CAMERA = 1,
+	MOUSE_MOVE = 1,
 }
 
 dx = 0
 dy = 0
 
-function setup()
+areaX = 0
+areaY = 0
 
+mouseDown = false
+
+function setup()
+	print("setup", entityId)
+	enableMouseMove(entityId)
+	selectArea = createDefault(0, 0, 10, 10, 0, 122, 0, 90)
+	setZOrder(selectArea, 100)
 end
 
 -- Standard Mouse/Key events
 
 function onMouseMove(x, y, button)
-	print("Mouse Move", x, y, button)
-	if x >= 790 then
+	if x >= 1014 then
 		dx = 10
 	elseif x <= 10 then
 		dx = -10
@@ -30,21 +38,57 @@ function onMouseMove(x, y, button)
 		dx = 0
 	end
 
-	if y > 590 then
+	if y > 758 then
 		dy = 10
 	elseif y <= 10 then
 		dy = -10
 	else
 		dy = 0
 	end
+
+	if mouseDown then
+		camPos = getCameraPosition()
+		mx = x + camPos:getX()
+		my = y + camPos:getY()
+		upperLeftX = math.min(areaX, mx)
+		upperLeftY = math.min(areaY, my)
+		lowerRightX = math.max(areaX, mx)
+		lowerRightY = math.max(areaY, my)
+		width = lowerRightX - upperLeftX
+		height = lowerRightY - upperLeftY
+
+		setPosition(selectArea, upperLeftX + (width / 2), upperLeftY + (height / 2))
+		setSize(selectArea, width, height)
+	end
 end
 
 function onMouseUp(x, y, button)
-	print("onMouseUp", x, y, button)
+	if button == MOUSE_BUTTON_LEFT then
+		mouseDown = false
+
+		cameraPos = getCameraPosition()
+		print("End sellect area", x + cameraPos:getX(), y + cameraPos:getY())
+
+		bodies = checkCollisionsArea(x + cameraPos:getX(), y + cameraPos:getY(), areaX, areaY)
+
+		print("body count", bodies:size())
+		for i=0,bodies:size()-1 do
+			print("body", i, bodies:at(i))
+		end
+	end
 end
 
 function onMouseDown(x, y, button)
-	print("onMouseDown", x, y , button)
+	if button == MOUSE_BUTTON_LEFT then
+
+		cameraPos = getCameraPosition()
+
+		areaX = x + cameraPos:getX()
+		areaY = y + cameraPos:getY()
+		print("Start sellect area", areaX, areaY)
+		print("cam pos", cameraPos:getX(), cameraPos:getY())
+		mouseDown = true
+	end
 end
 
 function onKeyDown(keyId, ctrl, shft)
@@ -81,7 +125,6 @@ end
 
 function update(delta)
 	if dx ~= 0 or dy ~= 0 then
-		print("Moving Camera By:", dx, dy)
 		moveCameraBy(dx, dy)
 	end
 end

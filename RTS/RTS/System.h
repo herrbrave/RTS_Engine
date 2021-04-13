@@ -221,6 +221,11 @@ public:
 	void addFont(const string& path, const string&  assetTag, int fontsize);
 
 	void clear() override;
+
+	WeakGraphicsConfigPtr getGraphicsConfig() {
+		return WeakGraphicsConfigPtr(this->mGraphicsConfig);
+	}
+
 private:
 	GraphicsConfigPtr mGraphicsConfig{ nullptr };
 	GraphicsPtr mGraphics{ nullptr };
@@ -307,7 +312,9 @@ public:
 	QuadtreePtr quadTree{ nullptr };
 
 	PhysicsSystem(SystemManagerPtr systemManager) : System(SystemType::PHYSICS, systemManager) {
-		quadTree.reset(GCC_NEW Quadtree(512, 384, 1024, 768));
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		GraphicsConfigPtr graphicsConfig = makeShared(graphicsSystem->getGraphicsConfig());
+		this->setWorldSize(graphicsConfig->mWidth, graphicsConfig->mHeight);
 
 		EventListenerDelegate positionChangeListener([this](const EventData& eventData) {
 			EventData& nonConstEventData = const_cast<EventData&>(eventData);
@@ -351,6 +358,8 @@ public:
 
 	void registerBody(const unsigned long id, BodyPtr body);
 	void deregisterBody(const unsigned long id);
+
+	void setWorldSize(int width, int height);
 
 	void update(Uint32 delta);
 

@@ -424,11 +424,31 @@
   <object id="13" gid="66" x="700" y="338.667" width="64" height="64"/>
   <object id="14" gid="66" x="738.667" y="370.667" width="64" height="64"/>
   <object id="15" gid="66" x="677.333" y="388" width="64" height="64"/>
-  <object id="16" gid="84" x="437.333" y="1133.33" width="64" height="64"/>
-  <object id="17" gid="84" x="481.333" y="1169.33" width="64" height="64"/>
-  <object id="18" gid="84" x="525.333" y="1132" width="64" height="64"/>
-  <object id="19" gid="85" x="574.667" y="1028" width="64" height="64"/>
-  <object id="20" gid="85" x="638.667" y="1093.33" width="64" height="64"/>
+  <object id="16" gid="84" x="437.333" y="1133.33" width="64" height="64">
+   <properties>
+    <property name="script" value="Games/rts/worker.lua"/>
+   </properties>
+  </object>
+  <object id="17" gid="84" x="481.333" y="1169.33" width="64" height="64">
+   <properties>
+    <property name="script" value="Games/rts/worker.lua"/>
+   </properties>
+  </object>
+  <object id="18" gid="84" x="525.333" y="1132" width="64" height="64">
+   <properties>
+    <property name="script" value="Games/rts/worker.lua"/>
+   </properties>
+  </object>
+  <object id="19" gid="85" x="574.667" y="1028" width="64" height="64">
+   <properties>
+    <property name="script" value="Games/rts/worker.lua"/>
+   </properties>
+  </object>
+  <object id="20" gid="85" x="638.667" y="1093.33" width="64" height="64">
+   <properties>
+    <property name="script" value="Games/rts/worker.lua"/>
+   </properties>
+  </object>
   <object id="21" gid="91" x="417.333" y="1192" width="64" height="64"/>
   <object id="22" gid="91" x="2057.33" y="712" width="64" height="64"/>
  </objectgroup>

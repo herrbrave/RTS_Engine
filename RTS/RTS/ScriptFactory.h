@@ -5,6 +5,8 @@
 #include"System.h"
 #include"Ui.h"
 
+#include<cmath>
+
 class LuaScriptFactory;
 typedef shared_ptr<LuaScriptFactory> LuaScriptFactoryPtr;
 typedef weak_ptr<LuaScriptFactory> WeakLuaScriptFactoryPtr;
@@ -30,7 +32,7 @@ public:
 		EventManager::getInstance().addDelegate(scriptLoadedListener, EventType::SCRIPT_LOADED);
 	}
 
-	LuaScriptPtr create(const string& scriptPath);
+	LuaScriptPtr create(const string& scriptPath, unsigned long entityId);
 
 private:
 	void initialize(LuaScriptPtr& script);
@@ -44,6 +46,7 @@ private:
 	void registerUi(LuaScriptPtr& script);
 	void registerAsset(LuaScriptPtr& script);
 	void registerCamera(LuaScriptPtr& script);
+	void registerMouseMove(LuaScriptPtr& script);
 
 	WeakEntityFactoryPtr mEntityFactory;
 	WeakWidgetFactoryPtr mWidgetFactory;
@@ -113,4 +116,64 @@ public:
 	}
 
 	Vector2fPtr vector;
+};
+
+class LuaFriendlyIntVector {
+public:
+	LuaFriendlyIntVector() {}
+
+	int size() {
+		return this->vector.size();
+	}
+
+	int at(int index) {
+		return this->vector.at(index);
+	}
+
+	void push(int value) {
+		return vector.push_back(value);
+	}
+
+private:
+	vector<int> vector;
+};
+
+class LuaFriendlyStringVector {
+public:
+	LuaFriendlyStringVector() {}
+
+	int size() {
+		return this->vector.size();
+	}
+
+	string at(int index) {
+		return this->vector.at(index);
+	}
+
+	void push(string value) {
+		vector.push_back(value);
+	}
+
+private:
+	vector<string> vector;
+};
+
+class LuaFriendlyStringMap {
+public:
+	LuaFriendlyStringMap() {}
+
+	int size() {
+		return this->map.size();
+	}
+
+	string at(string key) {
+		return this->map.at(key);
+	}
+
+	void put(string key, string value) {
+		map.emplace(key, value);
+	}
+
+private:
+	unordered_map<string, string> map;
 };

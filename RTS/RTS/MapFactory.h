@@ -7,6 +7,7 @@
 #include"EntityFactory.h"
 #include"Map.h"
 #include"System.h"
+#include"ScriptFactory.h"
 
 class TileFactory;
 typedef shared_ptr<TileFactory> TileFactoryPtr;
@@ -29,7 +30,7 @@ public:
 
 class MapFactory {
 public:
-	MapFactory(TileFactoryPtr tileFactory, EntityFactoryPtr entityFactory, SystemManagerPtr systemManager);
+	MapFactory(TileFactoryPtr tileFactory, LuaScriptFactoryPtr luaScriptFactory, SystemManagerPtr systemManager);
 
 	MapPtr createMap(const string& pathToMap);
 
@@ -41,7 +42,7 @@ private:
 
 	SystemManagerPtr mSystemManager{ nullptr };
 	TileFactoryPtr mTileFactory{ nullptr };
-	EntityFactoryPtr mEntityFactory{ nullptr };
+	LuaScriptFactoryPtr mLuaScriptFactory{ nullptr };
 };
 
 #endif // !__MAP_FACTORY_H__

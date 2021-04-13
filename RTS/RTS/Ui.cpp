@@ -436,9 +436,9 @@ EntityPtr WidgetFactory::createProgressBar(float x, float y, float width, float 
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	DrawablePtr textureDrawable(GCC_NEW ProgressBarDrawable(width, height, progressMax, currentProgress));
+	ProgressBarDrawablePtr textureDrawable(GCC_NEW ProgressBarDrawable(width, height, progressMax, currentProgress));
 	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+	ProgressComponentPtr drawableComponent(GCC_NEW ProgressComponent(entity->id, textureDrawable));
 
 	entity->addComponent(physicsComponent);
 	entity->addComponent(drawableComponent);

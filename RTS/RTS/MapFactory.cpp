@@ -9,10 +9,10 @@ EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex
 	return entity;
 }
 
-MapFactory::MapFactory(TileFactoryPtr tileFactory, EntityFactoryPtr entityFactory, SystemManagerPtr systemManager) {
+MapFactory::MapFactory(TileFactoryPtr tileFactory, LuaScriptFactoryPtr luaScriptFactory, SystemManagerPtr systemManager) {
 	mTileFactory = tileFactory;
 	mSystemManager = systemManager;
-	mEntityFactory = entityFactory;
+	mLuaScriptFactory = luaScriptFactory;
 }
 
 MapPtr MapFactory::createMap(const string& pathToMap) {
@@ -60,6 +60,9 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
 	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), EntityVendorPtr(GCC_NEW EntitySystem::DefaultEntityVendor(entitySystem))));
+
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	physicsSystem->setWorldSize(map->getMapWidth() * map->getTileWidth(), map->getMapHeight() * map->getTileHeight());
 
 	MapLoadedSetEventData* eventData = GCC_NEW MapLoadedSetEventData(SDL_GetTicks());
 	EventManager::getInstance().pushEvent(eventData);
@@ -137,7 +140,50 @@ void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig&
 		int x = ((int)floor(object["x"].GetDouble()) + (width / 2) - (mapConfig.tileWidth / 2));
 		int y = ((int)floor(object["y"].GetDouble()) + (height / 2) - (mapConfig.tileHeight / 2));
 
-		EntityPtr tile = mEntityFactory->createTexturedEntity(t->textureAssetTag, x, y, width, height, t->tx, t->ty, t->w, t->h, false);
+		string script = "";
+		if (object.FindMember("properties") != object.MemberEnd()) {
+			auto properties = object["properties"].GetArray();
+			for (int i = 0; i < properties.Size(); i++) {
+				auto prop = properties[i].GetObject();
+				if (string("script").compare(prop["name"].GetString()) == 0) {
+					script = prop["value"].GetString();
+				}
+			}
+		}
+
+		EntityPtr tile = mTileFactory->createTexturedEntity(t->textureAssetTag, x, y, width, height, t->tx, t->ty, t->w, t->h, true);
+
 		mapConfig.objects.push_back(tile->id);
+
+		if (script.size() > 0) {
+			InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
+			InputListenerPtr inputListener(GCC_NEW InputListener(tile->id));
+			inputSystem->registerEventListener(inputListener);
+
+			LuaScriptPtr script(mLuaScriptFactory->create(script, tile->id));
+
+			LuaScriptComponent* luaScriptComponent = GCC_NEW LuaScriptComponent(tile->id, script);
+			tile->addComponent(ComponentPtr(luaScriptComponent));
+
+			inputListener->eventCallbacks.emplace(Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onMouseEnterEntity");
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onMouseExitEntity");
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_CLICK, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
+				return false;
+			}));
+
+			inputListener->eventCallbacks.emplace(Input::ON_DRAG, function<bool(EventPtr)>([luaScriptComponent](EventPtr evt) {
+				luaScriptComponent->script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
+				return false;
+			}));
+		}
 	}
 }

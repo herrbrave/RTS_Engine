@@ -71,12 +71,10 @@ EntityBuilder& EntityBuilder::withAnimation(const string& animationSetPath) {
 
 EntityBuilder& EntityBuilder::withScript(const string& scriptPath) {
 
-	LuaScriptPtr script = this->mLuaScriptFactory->create(scriptPath);
+	LuaScriptPtr script = this->mLuaScriptFactory->create(scriptPath, mEntity->id);
 
 	LuaScriptSystemPtr scriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
 	scriptSystem->registerLuaScript(mEntity->id, script);
-
-	script->state["entityId"] = (int)mEntity->id;
 
 	this->withInput(Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([script](EventPtr evt) {
 		script->invoke("onMouseEnterEntity");
