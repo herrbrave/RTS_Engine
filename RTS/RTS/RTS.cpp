@@ -26,10 +26,10 @@ void RTS::setup() {
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/rts/rts.lua").build();
+	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/collision_test.lua").build();
 	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
-	mMap = mMapFactory->createMap("Assets/rts/rts_test_map.json");
+	//mMap = mMapFactory->createMap("Assets/rts/rts_test_map.json");
 }
 
 void RTS::handleEvents() {

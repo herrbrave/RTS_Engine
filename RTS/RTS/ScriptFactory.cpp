@@ -235,7 +235,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		std::cout << "xs " << upperLeftX << " ys " << upperLeftY << "width " << width << " height " << height << " posX " << posX << " posY " << posY << std::endl;
 
 		BodyPtr body(GCC_NEW Body(0, posX, posY, width, height));
-		body->setCollider(GCC_NEW Collider(posX, posY, width, height));
+		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(posX, posY), width, height))));
 
 		vector<WeakBodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
@@ -247,6 +247,66 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		}
 
 		return *ids;
+	};
+
+	script->state["checkCollisions"] = [this](int entityId) -> LuaFriendlyIntVector& {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		PhysicsSystemPtr physicsSystem = makeShared<PhysicsSystem>(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+
+		BodyPtr body = makeShared(physicsSystem->getBody(entityId));
+		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
+		if (!body->isCollidable()) {
+			return *ids;
+		}
+
+		vector<WeakBodyPtr> bodies;
+		physicsSystem->quadTree->getCollidingBodies(body, bodies);
+
+		for (auto &bodyPtr : bodies) {
+			BodyPtr b = makeShared(bodyPtr);
+			ids->push(b->id);
+		}
+
+		return *ids;
+	};
+
+	script->state["setAABBCollision"] = [this](int entityId, int width, int height) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		BodyPtr body = makeShared(physicsComponent->getBody());
+		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
+		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height))));
+	};
+
+	script->state["setCircleCollision"] = [this](int entityId, int radius) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		BodyPtr body = makeShared(physicsComponent->getBody());
+		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
+		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius))));
+	};
+
+	script->state["setOBBCollision"] = [this](int entityId, int width, int height, int angle) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		BodyPtr body = makeShared(physicsComponent->getBody());
+		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
+		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle))));
 	};
 
 	script->state["setTarget"] = [this](int entityId, double x, double y, double threshold) {
@@ -376,6 +436,15 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 			animationComponent->setAngle(angle);
 		}
+
+		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
+			PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+			BodyPtr body = makeShared(physicsComponent->getBody());
+			if (body->isCollidable() && body->collider->colliderShape->colliderType() == ColliderType::OBB) {
+				OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(body->collider->colliderShape);
+				obb->setAngle(angle);
+			}
+		}
 	};
 
 	script->state["getAngle"] = [this](int entityId) {
@@ -391,6 +460,21 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 			return (double) animationComponent->animationHandler->textureDrawable->getAngle();
+		}
+	};
+
+	script->state["setColor"] = [this](int entityId, int r, int g, int b, int a) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			drawableComponent->setColor(r, g, b, a);
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			animationComponent->animationHandler->textureDrawable->setColor(r, g, b, a);
 		}
 	};
 }
@@ -455,6 +539,12 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
 	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
 	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
+	script->state["SDLK_1"] = (int)SDLK_1;
+	script->state["SDLK_2"] = (int)SDLK_2;
+	script->state["SDLK_3"] = (int)SDLK_3;
+	script->state["SDLK_4"] = (int)SDLK_4;
+	script->state["SDLK_5"] = (int)SDLK_5;
+	script->state["SDLK_6"] = (int)SDLK_6;
 
 	script->state["MOUSE_BUTTON_LEFT"] = static_cast<int>(MouseButton::LEFT);
 	script->state["MOUSE_BUTTON_MIDDLE"] = static_cast<int>(MouseButton::MIDDLE);

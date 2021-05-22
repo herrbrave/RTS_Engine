@@ -12,7 +12,7 @@ EntityBuilder& EntityBuilder::withPhysics(float x, float y, float w, float h, bo
 	physicsSystem->registerBody(mEntity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(mEntity->id, blockBody));
 	if (collidable) {
-		physicsComponent->setCollider(GCC_NEW Collider(x, y, w, h));
+		physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider((GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), w, h)))));
 	}
 
 	mEntity->addComponent(ComponentPtr(physicsComponent));

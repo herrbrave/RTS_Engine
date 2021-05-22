@@ -13,6 +13,17 @@
 #include<unordered_set>
 
 
+enum ColliderType : Uint8 {
+	AABB = 0,
+	CIRCLE = 1,
+	OBB,
+};
+const unordered_map<string, ColliderType> COLLIDER_TYPE_VALUES {
+	{ "AABB", ColliderType::AABB },
+	{ "CIRCLE", ColliderType::CIRCLE },
+	{ "OBB", ColliderType::OBB }
+};
+
 struct Extent {
 	float x0, y0, x1, y1;
 };
@@ -22,6 +33,28 @@ typedef weak_ptr<Extent> WeakExtentPtr;
 class Collider;
 typedef shared_ptr<Collider> ColliderPtr;
 typedef weak_ptr<Collider> WeakColliderPtr;
+
+class ColliderShape;
+typedef shared_ptr<ColliderShape> ColliderShapePtr;
+typedef weak_ptr<ColliderShape> WeakColliderShapePtr;
+
+class AABBColliderShape;
+typedef shared_ptr<AABBColliderShape> AABBColliderShapePtr;
+typedef weak_ptr<AABBColliderShape> WeakAABBColliderShapePtr;
+
+class CircleColliderShape;
+typedef shared_ptr<CircleColliderShape> CircleColliderShapePtr;
+typedef weak_ptr<CircleColliderShape> WeakCircleColliderShapePtr;
+
+class OBBColliderShape;
+typedef shared_ptr<OBBColliderShape> OBBColliderShapePtr;
+typedef weak_ptr<OBBColliderShape> WeakOBBColliderShapePtr;
+
+bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb);
+bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle);
+bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle);
+float clamp(float value, float min, float max);
+const Vector2f& clamp(const Vector2f& value, const Vector2f& min, const Vector2f& max);
 
 class Body;
 typedef shared_ptr<Body> BodyPtr;
@@ -53,15 +86,202 @@ public:
 	virtual void notifyColliderUpdate(unsigned long id) = 0;
 };
 
-class Collider {
+class ColliderShape {
 public:
-	float width;
-	float height;
 	Vector2fPtr position;
 
-	Collider(float x, float y, float width, float height);
+	ColliderShape(Vector2fPtr position) {
+		this->position = position;
+	}
+
+	ColliderShape(const ColliderShape& colliderShape) {
+		this->position = std::make_shared<Vector2f>(colliderShape.position);
+	}
+
+	ColliderShape(const rapidjson::Value& root) {
+		this->position = std::make_shared<Vector2f>(root["position"]);
+	}
+
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("position");
+		this->position->serialize(serializer);
+
+		this->onSerialize(serializer);
+
+		serializer.writer.EndObject();
+	}
+
+	virtual void onSerialize(Serializer& serializer) const = 0;
+
+	virtual bool checkCollision(const ColliderShapePtr& collider) const = 0;
+
+	virtual ColliderType colliderType() = 0;
+
+	virtual void setPosition(const Vector2f& position);
+};
+
+class AABBColliderShape : public ColliderShape {
+public:
+	int width;
+	int height;
+
+	AABBColliderShape(Vector2fPtr position, int width, int height) : ColliderShape(position) {
+		this->width = width;
+		this->height = height;
+	}
+
+	AABBColliderShape(const ColliderShape& colliderShape) : ColliderShape(colliderShape) {
+		const AABBColliderShape& aabb = static_cast<const AABBColliderShape&>(colliderShape);
+		this->width = aabb.width;
+		this->height = aabb.height;
+	}
+
+	AABBColliderShape(const rapidjson::Value& root) : ColliderShape(root) {
+		this->width = root["width"].GetInt();
+		this->height = root["height"].GetInt();
+	}
+
+	void onSerialize(Serializer& serializer) const override {
+		serializer.writer.String("width");
+		serializer.writer.Int(this->width);
+		serializer.writer.String("height");
+		serializer.writer.Int(this->height);
+	}
+
+	bool checkCollision(const ColliderShapePtr& collider) const override;
+
+	ColliderType colliderType() override;
+
+	ExtentPtr getExtent() const;
+};
+
+class CircleColliderShape : public ColliderShape {
+public:
+	int radius;
+
+	CircleColliderShape(Vector2fPtr position, int radius) : ColliderShape(position) {
+		this->radius = radius;
+	}
+
+	CircleColliderShape(const ColliderShape& colliderShape) : ColliderShape(colliderShape) {
+		const CircleColliderShape& circle = static_cast<const CircleColliderShape&>(colliderShape);
+		this->radius = circle.radius;
+	}
+
+	CircleColliderShape(const rapidjson::Value& root) : ColliderShape(root) {
+		this->radius = root["radius"].GetInt();
+	}
+
+	void onSerialize(Serializer& serializer) const override {
+		serializer.writer.String("radius");
+		serializer.writer.Int(this->radius);
+	}
+
+	bool checkCollision(const ColliderShapePtr& collider) const override;
+
+	ColliderType colliderType() override;
+};
+
+class OBBColliderShape : public ColliderShape {
+public:
+	int width;
+	int height;
+	int angle;
+	Vector2fPtr corners[4];
+	Vector2fPtr axis[2];
+	float origin[2];
+
+	OBBColliderShape(Vector2fPtr position, int width, int height, int angle) : ColliderShape(position), 
+		corners{
+			std::make_shared<Vector2f>(0, 0),
+			std::make_shared<Vector2f>(0, 0),
+			std::make_shared<Vector2f>(0, 0),
+			std::make_shared<Vector2f>(0, 0) }, 
+		axis{
+			std::make_shared<Vector2f>(0, 0),
+			std::make_shared<Vector2f>(0, 0) },
+		origin{
+			0.0f,
+			0.0f }
+	{
+		this->width = width;
+		this->height = height;
+		this->angle = angle;
+		
+		this->setup();
+	}
+
+	OBBColliderShape(const ColliderShape& colliderShape) : ColliderShape(colliderShape),
+		corners{
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0) },
+		axis{
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0) },
+		origin{
+		0.0f,
+		0.0f } 
+	{
+		const OBBColliderShape& obb = static_cast<const OBBColliderShape&>(colliderShape);
+		this->width = obb.width;
+		this->height = obb.height;
+		this->angle = obb.angle;
+
+		this->setup();
+	}
+
+	OBBColliderShape(const rapidjson::Value& root) : ColliderShape(root),
+		corners{
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0) },
+		axis{
+		std::make_shared<Vector2f>(0, 0),
+		std::make_shared<Vector2f>(0, 0) },
+		origin{
+		0.0f,
+		0.0f } {
+		this->width = root["width"].GetInt();
+		this->height = root["height"].GetInt();
+		this->angle = root["angle"].GetInt();
+	}
+
+	void onSerialize(Serializer& serializer) const override {
+		serializer.writer.String("width");
+		serializer.writer.Int(this->width);
+		serializer.writer.String("height");
+		serializer.writer.Int(this->height);
+		serializer.writer.String("angle");
+		serializer.writer.Int(this->angle);
+	}
+
+	bool checkCollision(const ColliderShapePtr& collider) const override;
+
+	ColliderType colliderType() override;
+
+	void setPosition(const Vector2f& position) override;
+
+	void setAngle(int angle);
+
+private:
+	void setup();
+	bool overlapOneWay(const OBBColliderShape& obb) const;
+};
+
+class Collider {
+public:
+	ColliderShapePtr colliderShape;
+
+	Collider(ColliderShape* colliderShape);
 
 	Collider(const Collider& copy);
+
+	Collider(const rapidjson::Value& root);
 
 	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
 
@@ -69,7 +289,14 @@ public:
 
 	void onCollision(const Collider& collider) const;
 
-	ExtentPtr getExtent() const;
+	void serialize(Serializer& serializer) const {
+		serializer.writer.StartObject();
+
+		serializer.writer.String("colliderShape");
+		this->colliderShape->serialize(serializer);
+
+		serializer.writer.EndObject();
+	}
 
 private:
 	std::function<void(const Collider&)> onCollisionCallback;
@@ -85,7 +312,7 @@ public:
 	Vector2fPtr velocity{ nullptr };
 	float width;
 	float height;
-	ColliderPtr collider;
+	ColliderPtr collider{ nullptr };
 	TargetPtr target;
 	string tag;
 
@@ -109,7 +336,7 @@ public:
 	void setVelocity(const Vector2f& vector);
 	const Vector2f& getVelocity();
 
-	void setCollider(Collider* collider);
+	void setCollider(ColliderPtr collider);
 	WeakColliderPtr getCollider();
 	bool isCollidable();
 
@@ -148,6 +375,11 @@ public:
 
 		serializer.writer.String("tag");
 		serializer.writer.String(tag.c_str());
+
+		if (this->collider != nullptr) {
+			serializer.writer.String("collider");
+			this->collider->serialize(serializer);
+		}
 
 		serializer.writer.EndObject();
 	}
@@ -245,7 +477,7 @@ public:
 		mBody->id = entityId;
 	}
 
-	void setCollider(Collider* collider);
+	void setCollider(ColliderPtr collider);
 	bool isCollidable();
 	void setPosition(const Vector2f& position);
 	const Vector2f& getPosition();

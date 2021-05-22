@@ -53,7 +53,7 @@ float Body::getMass() {
 void Body::setPosition(const Vector2f& position) {
 	this->position->set(position);
 	if (collider != nullptr) {
-		collider->position->set(position);
+		collider->colliderShape->setPosition(position);
 	}
 }
 
@@ -69,8 +69,8 @@ const Vector2f& Body::getVelocity() {
 	return *velocity.get();
 }
 
-void Body::setCollider(Collider* collider) {
-	this->collider = ColliderPtr(collider);
+void Body::setCollider(ColliderPtr collider) {
+	this->collider = std::move(collider);
 }
 
 WeakColliderPtr Body::getCollider() {
@@ -129,16 +129,34 @@ bool Body::checkPoint(const Vector2f& point) {
 		&& point.y <= extent.y1);
 }
 
-Collider::Collider(float x, float y, float width, float height) {
-	this->position = Vector2fPtr(GCC_NEW Vector2f(x, y));
-	this->width = width;
-	this->height = height;
+Collider::Collider(ColliderShape* collider) {
+	this->colliderShape = ColliderShapePtr(collider);
 }
 
 Collider::Collider(const Collider& copy) {
-	this->position = Vector2fPtr(GCC_NEW Vector2f(*copy.position));
-	this->width = copy.width;
-	this->height = copy.height;
+	if (copy.colliderShape->colliderType() == ColliderType::AABB) {
+		this->colliderShape = ColliderShapePtr(GCC_NEW AABBColliderShape(*copy.colliderShape));
+	}
+	else if (copy.colliderShape->colliderType() == ColliderType::CIRCLE) {
+		this->colliderShape = ColliderShapePtr(GCC_NEW CircleColliderShape(*copy.colliderShape));
+	}
+	else if (copy.colliderShape->colliderType() == ColliderType::OBB) {
+		this->colliderShape = ColliderShapePtr(GCC_NEW OBBColliderShape(*copy.colliderShape));
+	}
+}
+
+Collider::Collider(const rapidjson::Value& root) {
+	auto colliderType = COLLIDER_TYPE_VALUES.at(string(root["colliderType"].GetString()));
+
+	if (colliderType == ColliderType::AABB) {
+		this->colliderShape = std::make_shared<AABBColliderShape>(root["colliderShape"]);
+	}
+	else if (colliderType == ColliderType::CIRCLE) {
+		this->colliderShape = std::make_shared<CircleColliderShape>(root["colliderShape"]);
+	}
+	else if (colliderType == ColliderType::OBB) {
+		this->colliderShape = std::make_shared<OBBColliderShape>(root["colliderShape"]);
+	}
 }
 
 void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& callback) {
@@ -146,13 +164,7 @@ void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& call
 }
 
 bool Collider::checkCollision(const Collider& collider) const {
-	ExtentPtr extent = getExtent();
-	ExtentPtr otherExtent = collider.getExtent();
-
-	bool collision(extent->x0 <= otherExtent->x1
-		&& extent->x1 >= otherExtent->x0
-		&& extent->y0 <= otherExtent->y1
-		&& extent->y1 >= otherExtent->y0);
+	bool collision = this->colliderShape->checkCollision(collider.colliderShape);
 	if (collision) {
 		onCollision(collider);
 		collider.onCollision(*this);
@@ -169,7 +181,95 @@ void Collider::onCollision(const Collider& collider) const {
 	onCollisionCallback(collider);
 }
 
-ExtentPtr Collider::getExtent() const {
+void ColliderShape::setPosition(const Vector2f& position) {
+	this->position->x = position.x;
+	this->position->y = position.y;
+}
+
+bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb) {
+	Vector2fPtr position = std::make_shared<Vector2f>(aabb.position->x, aabb.position->y);
+	OBBColliderShapePtr aabbToObb = std::make_shared<OBBColliderShape>(position, aabb.width, aabb.height, 0);
+
+	return obb.checkCollision(aabbToObb);
+}
+
+bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle) {
+
+	Vector2f circlePos(circle.position);
+	Vector2f obbPos(obb.position);
+
+	Vector2f diff = circlePos - obbPos;
+
+	float angle = -obb.angle * (M_PI / 180.0f);
+
+	diff.x = std::cos(angle) * (diff.x) - std::sin(angle) * (diff.y);
+	diff.y = std::sin(angle) * (diff.x) + std::cos(angle) * (diff.y);
+
+	diff += obbPos;
+
+	Vector2fPtr circlePosPtr = std::make_shared<Vector2f>(diff);
+	Vector2fPtr obbPosPtr = std::make_shared<Vector2f>(obbPos);
+
+	AABBColliderShape aabb(obbPosPtr, obb.width, obb.height);
+	CircleColliderShape rotatedCircle(circlePosPtr, circle.radius);
+
+	return checkCollisionAABB_Circle(aabb, rotatedCircle);
+}
+
+bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle) {
+	Vector2f halfExtent = Vector2f(aabb.width / 2.0f, aabb.height / 2.0f);
+	Vector2f diff = *circle.position - *aabb.position;
+
+	Vector2f clamped = clamp(diff, halfExtent * -1.0f, halfExtent);
+	Vector2f closest = *aabb.position + clamped;
+	diff = closest - circle.position;
+
+	bool collision((int)diff.magnitude() < circle.radius);
+
+	return collision;
+}
+
+float clamp(float value, float min, float max) {
+	return std::min(max, std::max(min, value));
+}
+
+const Vector2f& clamp(const Vector2f& value, const Vector2f& min, const Vector2f& max) {
+	return Vector2f(clamp(value.x, min.x, max.x), clamp(value.y, min.y, max.y));
+}
+
+bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+
+	if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+		ExtentPtr extent = getExtent();
+		ExtentPtr otherExtent = aabb->getExtent();
+
+		bool collision(extent->x0 <= otherExtent->x1
+			&& extent->x1 >= otherExtent->x0
+			&& extent->y0 <= otherExtent->y1
+			&& extent->y1 >= otherExtent->y0);
+
+		return collision;
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
+		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+
+		return checkCollisionAABB_Circle(*this, *circle);
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
+
+		return checkCollisionOBB_AABB(*obb, *this);
+	}
+
+	return false;
+}
+
+ColliderType AABBColliderShape::colliderType() {
+	return ColliderType::AABB;
+}
+
+ExtentPtr AABBColliderShape::getExtent() const {
 	float x(position->x);
 	float y(position->y);
 	float halfWidth(width / 2);
@@ -183,9 +283,121 @@ ExtentPtr Collider::getExtent() const {
 	return extent;
 }
 
+bool CircleColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+
+	if (collider->colliderType() == ColliderType::CIRCLE) {
+		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+
+		const Vector2f& dist = *circle->position - *this->position;
+		int rads = circle->radius + this->radius;
+
+		bool collision((int) const_cast<Vector2f&>(dist).magnitude() >= rads);
+
+		return collision;
+	}
+	else if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+
+		return checkCollisionAABB_Circle(*aabb, *this);
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
+
+		return checkCollisionOBB_Circle(*obb, *this);
+	}
+
+	return false;
+}
+
+ColliderType CircleColliderShape::colliderType() {
+	return ColliderType::CIRCLE;
+}
+
+void OBBColliderShape::setPosition(const Vector2f& position) {
+	ColliderShape::setPosition(position);
+}
+
+bool OBBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+
+	if (collider->colliderType() == ColliderType::OBB) {
+		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
+		return this->overlapOneWay(*obb) && obb->overlapOneWay(*this);
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
+		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+
+		return checkCollisionOBB_Circle(*this, *circle);
+	}
+	else if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+
+		return checkCollisionOBB_AABB(*this, *aabb);
+	}
+
+	return false;
+}
+
+bool OBBColliderShape::overlapOneWay(const OBBColliderShape& obb) const {
+
+	for (int index = 0; index < 2; index++) {
+		float t = obb.corners[0]->dot(*this->axis[index]);
+
+		float tMin = t;
+		float tMax = t;
+
+		for (int corner = 1; corner < 4; corner++) {
+			t = obb.corners[corner]->dot(*this->axis[index]);
+
+			if (t < tMin) {
+				tMin = t;
+			}
+			else if (t > tMax) {
+				tMax = t;
+			}
+		}
+
+		if ((tMin > 1 + this->origin[index]) || (tMax < this->origin[index])) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+ColliderType OBBColliderShape::colliderType() {
+	return ColliderType::OBB;
+}
+
+void OBBColliderShape::setAngle(int angle) {
+	this->angle = angle;
+
+	this->setup();
+}
+
+void OBBColliderShape::setup() {
+	float rads = (this->angle / 180.0f) * M_PI;
+	Vector2f x(std::cos(rads), std::sin(rads));
+	Vector2f y(-std::sin(rads), std::cos(rads));
+	x *= this->width / 2.0f;
+	y *= this->height / 2.0f;
+
+	this->corners[0]->set(*this->position - x - y);
+	this->corners[1]->set(*this->position + x - y);
+	this->corners[2]->set(*this->position + x + y);
+	this->corners[3]->set(*this->position - x + y);
+
+	axis[0]->set(*corners[1] - *corners[0]);
+	axis[1]->set(*corners[3] - *corners[0]);
+
+	for (int index = 0; index < 2; index++) {
+		*axis[index] *= (1.0f / std::pow(axis[index]->magnitude(), 2));
+		origin[index] = corners[0]->dot(*axis[index]);
+	}
+}
+
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
 	mBody.reset(GCC_NEW Body(-1, x, y, width, height));
-	mBody->setCollider(GCC_NEW Collider(x, y, width, height));
+	mBody->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), (int) width, (int) height))));
 }
 
 bool QuadtreeNode::check(BodyPtr body) {
@@ -209,7 +421,7 @@ bool QuadtreeNode::contains(BodyPtr body) {
 }
 
 ExtentPtr QuadtreeNode::getNodeExtent() {
-	return mBody->collider->getExtent();
+	return static_cast<AABBColliderShape>(*mBody->collider->colliderShape).getExtent();
 }
 
 Quadtree::Quadtree(float x, float y, float width, float height) {
@@ -402,7 +614,7 @@ void PhysicsComponent::setPosition(const Vector2f& position) {
 	EventManager::getInstance().pushEvent(eventData);
 }
 
-void PhysicsComponent::setCollider(Collider* collider) {
+void PhysicsComponent::setCollider(ColliderPtr collider) {
 	mBody->setCollider(collider);
 
 	EntityCollisionSetEventData* eventData = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());

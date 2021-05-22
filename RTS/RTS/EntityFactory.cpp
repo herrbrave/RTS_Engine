@@ -13,7 +13,7 @@ EntityPtr EntityFactory::createDefault(float x, float y, float width, float heig
 	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
-	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
+	physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height))));
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
@@ -42,7 +42,7 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, f
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
 	if (isCollidable) {
-		physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
+		physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height))));
 	}
 
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
@@ -118,7 +118,7 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 
 			BodyPtr body = makeShared(comp->getBody());
 			physicsSystem->registerBody(entity->id, body);
-			comp->setCollider(GCC_NEW Collider(body->getPosition().x, body->getPosition().y, body->getWidth(), body->getHeight()));
+			comp->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(body->getPosition().x, body->getPosition().y), body->getWidth(), body->getHeight()))));
 		}
 		else if (componentId == ComponentType::TILE_COMPONENT) {
 			entity->addComponent(ComponentPtr(GCC_NEW TileComponent(entity->id, component)));
@@ -179,7 +179,7 @@ EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, floa
 	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
 	physicsSystem->registerBody(entity->id, blockBody);
 	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
-	physicsComponent->setCollider(GCC_NEW Collider(x, y, width, height));
+	physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height))));
 
 	entity->addComponent(ComponentPtr(physicsComponent));
 
