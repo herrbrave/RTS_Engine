@@ -34,6 +34,8 @@ class Collider;
 typedef shared_ptr<Collider> ColliderPtr;
 typedef weak_ptr<Collider> WeakColliderPtr;
 
+class Manifold;
+
 class ColliderShape;
 typedef shared_ptr<ColliderShape> ColliderShapePtr;
 typedef weak_ptr<ColliderShape> WeakColliderShapePtr;
@@ -53,6 +55,7 @@ typedef weak_ptr<OBBColliderShape> WeakOBBColliderShapePtr;
 bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb);
 bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle);
 bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle);
+void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle, Manifold* manifold);
 float clamp(float value, float min, float max);
 const Vector2f& clamp(const Vector2f& value, const Vector2f& min, const Vector2f& max);
 
@@ -86,6 +89,17 @@ public:
 	virtual void notifyColliderUpdate(unsigned long id) = 0;
 };
 
+class Manifold {
+public:
+	Vector2fPtr normal;
+	float penetration;
+
+	Manifold() {
+		normal = std::make_shared<Vector2f>(Vector2f());
+		penetration = 0.0f;
+	}
+};
+
 class ColliderShape {
 public:
 	Vector2fPtr position;
@@ -116,6 +130,8 @@ public:
 	virtual void onSerialize(Serializer& serializer) const = 0;
 
 	virtual bool checkCollision(const ColliderShapePtr& collider) const = 0;
+
+	virtual void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const = 0;
 
 	virtual ColliderType colliderType() = 0;
 
@@ -151,6 +167,7 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
+	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
 
 	ColliderType colliderType() override;
 
@@ -180,6 +197,7 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
+	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
 
 	ColliderType colliderType() override;
 };
@@ -261,6 +279,7 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
+	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
 
 	ColliderType colliderType() override;
 

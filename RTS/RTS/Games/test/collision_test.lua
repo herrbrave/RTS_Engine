@@ -29,6 +29,9 @@ function setup()
 	setScript(obb, "Games/test/collider.lua")
 
 	selected = aabb
+
+	aabb2 = createDefault(100, 500, 128, 128, 255, 255, 255, 255)
+	setAABBCollision(aabb2, 128, 128)
 	
 	dx = 0
 	dy = 0
@@ -111,5 +114,5 @@ end
 
 function update(delta)
 	setVelocity(selected, dx, dy)
-	setSpeed(selected, 80)
+	setSpeed(selected, 300)
 end

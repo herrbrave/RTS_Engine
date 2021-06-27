@@ -349,7 +349,7 @@ public:
 		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 
-		mBehaviors.push_back(PhysicsBehaviorPtr(new SteeringBehavior()));
+		mBehaviors.push_back(PhysicsBehaviorPtr(new BasicBehavior()));
 	}
 
 	~PhysicsSystem() = default;

@@ -173,6 +173,7 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 		SDL_SetTextureAlphaMod(sdlTexture.get(), a);
 	}
 	SDL_SetRenderDrawColor(mRenderer.get(), r, g, b, a);
+	SDL_SetTextureColorMod(sdlTexture.get(), r, g, b);
 
 	SDL_Rect src{ texture->x, texture->y, texture->w, texture->h };
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };

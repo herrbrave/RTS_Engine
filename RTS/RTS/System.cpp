@@ -284,7 +284,8 @@ void PhysicsSystem::update(Uint32 delta) {
 	// TODO: add steering later.
 	for (auto element : mBodies) {
 		for (auto behavior : mBehaviors) {
-			if (!behavior->updateBehavior(step, element.second, quadTree) || !element.second->isCollidable()) {
+			BodyPtr body = element.second;
+			if (!behavior->updateBehavior(step, body, quadTree) || !body->isCollidable()) {
 				continue;
 			}
 
@@ -296,9 +297,9 @@ void PhysicsSystem::update(Uint32 delta) {
 			quadTree->getCollidingBodies(element.second, collidingBodies);
 
 			for (WeakBodyPtr weakBody : collidingBodies) {
-				BodyPtr body = makeShared(weakBody);
+				BodyPtr collidedBody = makeShared(weakBody);
 
-				EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(element.second->id, body->id, SDL_GetTicks());
+				EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, collidedBody->id, SDL_GetTicks());
 				EventManager::getInstance().pushEvent(eventData);
 			}
 		}

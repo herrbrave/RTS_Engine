@@ -229,6 +229,53 @@ bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleCollid
 	return collision;
 }
 
+void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle, Manifold* manifold) {
+	Vector2f norm = *aabb.position - *circle.position;
+	Vector2f closest(norm);
+
+	float halfWidth = aabb.width / 2.0f;
+	float extentX = ((aabb.position->x + halfWidth) - (aabb.position->x - halfWidth)) / 2.0f;
+
+	float halfHeight = aabb.height / 2.0f;
+	float extentY = ((aabb.position->y + halfHeight) - (aabb.position->y - halfHeight)) / 2.0f;
+	closest.x = clamp(-extentX, extentX, closest.x);
+	closest.y = clamp(-extentY, extentY, closest.y);
+
+	bool inside = false;
+	if (norm.x == closest.y && norm.y == closest.y) {
+		inside = true;
+		if (abs(norm.x) > abs(norm.y)) {
+			if (closest.x > 0.0f) {
+				closest.x = extentX;
+			}
+			else {
+				closest.x = -extentX;
+			}
+		}
+		else {
+			if (closest.y > 0.0f) {
+				closest.y = extentY;
+			}
+			else {
+				closest.y = -extentY;
+			}
+		}
+	}
+
+	Vector2f normal = norm - closest;
+	float dist = normal.magnitude();
+	float rad = circle.radius;
+
+	if (inside) {
+		manifold->normal->set(normal * -1.0f);
+		manifold->penetration - rad - dist;
+	}
+	else {
+		manifold->normal->set(normal);
+		manifold->penetration - rad - dist;
+	}
+}
+
 float clamp(float value, float min, float max) {
 	return std::min(max, std::max(min, value));
 }
@@ -265,6 +312,42 @@ bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 	return false;
 }
 
+
+void AABBColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+
+	if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+
+		Vector2f norm = *aabb->position - *this->position;
+
+		Vector2f thisMin(this->position->x - (this->width / 2.0f), this->position->y - (this->height / 2.0f));
+		Vector2f thisMax(this->position->x + (this->width / 2.0f), this->position->y + (this->height / 2.0f));
+		Vector2f otherMin(aabb->position->x - (aabb->width / 2.0f), aabb->position->y - (aabb->height / 2.0f));
+		Vector2f otherMax(aabb->position->x + (aabb->width / 2.0f), aabb->position->y + (aabb->height / 2.0f));
+
+		Vector2f extent = (thisMax - thisMin) * 0.5f;
+		Vector2f extentOther = (otherMax - otherMin) * 0.5f;
+
+		Vector2f absNorm(abs(norm.x), abs(norm.y));
+		Vector2f overlap = extent + extentOther - absNorm;
+
+		if (overlap.x < overlap.y) {
+			manifold->normal->set((norm.x < 0.0f) ? Vector2f(1.0f, 0.0f) : Vector2f(-1.0f, 0.0f));
+			manifold->penetration = overlap.x;
+		}
+		else {
+			manifold->normal->set((norm.y < 0.0f) ? Vector2f(0.0f, 1.0f) : Vector2f(0.0f, -1.0f));
+			manifold->penetration = overlap.y;
+		}
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
+		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+		constructManifoldAABB_Circle(*this, *circle, manifold);
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+	}
+}
+
 ColliderType AABBColliderShape::colliderType() {
 	return ColliderType::AABB;
 }
@@ -288,10 +371,11 @@ bool CircleColliderShape::checkCollision(const ColliderShapePtr& collider) const
 	if (collider->colliderType() == ColliderType::CIRCLE) {
 		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
 
-		const Vector2f& dist = *circle->position - *this->position;
 		int rads = circle->radius + this->radius;
+		rads *= rads;
 
-		bool collision((int) const_cast<Vector2f&>(dist).magnitude() >= rads);
+		int dist = pow(this->position->x + circle->position->x, 2) + pow(this->position->y + circle->position->y, 2);
+		bool collision(rads < dist);
 
 		return collision;
 	}
@@ -307,6 +391,38 @@ bool CircleColliderShape::checkCollision(const ColliderShapePtr& collider) const
 	}
 
 	return false;
+}
+
+
+void CircleColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+
+	if (collider->colliderType() == ColliderType::CIRCLE) {
+		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+
+		Vector2f norm = *circle->position - *this->position;
+
+		float rads = this->radius + circle->radius;
+		rads *= rads;
+
+		float dist = norm.magnitude();
+
+		if (dist != 0) {
+			manifold->penetration - rads - dist;
+			norm *= 1.0f / dist;
+			manifold->normal->set(norm);
+		}
+		else {
+			manifold->penetration = this->radius;
+			manifold->normal->x = 1;
+		}
+	}
+	else if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+		constructManifoldAABB_Circle(*aabb, *this, manifold);
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+
+	}
 }
 
 ColliderType CircleColliderShape::colliderType() {
@@ -335,6 +451,10 @@ bool OBBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 	}
 
 	return false;
+}
+
+void OBBColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+
 }
 
 bool OBBColliderShape::overlapOneWay(const OBBColliderShape& obb) const {
@@ -697,10 +817,24 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 		velocity *= step;
 	}
 
+	// Handle overlap
+	vector<WeakBodyPtr> bodies;
+	quadtree->getCollidingBodies(body, bodies);
 	Vector2f newPosition(position + velocity);
+	for (auto bod : bodies) {
+		auto bodPtr = makeShared<Body>(bod);
+		Manifold manifold;
+		body->collider->colliderShape->constructManifold(bodPtr->collider->colliderShape, &manifold);
+		if (manifold.penetration >= 0.0f) {
+			auto norm = *manifold.normal * manifold.penetration;
 
- 	body->setPosition(newPosition);
+			velocity += norm;
+			newPosition.set(position + velocity);
+			body->setPosition(newPosition);
+		}
+	}
 
+	body->setPosition(newPosition);
 	velocity.normalize();
 	body->setVelocity(velocity);
 
