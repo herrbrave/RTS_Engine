@@ -35,6 +35,8 @@ public:
 
 	Animation() {}
 
+	Animation(const Animation& animation) : name(animation.name), frames(animation.frames) {}
+
 	Animation(const rapidjson::Value& root) {
 		this->name = root["name"].GetString();
 
@@ -72,6 +74,8 @@ public:
 	int fps;
 
 	AnimationSet() {}
+
+	AnimationSet(const AnimationSet& animationSet) : animations(animationSet.animations), spritesheet(animationSet.spritesheet), name(animationSet.name), defaultAnimationName(animationSet.defaultAnimationName), fps(animationSet.fps) {}
 
 	AnimationSet(const rapidjson::Value& root) {
 		this->spritesheet = root["spritesheet"].GetString();

@@ -6,8 +6,8 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(1024);
-	config->setWindowHeight(768);
+	config->setWindowWidth(512);
+	config->setWindowHeight(512);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 	config->setFont("Digital_tech.otf");
@@ -26,10 +26,11 @@ void RTS::setup() {
 
 	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
 
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/collision_test.lua").build();
+	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/collision_test.lua").build();
 	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
-	//mMap = mMapFactory->createMap("Assets/rts/rts_test_map.json");
+	mMap = mMapFactory->createMap("Assets/RPG/everwoods.json");
+	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/camera_test.lua").build();
 }
 
 void RTS::handleEvents() {

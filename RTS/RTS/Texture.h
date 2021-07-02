@@ -20,6 +20,8 @@ public:
 	float h;
 	std::string assetTag;
 
+	Texture(const Texture& texture) : assetTag(texture.assetTag), x(texture.x), y(texture.y), w(texture.w), h(texture.h) {}
+
 	Texture(std::string tag, float tx, float ty, float width, float height);
 
 	Texture(std::string tag);

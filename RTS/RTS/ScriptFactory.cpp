@@ -461,6 +461,8 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 			return (double) animationComponent->animationHandler->textureDrawable->getAngle();
 		}
+
+		return 0.0;
 	};
 
 	script->state["setColor"] = [this](int entityId, int r, int g, int b, int a) {
@@ -480,6 +482,24 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 }
 
 void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
+	script->state["attachAnimationSet"] = [this](int entityId, string path) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		TexturePtr texture(GCC_NEW Texture(""));
+		shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
+		graphicsSystem->registerDrawable(entity->id, textureDrawable);
+		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+		AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
+		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
+		animationSystem->registerAnimation(entity->id, animationHandler);
+		AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(entity->id, animationHandler));
+
+		entity->addComponent(ComponentPtr(animationComponent));
+	};
+
 	script->state["setAnimation"] = [this](int entityId, string animationName) {
 		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
@@ -517,7 +537,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->play();
+		animationComponent->animationHandler->loop();
 	};
 
 	script->state["isAnimationPlaying"] = [this](int entityId) {
@@ -745,6 +765,13 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr& script) {
 
 		CameraPtr camera = makeShared(graphicsSystem->getCamera());
 		*(camera->position) += Vector2f(dx, dy);
+	};
+	script->state["setCameraPosition"] = [this](int dx, int dy) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+
+		CameraPtr camera = makeShared(graphicsSystem->getCamera());
+		camera->position->set(Vector2f(dx, dy));
 	};
 
 

@@ -35,10 +35,10 @@ public:
 	MapPtr createMap(const string& pathToMap);
 
 private:
-	void loadTileLayer(const rapidjson::Value& tileLayer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig);
-	void loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig);
+	void loadTileLayer(const rapidjson::Value& tileLayer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder);
+	void loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig, int drawOrder);
 
-	void loadGridTileset(const rapidjson::Value& tileset, Tileset& tiles);
+	void loadGridTileset(const rapidjson::Value& tileset, Tileset& tiles, TileAnimationSet& animations);
 
 	SystemManagerPtr mSystemManager{ nullptr };
 	TileFactoryPtr mTileFactory{ nullptr };

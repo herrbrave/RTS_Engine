@@ -5,12 +5,14 @@
 #include<unordered_set>
 
 #include"EntityFactory.h"
+#include"Animation.h"
 
 
 class Tile;
 typedef shared_ptr<Tile> TilePtr;
 typedef weak_ptr<Tile> WeakTilePtr;
 typedef unordered_map<unsigned int, TilePtr> Tileset;
+typedef unordered_map<unsigned int, AnimationSetPtr> TileAnimationSet;
 
 struct MapConfig {
 	int tileWidth;
@@ -20,6 +22,7 @@ struct MapConfig {
 	std::vector<unsigned long> tiles;
 	std::vector<unsigned long> objects;
 	Tileset tileset;
+	TileAnimationSet animatedTiles;
 };
 typedef shared_ptr<MapConfig> MapConfigPtr;
 typedef weak_ptr<MapConfig> WeakMapConfigPtr;
@@ -46,13 +49,14 @@ public:
 	int ty;
 	int w;
 	int h;
+	bool collision = false;
+	int xOff = 0;
+	int yOff = 0;
+	int collisionWidth = 0;
+	int collisionHeight = 0;
+	bool animated = false;
 
-	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) {
-		this->textureAssetTag = std::move(textureAssetTag);
-		this->tx = tx;
-		this->ty = ty;
-		this->w = w;
-		this->h = h;
+	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) : textureAssetTag(textureAssetTag), tx(tx), ty(ty), w(w), h(h) {
 	}
 };
 
