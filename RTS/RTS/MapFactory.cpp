@@ -16,47 +16,34 @@ MapFactory::MapFactory(TileFactoryPtr tileFactory, LuaScriptFactoryPtr luaScript
 }
 
 MapPtr MapFactory::createMap(const string& pathToMap) {
-	std::ifstream file(pathToMap);
-	std::string line;
-	std::string builder;
-	while (std::getline(file, line)) {
-		builder.append(line);
-	}
-	file.close();
-
-	rapidjson::Document doc;
-	doc.Parse(builder.c_str());
+	TMXMapPtr tmxMap = parseMap(pathToMap);
 
 	Tileset tileset;
 	TileAnimationSet animations;
-	auto tilesets = doc["tilesets"].GetArray();
-	for (int index = 0; index < tilesets.Size(); index++) {
-		this->loadGridTileset(tilesets[index].GetObject(), tileset, animations);
+	auto tilesets = tmxMap->tilesets;
+	for (TMXTilesetPtr _tileset : tilesets) {
+		this->loadGridTileset(_tileset, tileset, animations);
 	}
 
-	int width(doc["width"].GetInt());
-	int height(doc["height"].GetInt());
-	float tileWidth(doc["tilewidth"].GetInt());
-	float tileHeight(doc["tileheight"].GetInt());
-
 	MapConfig* mapConfig = GCC_NEW MapConfig();
-	mapConfig->mapWidth = width;
-	mapConfig->mapHeight = height;
-	mapConfig->tileWidth = tileWidth;
-	mapConfig->tileHeight = tileHeight;
+	mapConfig->mapWidth = tmxMap->width;
+	mapConfig->mapHeight = tmxMap->height;
+	mapConfig->tileWidth = tmxMap->tileWidth;
+	mapConfig->tileHeight = tmxMap->tileHeight;
 	mapConfig->tileset = tileset;
 	mapConfig->animatedTiles = animations;
 
-	auto layers = doc["layers"].GetArray();
-	for (int index = 0; index < layers.Size(); index++) {
-		auto layer = layers[index].GetObject();
-		std::string type = layer["type"].GetString();
+	auto layers = tmxMap->layers;
+	int index = 0;
+	for (TMXLayerPtr layer : layers) {
+		std::string type = layer->type;
 		if (type == "tilelayer") {
-			loadTileLayer(layer, width, height, tileWidth, tileHeight, *mapConfig, index);
+			loadTileLayer(layer, tmxMap->width, tmxMap->height, tmxMap->tileWidth, tmxMap->tileHeight, *mapConfig, index);
 		}
 		else {
 			loadObjectLayer(layer, *mapConfig, index);
 		}
+		index++;
 	}
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
@@ -72,69 +59,66 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	return map;
 }
 
-void MapFactory::loadGridTileset(const rapidjson::Value& tileset, Tileset& tiles, TileAnimationSet& animations) {
+void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, TileAnimationSet& animations) {
 	// If the tileset contains an image then it is a grid based tileset.
-	if (tileset.FindMember("image") != tileset.MemberEnd()) {
-		string image = tileset["image"].GetString();
+	if (!tileset->image.empty()) {
+		string image = tileset->image;
 
 		GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 		graphicsSystem->addTexture(image, image);
 
-		int tileWidth = tileset["tilewidth"].GetInt();
-		int tileHeight = tileset["tileheight"].GetInt();
-		int columns = tileset["columns"].GetInt();
-		int tileCount = tileset["tilecount"].GetInt();
-		int id = tileset["firstgid"].GetInt();
+		int tileWidth = tileset->tileWidth;
+		int tileHeight = tileset->tileHeight;
+		int columns = tileset->columns;
+		int tileCount = tileset->tileCount;
+		int id = tileset->firstgid;
 		int count = 0;
 		int row = 0;
 
-		while (count <= tileCount) {
-			for (int i = 0; i < columns && count <= tileCount; i++, count++) {
-				tiles.emplace(id++, TilePtr(GCC_NEW Tile(image, i * tileWidth, row * tileHeight, tileHeight, tileWidth)));
+		while (count < tileCount) {
+			for (int i = 0; i < columns && count < tileCount; i++, count++) {
+				tiles.emplace(id, TilePtr(GCC_NEW Tile(image, i * tileWidth, row * tileHeight, tileHeight, tileWidth))); 
+				id++;
 			}
 			row++;
 		}
 
-		id = tileset["firstgid"].GetInt();
-		auto tilesArray = tileset["tiles"].GetArray();
-		for (int index = 0; index < tilesArray.Size(); index++) {
-			auto tile = tilesArray[index].GetObject();
-
+		id = tileset->firstgid;
+		auto tilesArray = tileset->tiles;
+		for (TMXTilePtr tile : tilesArray) {
 			TilePtr newTile = tiles[id++];
-			if (tile.FindMember("objectgroup") != tile.MemberEnd()) {
-				auto objectGroup = tile["objectgroup"].GetObject();
-				auto objects = objectGroup["objects"].GetArray();
-				auto collisionObject = objects[0].GetObject();
+			if (!tile->objectgroup.empty()) {
+				auto objectGroup = tile->objectgroup;
+				auto collisionObject = objectGroup[0];
 				newTile->collision = true;
-				newTile->xOff = collisionObject["x"].GetInt();
-				newTile->yOff = collisionObject["y"].GetInt();
-				newTile->collisionWidth = collisionObject["width"].GetInt();
-				newTile->collisionHeight = collisionObject["height"].GetInt();
+				newTile->xOff = 0;
+				newTile->yOff = 0;
+				newTile->collisionWidth = collisionObject->width;
+				newTile->collisionHeight = collisionObject->height;
 			}
 
-			if (tile.FindMember("animation") != tile.MemberEnd()) {
+			if (!tile->animation.empty()) {
 				AnimationSetPtr animationSet(GCC_NEW AnimationSet());
-				id = tileset["firstgid"].GetInt();
+				id = tileset->firstgid;
 				newTile->animated = true;
 				animations[id] = animationSet;
 				
 				animationSet->spritesheet = image;
 				animationSet->fps = 0;
 				animationSet->defaultAnimationName = "default";
-				animationSet->name = "TileAnimation";
+				animationSet->name = tileset->name;
 
 				AnimationPtr anim(GCC_NEW Animation());
 				animationSet->animations["default"] = anim;
 
-				auto animation = tile["animation"].GetArray();
-				for (int animIndex = 0; animIndex < animation.Size(); animIndex++) {
-					auto anim = animation[animIndex].GetObject();
+				auto animation = tile->animation;
+				for (TMXFramePtr anim : animation) {
 					if (animationSet->fps == 0) {
-						int frameTime = anim["duration"].GetInt();
+						int frameTime = anim->duration;
 						int fps = 1000 / frameTime;
 						animationSet->fps = fps;
 					}
-					int tileId = anim["tileid"].GetInt() + id;
+					int tileId = anim->tileid + id;
 					auto animTile = tiles[tileId];
 
 					TexturePtr texture(GCC_NEW Texture(animTile->textureAssetTag, animTile->tx, animTile->ty, animTile->w, animTile->h));
@@ -144,41 +128,39 @@ void MapFactory::loadGridTileset(const rapidjson::Value& tileset, Tileset& tiles
 		}
 	}
 	else {
-		int id = tileset["firstgid"].GetInt();
-		auto tilesArray = tileset["tiles"].GetArray();
-		for (int index = 0; index < tilesArray.Size(); index++) {
-			auto tile = tilesArray[index].GetObject();
-			string image = tile["image"].GetString();
+		int id = tileset->firstgid;
+		auto tilesArray = tileset->tiles;
+		for (TMXTilePtr tile : tilesArray) {
+			string image = tile->image;
 
 			GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 			graphicsSystem->addTexture(image, image);
 
-			int tileWidth = tile["imagewidth"].GetInt();
-			int tileHeight = tile["imageheight"].GetInt();
+			int tileWidth = tile->imageWidth;
+			int tileHeight = tile->imageHeight;
 			auto newTile = TilePtr(GCC_NEW Tile(image, 0, 0, tileHeight, tileWidth));
 			tiles.emplace(id++, newTile);
 
-			if (tile.FindMember("objectgroup") != tile.MemberEnd()) {
-				auto objectGroup = tile["objectgroup"].GetObject();
-				auto objects = objectGroup["objects"].GetArray();
-				auto collisionObject = objects[0].GetObject();
+			if (!tile->objectgroup.empty()) {
+				auto objectGroup = tile->objectgroup;
+				auto collisionObject = objectGroup[0];
 				newTile->collision = true;
-				newTile->xOff = collisionObject["x"].GetInt();
-				newTile->yOff = collisionObject["y"].GetInt();
-				newTile->collisionWidth = collisionObject["width"].GetInt();
-				newTile->collisionHeight = collisionObject["height"].GetInt();
+				newTile->xOff = 0;
+				newTile->yOff = 0;
+				newTile->collisionWidth = collisionObject->width;
+				newTile->collisionHeight = collisionObject->height;
 			}
 		}
 	}
 }
 
-void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer,int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder) {
-	auto data = tileLayer["data"].GetArray();
+void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder) {
+	auto data = layer->data;
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	for (int index = 0; index < data.Size(); index++) {
-		int tileVal(data[index].GetInt());
+	for (int index = 0; index < layer->tileCount; index++) {
+		int tileVal(data[index]);
 		if (mapConfig.tileset.find(tileVal) == mapConfig.tileset.end()) {
 			continue;
 		}
@@ -223,25 +205,23 @@ void MapFactory::loadTileLayer(const rapidjson::Value& tileLayer,int width, int 
 	}
 }
 
-void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig& mapConfig, int drawOrder) {
-	auto data = objectLayer["objects"].GetArray();
-	for (int index = 0; index < data.Size(); index++) {
-		auto object = data[index].GetObject();
-		int width = object["width"].GetInt();
-		int height = object["height"].GetInt();
-		int id = object.FindMember("gid") != object.MemberEnd() ? object["gid"].GetInt() : -1;
+void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig, int drawOrder) {
+	auto data = layer->objects;
+	for (TMXObjectPtr object : data) {
+		int width = object->width;
+		int height = object->height;
+		int id = object->gid;
 
 		// Tiled stored location from the top left corner.
-		int x = ((int)floor(object["x"].GetDouble()) + (width / 2) - (mapConfig.tileWidth / 2));
-		int y = ((int)floor(object["y"].GetDouble()) + (height / 2) - (mapConfig.tileHeight / 2));
+		int x = (int)round(object->x);
+		int y = (int)round(object->y) - height;
 
 		string script = "";
-		if (object.FindMember("properties") != object.MemberEnd()) {
-			auto properties = object["properties"].GetArray();
-			for (int i = 0; i < properties.Size(); i++) {
-				auto prop = properties[i].GetObject();
-				if (string("script").compare(prop["name"].GetString()) == 0) {
-					script = prop["value"].GetString();
+		if (!object->properties.empty()) {
+			auto properties = object->properties;
+			for (TMXPropertyPtr prop : properties) {
+				if (string("script").compare(prop->name) == 0) {
+					script = string(makeShared(prop->getValue<string>())->c_str());
 				}
 			}
 		}
@@ -249,13 +229,14 @@ void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig&
 		EntityPtr tile;
 		if (id > 0) {
 			TilePtr t = mapConfig.tileset.at(id);
-			tile = mTileFactory->createPhysicsEntity(x, y - height / 2, width, height);
+			tile = mTileFactory->createPhysicsEntity(x, y, width, height);
 			if (t->animated) {
 				GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 				AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 				tile = mTileFactory->createPhysicsEntity(x, y, width, height);
 				TexturePtr texture(GCC_NEW Texture(""));
 				shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
+				textureDrawable->setDrawDepth(drawOrder);
 				graphicsSystem->registerDrawable(tile->id, textureDrawable);
 				AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, mapConfig.animatedTiles[id], mapConfig.animatedTiles[id]->fps));
 				animationHandler->loop();
@@ -266,9 +247,9 @@ void MapFactory::loadObjectLayer(const rapidjson::Value& objectLayer, MapConfig&
 				tile->addComponent(tileComponent);
 			}
 			else {
-				tile = mTileFactory->createTexturedEntity(t->textureAssetTag, x, y - height / 2, width, height, t->tx, t->ty, t->w, t->h, true);
+				tile = mTileFactory->createTexturedEntity(t->textureAssetTag, x, y, width, height, t->tx, t->ty, t->w, t->h, true);
 				auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
-				//drawableComponent->setZOrder(drawOrder);
+				drawableComponent->setZOrder(drawOrder);
 			}
 		}
 		else {
