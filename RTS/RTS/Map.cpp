@@ -46,16 +46,24 @@ void parseProperties(const rapidjson::Value& root, TMXProperties& props) {
 		prop->name = tile["name"].GetString();
 		prop->type = tile["type"].GetString();
 		if (prop->type == "string") {
-			prop->value = VoidPtr(static_cast<void*>(const_cast<char*>(tile["value"].GetString())));
+			auto v = tile["value"].GetString();
+			auto len = strlen(v) + 1;
+			char* cpy = new char[len];
+			for (int index = 0; index < len; index++) {
+				cpy[index] = v[index];
+			}
+
+			auto ptr = VoidPtr(static_cast<void*>(cpy));
+			prop->value = ptr;
 		}
 		else if (prop->type == "int") {
-			prop->value = VoidPtr(new int { tile["value"].GetInt() });
+			prop->setValue(VoidPtr(new int { tile["value"].GetInt() }));
 		}
 		else if (prop->type == "float") {
-			prop->value = VoidPtr(new float { tile["value"].GetFloat() });
+			prop->setValue(VoidPtr(new float { tile["value"].GetFloat() }));
 		}
 		else if (prop->type == "bool") {
-			prop->value = VoidPtr(new bool{ tile["value"].GetBool() });
+			prop->setValue(VoidPtr(new bool{ tile["value"].GetBool() }));
 		}
 		props.push_back(prop);
 	}

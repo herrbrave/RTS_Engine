@@ -185,3 +185,56 @@ EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, floa
 
 	return entity;
 }
+
+EntityPtr EntityFactory::createScriptEntity(const string& path) {
+	EntitySystemPtr entitySystem(makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY)));
+	EntityPtr entity(GCC_NEW Entity());
+	entitySystem->addEntity(entity);
+
+	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
+	LuaScriptPtr luaScript(GCC_NEW LuaScript(path));
+
+	luaScript->state["entityId"] = (int)entity->id;
+	LuaScriptComponentPtr scriptComponent(GCC_NEW LuaScriptComponent(entity->id, luaScript));
+	ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);
+	EventManager::getInstance().pushEvent(scriptLoaded);
+	entity->addComponent(ComponentPtr(scriptComponent));
+
+	InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
+	InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
+	inputSystem->registerEventListener(inputListener);
+
+	inputListener->eventCallbacks.emplace(Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([scriptComponent](EventPtr evt) {
+		scriptComponent->script->invoke("onMouseEnterEntity");
+		return false;
+	}));
+
+	inputListener->eventCallbacks.emplace(Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([scriptComponent](EventPtr evt) {
+		scriptComponent->script->invoke("onMouseExitEntity");
+		return false;
+	}));
+
+	inputListener->eventCallbacks.emplace(Input::ON_CLICK, function<bool(EventPtr)>([scriptComponent](EventPtr evt) {
+		scriptComponent->script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
+		return false;
+	}));
+
+	inputListener->eventCallbacks.emplace(Input::ON_DRAG, function<bool(EventPtr)>([scriptComponent](EventPtr evt) {
+		scriptComponent->script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
+		return false;
+	}));
+
+	inputListener->eventCallbacks.emplace(Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([scriptComponent](EventPtr evt) {
+		scriptComponent->script->invoke("onMouseMove", static_cast<int>(evt->mouseEvent->position->x), static_cast<int>(evt->mouseEvent->position->y), static_cast<int>(evt->mouseEvent->button));
+		return false;
+	}));
+
+	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	BodyPtr blockBody(GCC_NEW Body(entity->id, -1, -1, 1, 1));
+	physicsSystem->registerBody(entity->id, blockBody);
+	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
+
+	entity->addComponent(ComponentPtr(physicsComponent));
+
+	return entity;
+}

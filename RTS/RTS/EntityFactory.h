@@ -25,6 +25,8 @@ public:
 
 	EntityPtr createPhysicsEntity(float x, float y, float width, float height);
 
+	EntityPtr createScriptEntity(const string& path);
+
 protected:
 	SystemManagerPtr mSystemManager{ nullptr };
 };

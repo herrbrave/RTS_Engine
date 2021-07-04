@@ -3,8 +3,7 @@
     {
      "export":
         {
-         "format":"json",
-         "target":"everwoods.json"
+         "format":"json"
         }
     },
  "height":45,
@@ -84,6 +83,12 @@
  "nextlayerid":4,
  "nextobjectid":6,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"script",
+         "type":"string",
+         "value":"Games\/test\/camera_test.lua"
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.7.0",
  "tileheight":16,

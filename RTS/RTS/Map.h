@@ -3,6 +3,7 @@
 
 #include<queue>
 #include<unordered_set>
+#include<string.h>
 
 #include"EntityFactory.h"
 #include"Animation.h"
@@ -121,6 +122,10 @@ public:
 	string name;
 	string type;
 	VoidPtr value;
+
+	void setValue(VoidPtr voidPtr) {
+		value = std::move(voidPtr);
+	}
 
 	template<class ClassType>
 	weak_ptr<ClassType> getValue() {

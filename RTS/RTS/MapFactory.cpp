@@ -56,6 +56,19 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	MapLoadedSetEventData* eventData = GCC_NEW MapLoadedSetEventData(SDL_GetTicks());
 	EventManager::getInstance().pushEvent(eventData);
 
+	if (!tmxMap->properties.empty()) {
+		auto properties = tmxMap->properties;
+		for (TMXPropertyPtr prop : properties) {
+			if (string("script").compare(prop->name) == 0) {
+				auto ptr = prop->getValue<char*>();
+				auto shPtr = makeShared(ptr);
+				auto c = (char*)shPtr.get();
+				string script(c);
+				mTileFactory->createScriptEntity(script);
+			}
+		}
+	}
+
 	return map;
 }
 

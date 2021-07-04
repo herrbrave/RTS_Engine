@@ -30,7 +30,7 @@ void RTS::setup() {
 	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
 	mMap = mMapFactory->createMap("Assets/RPG/everwoods.json");
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/camera_test.lua").build();
+	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/camera_test.lua").build();
 }
 
 void RTS::handleEvents() {
