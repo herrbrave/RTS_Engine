@@ -38,6 +38,8 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 		"at", &LuaFriendlyStringMap::at,
 		"put", &LuaFriendlyStringMap::put);
 
+	this->registerGeneral(script);
+
 	if (DRAWABLE) {
 		this->registerDrawable(script);
 	}
@@ -73,6 +75,18 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 	}
 
 	auto output = script->invoke("setup");
+}
+
+void LuaScriptFactory::registerGeneral(LuaScriptPtr& script) {
+	script->state["sendMessage"] = [this](int entityId, string message, string value) -> string {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		LuaScriptComponentPtr scriptComponent = makeShared(entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT));
+
+		return scriptComponent->script->invoke("onMessage", message, value);
+	};
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
@@ -636,11 +650,12 @@ void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
 
 		luaScript->state["entityId"] = (int)entityId;
 		LuaScriptComponentPtr scriptComponent;
-		if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) == entity->getComponents().end()) {
+		if (entity->getComponents().find(ComponentType::LUA_SCRIPT_COMPONENT) == entity->getComponents().end()) {
 			scriptComponent.reset(GCC_NEW LuaScriptComponent(entityId, luaScript));
+			entity->addComponent(scriptComponent);
 		}
 		else {
-			scriptComponent = makeShared<LuaScriptComponent>(entity->getComponentByType<LuaScriptComponent>(ComponentType::INPUT_COMPONENT));
+			scriptComponent = makeShared<LuaScriptComponent>(entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT));
 		}
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, luaScript);
 		EventManager::getInstance().pushEvent(scriptLoaded);

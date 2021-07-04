@@ -36,6 +36,7 @@ public:
 
 private:
 	void initialize(LuaScriptPtr& script);
+	void registerGeneral(LuaScriptPtr& script);
 	void registerFactory(LuaScriptPtr& script);
 	void registerEntity(LuaScriptPtr& script);
 	void registerPhysics(LuaScriptPtr& script);
