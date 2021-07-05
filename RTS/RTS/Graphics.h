@@ -283,23 +283,29 @@ public:
 	int mWidth = 800;
 	int mHeight = 600;
 	int mFontSize = 12;
+	float mZoom = 1.0f;
 	Uint32 mFlags{ SDL_WINDOW_SHOWN };
 };
 
 class Graphics {
 public:
-	Graphics(AssetVendorPtr assetVendor) { mAssetVendor = assetVendor; }
+	Graphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : mAssetVendor(assetVendor), mGraphicsConfig(graphicsConfig) { }
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
+	
+	void zoomBy(float value) {
+		this->mGraphicsConfig->mZoom += value;
+	}
 
 	virtual AssetPtr createTexture(const std::string& path, const std::string& assetTag) = 0;
 	virtual AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) = 0;
 protected:
 	AssetVendorPtr mAssetVendor{ nullptr };
+	GraphicsConfigPtr mGraphicsConfig;
 };
 
 class SDLGraphics : public Graphics {

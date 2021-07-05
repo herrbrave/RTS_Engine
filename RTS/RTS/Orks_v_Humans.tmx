@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="45" height="45" tilewidth="8" tileheight="8" infinite="0" nextlayerid="5" nextobjectid="26">
+ <editorsettings>
+  <export target="Assets/Orcs_v_Humans/Orks_v_Humans.json" format="json"/>
+ </editorsettings>
+ <properties>
+  <property name="script" value="Games/orksvhumans/orks_v_humans.lua"/>
+ </properties>
+ <tileset firstgid="1" name="tinyrts" tilewidth="8" tileheight="8" tilecount="272" columns="16">
+  <image source="Assets/orksvhuman/tinyrts.png" width="128" height="136"/>
+  <tile id="12">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="13">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="14">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="28">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="29">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="30">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="31">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="44">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="45">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="46">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="47">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="60">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="61">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="62">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="63">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="64">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="65">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="66">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="67">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="76">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="77">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="78">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="79">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="80">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="81">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="117">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="118">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="119">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="121">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="122">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="123">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="133">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="134">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="135">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="137">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="138">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="139">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="149">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="150">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="151">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="153">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="154">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="155">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="8" height="8"/>
+   </objectgroup>
+  </tile>
+  <tile id="217">
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Wolf Pen" x="0" y="0" width="8" height="8">
+     <properties>
+      <property name="script" value="Games/orksvhuman/wolf_pen.lua"/>
+     </properties>
+    </object>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="273" name="RivertileHorizontal" tilewidth="8" tileheight="8" tilecount="8" columns="8">
+  <image source="Assets/Orcs_v_Humans/AnimatedTiles/RivertileHorizontal.png" width="64" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="120"/>
+    <frame tileid="1" duration="120"/>
+    <frame tileid="2" duration="120"/>
+    <frame tileid="4" duration="120"/>
+    <frame tileid="5" duration="120"/>
+    <frame tileid="6" duration="120"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="281" name="RivertileVertical" tilewidth="8" tileheight="8" tilecount="8" columns="8">
+  <image source="Assets/Orcs_v_Humans/AnimatedTiles/RivertileVertical.png" width="64" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="120"/>
+    <frame tileid="1" duration="120"/>
+    <frame tileid="2" duration="120"/>
+    <frame tileid="3" duration="120"/>
+    <frame tileid="4" duration="120"/>
+    <frame tileid="5" duration="120"/>
+    <frame tileid="6" duration="120"/>
+    <frame tileid="7" duration="120"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="289" name="WaterfallAbyss" tilewidth="8" tileheight="16" tilecount="8" columns="8">
+  <image source="Assets/Orcs_v_Humans/AnimatedTiles/WaterfallAbyss.png" width="64" height="16"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="120"/>
+    <frame tileid="1" duration="120"/>
+    <frame tileid="2" duration="120"/>
+    <frame tileid="3" duration="120"/>
+    <frame tileid="4" duration="120"/>
+    <frame tileid="5" duration="120"/>
+    <frame tileid="6" duration="120"/>
+    <frame tileid="7" duration="120"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="297" name="WaterfallTop" tilewidth="8" tileheight="8" tilecount="8" columns="8">
+  <image source="Assets/Orcs_v_Humans/AnimatedTiles/WaterfallTop.png" width="64" height="8"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="120"/>
+    <frame tileid="1" duration="120"/>
+    <frame tileid="4" duration="120"/>
+    <frame tileid="5" duration="120"/>
+    <frame tileid="6" duration="120"/>
+    <frame tileid="7" duration="120"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="305" name="MageTower" tilewidth="8" tileheight="24" tilecount="1" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <properties>
+    <property name="script" value="Games/orksvhuman/mage_tower.lua"/>
+   </properties>
+   <image width="8" height="24" source="Assets/Orcs_v_Humans/Sprites/MageTower.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Mage Tower" x="0" y="0" width="8" height="24">
+     <properties>
+      <property name="script" value="Games/orksvhuman/mage_tower.lua"/>
+     </properties>
+    </object>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="306" name="HumanBarracks" tilewidth="16" tileheight="16" tilecount="1" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="16" height="16" source="Assets/Orcs_v_Humans/Sprites/HumanBarracks.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Human Barracks" x="0" y="0" width="16" height="16">
+     <properties>
+      <property name="script" value="Games/orksvhuman/human_barracks.lua"/>
+     </properties>
+    </object>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="307" name="HumanGuardTower" tilewidth="8" tileheight="16" tilecount="1" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <properties>
+    <property name="script" value="Games/orksvhuman/human_guard_tower.lua"/>
+   </properties>
+   <image width="8" height="16" source="Assets/Orcs_v_Humans/Sprites/HumanGuardTower.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Human Guard Tower" x="0" y="0" width="8" height="16"/>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="308" name="OrkBarracks" tilewidth="16" tileheight="16" tilecount="1" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <properties>
+    <property name="script" value="Games/orksvhuman/ork_barracks.lua"/>
+   </properties>
+   <image width="16" height="16" source="Assets/Orcs_v_Humans/Sprites/OrkBarracks.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Ork Barracks" x="0" y="0" width="16" height="16"/>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="309" name="OrkGuardTower" tilewidth="8" tileheight="16" tilecount="1" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0" type="Ork Guard Tower">
+   <properties>
+    <property name="script" value="Games/orksvhuman/ork_guard_tower.lua"/>
+   </properties>
+   <image width="8" height="16" source="Assets/Orcs_v_Humans/Sprites/OrkGuardTower.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" name="Ork Guard Tower" x="0" y="0" width="8" height="16"/>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <layer id="1" name="Base" width="45" height="45">
+  <data encoding="csv">
+65,5,65,65,68,65,65,66,5,18,6,6,6,17,5,6,17,5,17,6,5,5,18,17,5,17,5,21,5,5,5,18,21,18,5,17,5,281,5,6,6,18,6,68,68,
+68,68,66,65,65,66,65,17,6,5,18,21,6,18,18,6,18,6,10,8,26,5,5,21,6,21,6,18,21,21,21,6,6,6,18,21,21,281,17,5,17,66,66,65,68,
+65,65,66,65,66,66,65,6,6,6,21,18,17,6,21,6,5,18,9,26,9,9,5,18,18,6,6,6,5,5,18,18,17,21,21,17,6,281,21,6,21,68,65,66,68,
+66,65,65,65,66,18,5,5,21,21,18,5,9,9,7,7,26,9,7,7,9,26,10,17,5,21,5,5,21,17,18,5,5,17,18,21,6,281,21,5,65,66,65,65,65,
+68,65,66,65,68,17,21,21,21,5,21,6,8,26,7,7,9,10,10,9,10,10,7,6,6,6,21,18,17,5,5,17,21,6,6,18,5,281,6,65,66,68,68,66,66,
+5,17,18,18,17,21,6,21,17,18,7,7,10,8,8,7,8,8,10,7,7,5,6,5,18,17,21,5,21,6,6,5,118,273,273,273,273,152,66,65,66,68,66,68,68,
+18,18,17,6,18,6,21,7,26,10,10,26,10,9,9,8,26,8,26,7,5,6,18,17,21,18,17,5,6,6,21,118,152,6,65,66,66,66,66,68,66,65,65,65,65,
+10,8,9,7,26,8,26,26,26,26,7,10,7,7,7,9,8,10,26,6,17,17,118,273,273,273,273,273,273,273,273,152,18,66,65,65,66,66,68,68,66,68,66,66,65,
+26,8,26,9,7,7,26,26,9,10,8,10,9,8,9,8,10,8,9,18,6,17,281,18,5,5,5,21,6,5,18,5,66,65,65,65,65,66,68,68,65,68,65,65,65,
+7,9,26,7,10,26,8,8,26,26,8,9,26,7,9,9,21,21,6,17,18,6,281,6,6,6,18,17,21,21,18,21,68,66,66,65,65,65,65,66,68,65,66,65,65,
+8,10,9,8,8,7,9,9,26,8,9,9,8,10,5,6,17,6,17,17,17,18,281,5,21,17,18,17,17,18,18,17,17,17,66,66,65,66,68,65,68,68,68,65,68,
+9,9,8,10,9,7,10,8,10,7,8,10,9,125,174,126,126,174,174,174,126,174,281,174,174,126,126,174,174,126,174,126,128,6,17,65,68,68,68,66,66,68,66,66,65,
+7,7,10,7,9,10,9,8,7,10,10,9,7,157,6,17,68,65,68,68,6,18,281,5,18,17,17,5,5,17,21,6,144,5,6,65,66,66,65,68,66,66,65,65,66,
+26,10,7,10,9,26,7,7,10,9,10,26,10,144,18,68,66,66,65,68,65,17,281,21,17,5,18,17,18,21,6,5,144,5,5,65,66,68,65,65,66,65,66,65,68,
+10,9,7,7,26,10,8,9,26,9,7,26,10,157,6,65,68,65,66,68,68,5,281,21,5,18,6,17,6,18,6,17,144,5,5,68,68,65,65,66,66,68,65,68,65,
+26,7,10,8,9,7,10,7,9,7,8,26,8,144,66,65,65,68,66,65,68,6,281,21,21,21,18,18,21,18,6,5,144,21,5,65,65,68,66,66,65,68,68,65,65,
+174,174,174,174,174,126,126,126,126,174,174,126,174,176,68,66,68,65,68,6,6,6,281,5,6,5,5,17,17,6,18,6,157,17,21,65,65,65,66,65,65,66,68,68,65,
+6,21,18,6,18,18,21,6,6,21,18,5,17,17,66,65,68,6,29,14,14,14,30,14,14,32,5,17,5,5,6,5,144,18,18,5,21,68,66,68,66,66,68,68,65,
+65,68,65,66,65,65,17,5,68,65,66,18,65,65,66,18,5,6,45,79,62,77,79,13,77,48,5,21,21,21,21,6,144,17,18,21,18,17,5,5,65,68,68,65,68,
+66,68,66,65,68,68,68,68,68,68,65,66,65,6,18,118,273,273,30,79,62,79,79,77,13,80,5,21,18,6,6,21,144,18,5,6,21,6,21,17,18,17,18,17,18,
+65,68,65,68,66,68,68,66,68,68,68,68,68,17,17,281,6,5,61,62,13,13,62,77,13,48,5,17,6,21,21,17,144,18,6,5,6,21,18,5,6,17,6,6,18,
+66,68,68,65,68,68,65,65,65,65,66,66,66,17,21,281,6,6,6,61,77,77,77,77,77,64,5,21,5,18,6,18,173,126,174,126,126,174,126,126,126,126,174,174,174,
+65,68,66,66,68,68,65,66,65,66,68,66,68,21,18,281,6,5,6,5,5,6,5,18,5,18,18,17,17,18,5,6,6,5,5,5,17,18,5,21,17,17,18,6,6,
+66,66,68,68,66,66,65,68,66,66,65,66,68,5,21,281,18,21,5,17,5,21,18,6,18,5,17,21,21,17,21,6,5,18,6,6,26,8,10,8,7,9,17,21,17,
+66,68,65,66,66,68,68,65,65,66,5,18,17,5,21,281,17,17,17,6,17,18,5,21,5,5,21,21,18,17,5,21,17,6,18,18,7,7,8,9,9,26,7,26,21,
+68,65,68,65,65,66,68,66,68,21,5,118,273,273,29,152,6,5,18,21,21,21,6,5,6,17,21,17,5,18,17,6,21,6,5,7,8,9,10,7,9,7,8,26,8,
+6,66,68,68,6,6,18,6,5,17,118,152,5,18,281,18,21,5,5,18,17,17,5,17,6,17,5,6,17,18,17,21,17,6,18,8,26,7,7,9,9,7,9,7,26,
+273,273,273,273,273,273,273,273,273,273,152,17,6,18,281,17,6,5,21,18,17,18,18,21,5,17,6,68,66,68,68,21,18,6,5,9,7,26,9,26,8,8,10,7,26,
+5,6,17,17,18,6,5,21,5,17,6,18,17,18,281,5,5,17,21,5,6,18,6,17,6,6,66,66,68,68,66,5,5,17,8,10,9,7,8,26,10,7,7,7,26,
+17,18,6,6,21,6,18,21,6,18,17,18,17,6,281,5,6,5,18,6,17,6,5,17,18,65,65,65,65,66,66,18,17,7,26,7,8,26,9,8,10,9,10,26,7,
+18,21,18,6,21,5,5,21,7,8,18,6,18,9,297,10,5,18,21,18,21,5,21,21,68,66,66,66,66,66,65,18,21,9,8,10,9,7,9,26,10,8,9,8,9,
+18,21,17,5,18,6,6,18,7,8,7,10,8,122,123,123,124,18,21,18,18,6,5,65,66,66,68,66,65,66,65,6,18,9,10,8,8,8,8,10,7,7,26,7,7,
+6,5,6,18,17,21,5,7,8,122,123,123,123,139,289,139,140,5,21,6,17,6,5,68,65,66,68,66,68,65,65,5,17,26,9,10,8,10,10,7,7,8,10,7,5,
+17,5,5,18,6,5,21,9,9,138,139,139,139,139,139,139,140,21,21,18,17,17,66,65,68,66,68,68,68,65,68,5,18,8,8,7,7,8,26,8,26,9,8,9,21,
+6,21,17,18,17,18,21,10,10,154,139,139,139,139,139,155,156,5,5,5,6,66,66,68,66,68,65,65,68,65,6,6,6,10,8,10,10,26,9,9,10,26,26,26,18,
+18,5,5,5,21,17,17,21,7,7,138,139,139,155,156,18,18,6,6,5,66,66,66,65,68,66,65,68,68,65,18,5,8,7,9,7,8,10,7,8,10,9,26,9,6,
+17,21,6,21,21,6,18,6,6,17,154,155,156,17,17,6,5,6,18,21,66,66,66,65,66,68,65,66,68,68,65,18,10,7,9,8,10,9,7,10,9,9,9,7,18,
+6,18,21,5,6,18,18,18,21,6,18,18,18,21,18,21,17,21,6,6,66,66,66,66,65,66,66,66,68,66,66,17,21,10,8,9,26,7,26,7,8,7,8,7,17,
+5,21,6,21,17,6,6,6,18,21,18,21,6,6,6,6,6,5,21,18,65,65,66,65,68,66,68,66,66,66,65,65,21,5,26,7,26,8,8,9,26,26,9,9,21,
+6,5,21,6,18,6,18,6,21,6,18,17,18,5,21,18,18,5,6,5,68,66,66,68,65,68,65,68,65,65,66,66,68,68,5,8,9,10,10,26,7,10,10,7,5,
+6,17,5,21,17,18,6,6,18,21,6,21,21,18,17,5,17,5,6,5,66,68,66,68,66,65,66,68,65,66,68,67,66,68,66,21,18,17,7,8,10,9,7,6,17,
+18,5,21,6,6,5,18,21,6,21,21,21,17,17,6,21,18,18,6,18,66,65,66,66,65,68,68,65,68,68,65,68,66,65,66,65,17,5,5,10,8,7,26,7,17,
+17,17,17,5,18,6,21,18,18,21,6,18,17,5,5,21,17,18,17,18,66,68,66,68,66,66,66,66,68,68,66,65,66,66,66,68,21,21,6,6,10,9,9,10,5,
+6,6,18,6,21,18,18,17,17,17,18,17,5,6,17,5,18,18,5,6,66,65,66,68,68,66,68,68,66,66,68,68,68,68,66,66,17,5,6,5,26,8,26,8,5,
+6,5,21,5,5,21,5,6,18,6,17,6,18,5,21,18,18,5,6,5,18,65,68,68,66,65,65,66,68,65,65,66,66,66,66,68,6,6,6,21,8,7,8,8,26
+</data>
+ </layer>
+ <layer id="2" name="Props" width="45" height="45">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,200,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="3" name="Entity">
+  <object id="3" gid="254" x="55.6667" y="90" width="8" height="8"/>
+  <object id="8" gid="306" x="19.6667" y="94" width="16" height="16"/>
+  <object id="9" gid="307" x="13.3333" y="127.667" width="8" height="16"/>
+  <object id="10" gid="307" x="136" y="71.6667" width="8" height="16"/>
+  <object id="11" gid="307" x="99" y="37.6667" width="8" height="16"/>
+  <object id="12" gid="305" x="64" y="78.3333" width="8" height="24"/>
+  <object id="13" gid="308" x="308" y="262.667" width="16" height="16"/>
+  <object id="14" gid="309" x="273.333" y="249" width="8" height="16"/>
+  <object id="15" gid="309" x="325.333" y="199.333" width="8" height="16"/>
+  <object id="16" gid="309" x="276.333" y="308" width="8" height="16"/>
+  <object id="17" gid="218" x="333" y="240.667" width="8" height="8"/>
+  <object id="18" name="Peasant" x="35.3333" y="106.708" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/peasant.lua"/>
+   </properties>
+  </object>
+  <object id="19" name="Peasant" x="58.875" y="91.5" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/peasant.lua"/>
+   </properties>
+  </object>
+  <object id="20" name="Soldier" x="91.125" y="62.25" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/soldier.lua"/>
+   </properties>
+  </object>
+  <object id="21" name="Soldier" x="117.25" y="47.625" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/soldier.lua"/>
+   </properties>
+  </object>
+  <object id="22" name="Peon" x="286.909" y="219.818" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/peon.lua"/>
+   </properties>
+  </object>
+  <object id="23" name="Peon" x="307.667" y="203" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/peon.lua"/>
+   </properties>
+  </object>
+  <object id="24" name="Grunt" x="285.875" y="255.625" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/grunt.lua"/>
+   </properties>
+  </object>
+  <object id="25" name="Grunt" x="307.25" y="273.875" width="8" height="8">
+   <properties>
+    <property name="script" value="Games/orksvhuman/grunt.lua"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

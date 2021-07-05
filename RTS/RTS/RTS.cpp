@@ -29,8 +29,8 @@ void RTS::setup() {
 	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/collision_test.lua").build();
 	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
-	//mMap = mMapFactory->createMap("Assets/RPG/everwoods.json");
-	mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/message_test.lua").build();
+	mMap = mMapFactory->createMap("Assets/orksvhumans/orks_v_humans.json");
+	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/message_test.lua").build();
 }
 
 void RTS::handleEvents() {

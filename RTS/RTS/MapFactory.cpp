@@ -234,7 +234,10 @@ void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig,
 			auto properties = object->properties;
 			for (TMXPropertyPtr prop : properties) {
 				if (string("script").compare(prop->name) == 0) {
-					script = string(makeShared(prop->getValue<string>())->c_str());
+					auto ptr = prop->getValue<char*>();
+					auto shPtr = makeShared(ptr);
+					auto c = (char*)shPtr.get();
+					script = string(c);
 				}
 			}
 		}

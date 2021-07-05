@@ -144,7 +144,12 @@ void parseObjects(const rapidjson::Value& root, TMXObjects& objectList) {
 		auto object = objects[index].GetObject();
 		TMXObjectPtr newObject(GCC_NEW TMXObject());
 
-		newObject->gid = object["gid"].GetInt();
+		if (object.FindMember("gid") != object.MemberEnd()) {
+			newObject->gid = object["gid"].GetInt();
+		}
+		else {
+			newObject->gid = -1;
+		}
 		newObject->name = object["name"].GetString();
 		newObject->type = object["type"].GetString();
 		newObject->rotation = object["rotation"].GetDouble();

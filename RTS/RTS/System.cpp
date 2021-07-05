@@ -64,7 +64,7 @@ AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 		auto animation = animations[index].GetObject();
 
 		AnimationPtr anim(GCC_NEW Animation());
-		anim->name =animation["name"].GetString();
+		anim->name = animation["name"].GetString();
 		animationSet->animations.emplace(anim->name, anim);
 		auto frames = animation["frames"].GetArray();
 		for (int frameIndex = 0; frameIndex < frames.Size(); frameIndex++) {

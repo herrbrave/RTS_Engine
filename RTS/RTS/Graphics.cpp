@@ -98,7 +98,7 @@ void TextDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	graphicsRef.renderText(this->text, this->font, position.x, position.y, this->mColor->r, this->mColor->g, this->mColor->b, this->mColor->a);
 }
 
-SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(assetVendor) {
+SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(graphicsConfig, assetVendor) {
 	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		throw std::exception("Failed to initialize TTF");
 	}
@@ -133,6 +133,12 @@ void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 
 		width, 
 		height
 	};
+
+	// Apply zoom effect
+	rect.x *= mGraphicsConfig->mZoom;
+	rect.y *= mGraphicsConfig->mZoom;
+	rect.w *= mGraphicsConfig->mZoom;
+	rect.h *= mGraphicsConfig->mZoom;
 
 	if (a < 255) {
 		SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_BLEND);
@@ -188,6 +194,12 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 		dest.h = src.h;
 	}
 
+	// apply zoom effect
+	dest.x *= mGraphicsConfig->mZoom;
+	dest.y *= mGraphicsConfig->mZoom;
+	dest.w *= mGraphicsConfig->mZoom;
+	dest.h *= mGraphicsConfig->mZoom;
+
 	SDL_RenderCopyEx(mRenderer.get(), sdlTexture.get(), &src, &dest, angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
 
 	if (a < 255) {
@@ -223,6 +235,12 @@ void SDLGraphics::renderText(const string& text, const string& font, float x, fl
 
 	SDL_Rect src{ 0, 0, w, h };
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };
+
+	// apply zoom effect
+	dest.x *= mGraphicsConfig->mZoom;
+	dest.y *= mGraphicsConfig->mZoom;
+	dest.w *= mGraphicsConfig->mZoom;
+	dest.h *= mGraphicsConfig->mZoom;
 
 	SDL_RenderCopy(mRenderer.get(), sdlTexture, &src, &dest);
 
@@ -265,7 +283,7 @@ AssetPtr SDLGraphics::createFontAsset(const string& path, const string& assetTag
 	return asset;
 }
 
-SDLOpenGLGraphics::SDLOpenGLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(assetVendor) {
+SDLOpenGLGraphics::SDLOpenGLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(graphicsConfig, assetVendor) {
 
 	if (graphicsConfig->mFontPath.length() > 0 && TTF_Init() < 0) {
 		string err("Error setting up TTF : ");
