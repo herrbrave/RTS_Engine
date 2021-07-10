@@ -59,16 +59,16 @@ AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 	animationSet->fps = fps;
 	animationSet->spritesheet = imagePath;
 	animationSet->name = name;
-	auto animations = doc["animations"].GetArray();
+	const rapidjson::Value& animations = doc["animations"];
 	for (int index = 0; index < animations.Size(); index++) {
-		auto animation = animations[index].GetObject();
+		const rapidjson::Value& animation = animations[index];
 
 		AnimationPtr anim(GCC_NEW Animation());
 		anim->name = animation["name"].GetString();
 		animationSet->animations.emplace(anim->name, anim);
-		auto frames = animation["frames"].GetArray();
+		const rapidjson::Value& frames = animation["frames"];
 		for (int frameIndex = 0; frameIndex < frames.Size(); frameIndex++) {
-			auto frame = frames[frameIndex].GetObject();
+			const rapidjson::Value& frame = frames[frameIndex];
 			float x(float(frame["x"].GetInt()));
 			float y(float(frame["y"].GetInt()));
 			float w(float(frame["w"].GetInt()));

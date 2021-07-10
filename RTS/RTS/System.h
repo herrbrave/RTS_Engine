@@ -170,13 +170,7 @@ class GraphicsSystem : public System {
 public:
 	GraphicsSystem(GraphicsConfig* graphicsConfig, SystemManagerPtr systemManager) : System(SystemType::GRAPHICS, systemManager) {
 		mGraphicsConfig.reset(graphicsConfig);
-
-		if (graphicsConfig->mFlags & SDL_WINDOW_OPENGL) {
-			mGraphics.reset(GCC_NEW SDLOpenGLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
-		}
-		else {
-			mGraphics.reset(GCC_NEW SDLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
-		}
+		mGraphics.reset(GCC_NEW SDLGraphics(mGraphicsConfig, AssetVendorPtr(GCC_NEW AssetSystem::DefaultAssetVendor(static_pointer_cast<AssetSystem>(systemManager->systems.at(SystemType::ASSET))))));
 		mCamera.reset(GCC_NEW Camera());
 		mCamera->position.reset(GCC_NEW Vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;
@@ -425,7 +419,7 @@ private:
 class SoundSystem : public System {
 public:
 	SoundSystem(SystemManagerPtr systemManager) : System(SystemType::SOUND, systemManager) {
-		if (!Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
+		if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0) {
 			string error("Error initializing SDL_Mixer: ");
 			error.append(SDL_GetError());
 			throw std::exception(error.c_str());

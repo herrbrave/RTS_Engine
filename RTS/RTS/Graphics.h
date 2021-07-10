@@ -15,12 +15,6 @@
 #include<SDL_ttf.h>
 #include<SDL_image.h>
 
-// OpenGL requirements
-#include<gl\glew.h>
-#include<SDL_opengl.h>
-
-
-
 class Graphics;
 typedef shared_ptr<Graphics> GraphicsPtr;
 typedef weak_ptr<Graphics> WeakGraphicsPtr;
@@ -324,34 +318,6 @@ private:
 
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 	std::unique_ptr<SDL_Renderer, SDL_DELETERS> mRenderer{ nullptr };
-};
-
-struct GLTexture {
-	GLuint texId;
-	GLfloat w;
-	GLfloat h;
-};
-
-struct Vector3f {
-	GLfloat x, y, z;
-};
-
-class SDLOpenGLGraphics : public Graphics {
-public:
-	SDLOpenGLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
-	void onBeforeDraw() override;
-	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void onAfterDraw() override;
-
-	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
-	AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) override;
-private:
-
-	std::unique_ptr<SDL_GLContext, SDL_DELETERS> mGLContext{ nullptr };
-	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 };
 
 class DrawableComponent : public Component {

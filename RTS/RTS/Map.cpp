@@ -38,10 +38,9 @@ TMXMapPtr parseMap(const string& path) {
 	return map;
 }
 
-void parseProperties(const rapidjson::Value& root, TMXProperties& props) {
-	auto tiles = root.GetArray();
+void parseProperties(const rapidjson::Value& tiles, TMXProperties& props) {
 	for (int index = 0; index < tiles.Size(); index++) {
-		auto tile = tiles[index].GetObject();
+		const rapidjson::Value& tile = tiles[index];
 		TMXPropertyPtr prop(GCC_NEW TMXProperty());
 		prop->name = tile["name"].GetString();
 		prop->type = tile["type"].GetString();
@@ -60,7 +59,7 @@ void parseProperties(const rapidjson::Value& root, TMXProperties& props) {
 			prop->setValue(VoidPtr(new int { tile["value"].GetInt() }));
 		}
 		else if (prop->type == "float") {
-			prop->setValue(VoidPtr(new float { tile["value"].GetFloat() }));
+			prop->setValue(VoidPtr(new float { (float) tile["value"].GetDouble() }));
 		}
 		else if (prop->type == "bool") {
 			prop->setValue(VoidPtr(new bool{ tile["value"].GetBool() }));
@@ -69,10 +68,9 @@ void parseProperties(const rapidjson::Value& root, TMXProperties& props) {
 	}
 }
 
-void parseLayers(const rapidjson::Value& root, TMXLayers& layerList) {
-	auto layers = root.GetArray();
+void parseLayers(const rapidjson::Value& layers, TMXLayers& layerList) {
 	for (int index = 0; index < layers.Size(); index++) {
-		auto layer = layers[index].GetObject();
+		const rapidjson::Value& layer = layers[index];
 
 		TMXLayerPtr newLayer(GCC_NEW TMXLayer());
 		newLayer->name = layer["name"].GetString();
@@ -95,7 +93,7 @@ void parseLayers(const rapidjson::Value& root, TMXLayers& layerList) {
 			parseObjects(layer["objects"], newLayer->objects);
 		}
 		if (layer.FindMember("data") != layer.MemberEnd()) {
-			auto data = layer["data"].GetArray();
+			const rapidjson::Value& data = layer["data"];
 			newLayer->tileCount = data.Size();
 			unsigned int* newData = new unsigned int[data.Size()];
 			for (int d = 0; d < data.Size(); d++) {
@@ -108,10 +106,9 @@ void parseLayers(const rapidjson::Value& root, TMXLayers& layerList) {
 	}
 }
 
-void parseTilesets(const rapidjson::Value& root, TMXTilesets& tilesetList) {
-	auto tilesets = root.GetArray();
+void parseTilesets(const rapidjson::Value& tilesets, TMXTilesets& tilesetList) {
 	for (int index = 0; index < tilesets.Size(); index++) {
-		auto tileset = tilesets[index].GetObject();
+		const rapidjson::Value& tileset = tilesets[index];
 		TMXTilesetPtr newTileset(GCC_NEW TMXTileset());
 
 		newTileset->firstgid = tileset["firstgid"].GetInt();
@@ -138,10 +135,9 @@ void parseTilesets(const rapidjson::Value& root, TMXTilesets& tilesetList) {
 	}
 }
 
-void parseObjects(const rapidjson::Value& root, TMXObjects& objectList) {
-	auto objects = root.GetArray();
+void parseObjects(const rapidjson::Value& objects, TMXObjects& objectList) {
 	for (int index = 0; index < objects.Size(); index++) {
-		auto object = objects[index].GetObject();
+		const rapidjson::Value& object = objects[index];
 		TMXObjectPtr newObject(GCC_NEW TMXObject());
 
 		if (object.FindMember("gid") != object.MemberEnd()) {
@@ -156,10 +152,10 @@ void parseObjects(const rapidjson::Value& root, TMXObjects& objectList) {
 		newObject->width = object["width"].GetInt();
 		newObject->height = object["height"].GetInt();
 		if (object.FindMember("x") != object.MemberEnd()) {
-			newObject->x = object["x"].GetFloat();
+			newObject->x = (float) object["x"].GetDouble();
 		}
 		if (object.FindMember("y") != object.MemberEnd()) {
-			newObject->y = object["y"].GetFloat();
+			newObject->y = (float) object["y"].GetDouble();
 		}
 		newObject->visible = object["visible"].GetBool();
 		if (object.FindMember("properties") != object.MemberEnd()) {
@@ -170,10 +166,9 @@ void parseObjects(const rapidjson::Value& root, TMXObjects& objectList) {
 	}
 }
 
-void parseTiles(const rapidjson::Value& root, TMXTiles& tileList) {
-	auto tiles = root.GetArray();
+void parseTiles(const rapidjson::Value& tiles, TMXTiles& tileList) {
 	for (int index = 0; index < tiles.Size(); index++) {
-		auto tile = tiles[index].GetObject();
+		const rapidjson::Value& tile = tiles[index];
 		TMXTilePtr newTile(GCC_NEW TMXTile());
 
 		newTile->id = tile["id"].GetInt();
@@ -197,10 +192,9 @@ void parseTiles(const rapidjson::Value& root, TMXTiles& tileList) {
 	}
 }
 
-void parseFrames(const rapidjson::Value& root, TMXFrames& frameList) {
-	auto frames = root.GetArray();
+void parseFrames(const rapidjson::Value& frames, TMXFrames& frameList) {
 	for (int index = 0; index < frames.Size(); index++) {
-		auto frame = frames[index].GetObject();
+		const rapidjson::Value& frame = frames[index];
 		TMXFramePtr newFrame(GCC_NEW TMXFrame());
 
 		newFrame->duration = frame["duration"].GetInt();

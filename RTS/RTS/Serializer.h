@@ -7,10 +7,9 @@
 class Serializer {
 public:
 	rapidjson::StringBuffer stringBuffer;
-	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer;
+	rapidjson::PrettyWriter<rapidjson::StringBuffer> writer{ stringBuffer };
 
 	Serializer() {
-		writer.Reset(stringBuffer);
 	}
 };
 

@@ -87,11 +87,11 @@ public:
 		this->defaultAnimationName = root["defaultAnimationName"].GetString();
 		this->fps = root["fps"].GetInt();
 
-		auto it = root["animations"].GetObject().begin();
+		auto it = root["animations"].Begin();
 
-		while (it != root["animations"].GetObject().end()) {
-			const rapidjson::Value& animation = it->value;
-			this->animations[it->name.GetString()] = AnimationPtr(GCC_NEW Animation(animation));
+		while (it != root["animations"].End()) {
+			const rapidjson::Value& animation = *it;
+			this->animations[animation["name"].GetString()] = AnimationPtr(GCC_NEW Animation(animation));
 			it++;
 		}
 	}
