@@ -1,0 +1,8 @@
+Spider
+32x16 pixels sq
+14 frames
+
+Row
+1 Idle
+2 Walk
+3 Jump

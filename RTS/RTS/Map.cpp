@@ -1,7 +1,13 @@
 #include"Map.h"
 
 TMXMapPtr parseMap(const string& path) {
-	std::ifstream file(path);
+	auto start = std::chrono::high_resolution_clock::now();
+
+	std::ifstream file;
+	file.open(path);
+	if (!file.is_open()) {
+		ERR("Unable to open file: " + path);
+	}
 	std::string line;
 	std::string builder;
 	while (std::getline(file, line)) {
@@ -11,6 +17,12 @@ TMXMapPtr parseMap(const string& path) {
 
 	rapidjson::Document doc;
 	doc.Parse(builder.c_str());
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Parse Map File: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
 
 	TMXMapPtr map(GCC_NEW TMXMap());
 
@@ -23,17 +35,41 @@ TMXMapPtr parseMap(const string& path) {
 	map->tileWidth = doc["tilewidth"].GetInt();
 	map->tileHeight = doc["tileheight"].GetInt();
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Read Map Attributes: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
+
 	if (doc.FindMember("properties") != doc.MemberEnd()) {
 		parseProperties(doc["properties"], map->properties);
 	}
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Read Map Properties: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
 
 	if (doc.FindMember("tilesets") != doc.MemberEnd()) {
 		parseTilesets(doc["tilesets"], map->tilesets);
 	}
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Read Tilesets: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
+
 	if (doc.FindMember("layers") != doc.MemberEnd()) {
 		parseLayers(doc["layers"], map->layers);
 	}
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Read Layers: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
 
 	return map;
 }

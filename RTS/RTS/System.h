@@ -396,6 +396,10 @@ public:
 
 	void handleEvent(const SDL_Event& evt);
 
+	bool contains(unsigned long id);
+
+	WeakInputListenerPtr at(unsigned long id);
+
 	void clear() override;
 
 private:

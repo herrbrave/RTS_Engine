@@ -35,7 +35,11 @@ void AnimationSystem::deregisterAnimation(unsigned long id) {
 }
 
 AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
-	std::ifstream file(path);
+	std::ifstream file;
+	file.open(path);
+	if (!file.is_open()) {
+		ERR("Unable to open path: " + path);
+	}
 	std::string line;
 	std::string builder;
 	while (std::getline(file, line)) {
@@ -387,6 +391,14 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 	}
 }
 
+bool InputSystem::contains(unsigned long id) {
+	return this->mListeners.find(id) != this->mListeners.end();
+}
+
+WeakInputListenerPtr InputSystem::at(unsigned long id) {
+	return WeakInputListenerPtr(this->mListeners.at(id));
+}
+
 void InputSystem::clear() {
 	mListeners.clear();
 }
@@ -394,6 +406,8 @@ void InputSystem::clear() {
 bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vector2f& position) {
 	GraphicsSystemPtr graphicsSystem(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	auto ent = entitySystem->getEntityById(id);
 	BodyPtr body(physicsSystem->getBody(id));
 
 	CameraPtr cam = makeShared(graphicsSystem->getCamera());

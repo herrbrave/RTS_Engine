@@ -1,0 +1,7 @@
+Wyvern
+32x32 pixels sq
+8 frames
+
+Row
+1 Flap
+2 Breath

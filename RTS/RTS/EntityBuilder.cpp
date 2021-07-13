@@ -76,26 +76,6 @@ EntityBuilder& EntityBuilder::withScript(const string& scriptPath) {
 	LuaScriptSystemPtr scriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
 	scriptSystem->registerLuaScript(mEntity->id, script);
 
-	this->withInput(Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([script](EventPtr evt) {
-		script->invoke("onMouseEnterEntity");
-		return false;
-	}));
-
-	this->withInput(Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([script](EventPtr evt) {
-		script->invoke("onMouseExitEntity");
-		return false;
-	}));
-
-	this->withInput(Input::ON_CLICK, function<bool(EventPtr)>([script](EventPtr evt) {
-		script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
-		return false;
-	}));
-
-	this->withInput(Input::ON_DRAG, function<bool(EventPtr)>([script](EventPtr evt) {
-		script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
-		return false;
-	}));
-
 	LuaScriptComponentPtr scriptComponent(GCC_NEW LuaScriptComponent(mEntity->id, script));
 	mEntity->addComponent(ComponentPtr(scriptComponent));
 

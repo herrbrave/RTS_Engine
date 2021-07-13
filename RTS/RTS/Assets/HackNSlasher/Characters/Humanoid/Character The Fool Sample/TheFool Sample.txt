@@ -1,0 +1,19 @@
+The Fool
+32x32 pixels sq
+36 frames
+
+Row
+1: Up
+2: Right
+3: Down
+4: Left
+
+Column
+1-4: Idle
+5-8: Walking
+9-12: Attacking
+13: Stunned
+14: Burned/Shocked
+15: Cut/Stabbed/Bleeding
+
+These are prebaked animations for The Moon Fields' character The Fool. See the "Humanoid Characters" folder for directions on prebaking your own characters mixing and matching a character sprite with a weapon of your choosing.

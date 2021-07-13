@@ -24,8 +24,7 @@ public:
 
 		EventDelegate scriptLoadedDelegate([this](const EventData& eventData) {
 			ScriptLoadedData data = dynamic_cast<const ScriptLoadedData&>(eventData);
-
-			initialize(data.script);
+			initialize(data.script, data.id);
 		});
 
 		EventListenerDelegate scriptLoadedListener(scriptLoadedDelegate);
@@ -35,14 +34,14 @@ public:
 	LuaScriptPtr create(const string& scriptPath, unsigned long entityId);
 
 private:
-	void initialize(LuaScriptPtr& script);
+	void initialize(LuaScriptPtr& script, unsigned long entityId);
 	void registerGeneral(LuaScriptPtr& script);
 	void registerFactory(LuaScriptPtr& script);
 	void registerEntity(LuaScriptPtr& script);
 	void registerPhysics(LuaScriptPtr& script);
 	void registerDrawable(LuaScriptPtr& script);
 	void registerAnimation(LuaScriptPtr& script);
-	void registerInput(LuaScriptPtr& script);
+	void registerInput(LuaScriptPtr& script, unsigned long entityId);
 	void registerScript(LuaScriptPtr& script);
 	void registerUi(LuaScriptPtr& script);
 	void registerAsset(LuaScriptPtr& script);

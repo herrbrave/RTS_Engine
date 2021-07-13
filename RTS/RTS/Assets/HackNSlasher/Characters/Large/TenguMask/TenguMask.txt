@@ -1,0 +1,9 @@
+Tengu
+32x32 pixels sq
+36 frames
+
+Row
+1 Idle/Looking
+2 Cast Spell (Orb/Lightning/Attack)
+3 Cast Spell (Split/Teleport/Summon)
+4 Stoneface

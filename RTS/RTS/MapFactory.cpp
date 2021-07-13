@@ -1,10 +1,28 @@
 #include"MapFactory.h"
 
-EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height) {
+
+void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, int y, bool canOccupy) {
+	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+
+	TileComponentPtr tileComponent;
+	if (entity->getComponents().find(ComponentType::TILE_COMPONENT) != entity->getComponents().end()) {
+		tileComponent = makeShared(entity->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+	}
+	else {
+		tileComponent = TileComponentPtr(GCC_NEW TileComponent(entity->id, x, y));
+		entity->addComponent(tileComponent);
+	}
+
+	tileComponent->x = x;
+	tileComponent->y = y;
+	tileComponent->canOccupy = canOccupy;
+}
+
+EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height, bool canOccupy) {
 	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, width, height, tx, ty, width, height, false);
 
-	TileComponentPtr tileComponent(GCC_NEW TileComponent(entity->id, xIndex, yIndex));
-	entity->addComponent(tileComponent);
+	applyTile(this->mSystemManager, entity->id, xIndex, yIndex, canOccupy);
 
 	return entity;
 }
@@ -18,12 +36,20 @@ MapFactory::MapFactory(TileFactoryPtr tileFactory, LuaScriptFactoryPtr luaScript
 MapPtr MapFactory::createMap(const string& pathToMap) {
 	TMXMapPtr tmxMap = parseMap(pathToMap);
 
+	auto start = std::chrono::high_resolution_clock::now();
+
 	Tileset tileset;
 	TileAnimationSet animations;
 	auto tilesets = tmxMap->tilesets;
 	for (TMXTilesetPtr _tileset : tilesets) {
 		this->loadGridTileset(_tileset, tileset, animations);
 	}
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map Factory - Load Tilesets: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
 
 	MapConfig* mapConfig = GCC_NEW MapConfig();
 	mapConfig->mapWidth = tmxMap->width;
@@ -36,6 +62,9 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	auto layers = tmxMap->layers;
 	int index = 0;
 	for (TMXLayerPtr layer : layers) {
+
+		auto before = std::chrono::high_resolution_clock::now();
+
 		std::string type = layer->type;
 		if (type == "tilelayer") {
 			loadTileLayer(layer, tmxMap->width, tmxMap->height, tmxMap->tileWidth, tmxMap->tileHeight, *mapConfig, index);
@@ -43,8 +72,19 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 		else {
 			loadObjectLayer(layer, *mapConfig, index);
 		}
+
+		auto after = std::chrono::high_resolution_clock::now();
+		auto time = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+		DEBUG_LOG("Map Factory - Load Layer: " + std::to_string(time.count()));
 		index++;
 	}
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map Factory - Create Tile and Object Layers: " + std::to_string(res.count()));
+
+	start = std::chrono::high_resolution_clock::now();
+
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
 	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
@@ -68,6 +108,10 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 			}
 		}
 	}
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("Map - Parse Map File: " + std::to_string(res.count()));
 
 	return map;
 }
@@ -109,6 +153,20 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 				newTile->collisionWidth = collisionObject->width;
 				newTile->collisionHeight = collisionObject->height;
 			}
+
+			string script = "";
+			if (!tile->properties.empty()) {
+				auto properties = tile->properties;
+				for (TMXPropertyPtr prop : properties) {
+					if (string("script").compare(prop->name) == 0) {
+						auto ptr = prop->getValue<char*>();
+						auto shPtr = makeShared(ptr);
+						auto c = (char*)shPtr.get();
+						script = string(c);
+					}
+				}
+			}
+			newTile->script = script;
 
 			if (!tile->animation.empty()) {
 				AnimationSetPtr animationSet(GCC_NEW AnimationSet());
@@ -154,6 +212,20 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 			auto newTile = TilePtr(GCC_NEW Tile(image, 0, 0, tileHeight, tileWidth));
 			tiles.emplace(id++, newTile);
 
+			string script = "";
+			if (!tile->properties.empty()) {
+				auto properties = tile->properties;
+				for (TMXPropertyPtr prop : properties) {
+					if (string("script").compare(prop->name) == 0) {
+						auto ptr = prop->getValue<char*>();
+						auto shPtr = makeShared(ptr);
+						auto c = (char*)shPtr.get();
+						script = string(c);
+					}
+				}
+			}
+			newTile->script = script;
+
 			if (!tile->objectgroup.empty()) {
 				auto objectGroup = tile->objectgroup;
 				auto collisionObject = objectGroup[0];
@@ -163,11 +235,41 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 				newTile->collisionWidth = collisionObject->width;
 				newTile->collisionHeight = collisionObject->height;
 			}
+
+			if (!tile->animation.empty()) {
+				AnimationSetPtr animationSet(GCC_NEW AnimationSet());
+				id = tileset->firstgid;
+				newTile->animated = true;
+				animations[id] = animationSet;
+
+				animationSet->spritesheet = image;
+				animationSet->fps = 0;
+				animationSet->defaultAnimationName = "default";
+				animationSet->name = tileset->name;
+
+				AnimationPtr anim(GCC_NEW Animation());
+				animationSet->animations["default"] = anim;
+
+				auto animation = tile->animation;
+				for (TMXFramePtr anim : animation) {
+					if (animationSet->fps == 0) {
+						int frameTime = anim->duration;
+						int fps = 1000 / frameTime;
+						animationSet->fps = fps;
+					}
+					int tileId = anim->tileid + id;
+					auto animTile = tiles[tileId];
+
+					TexturePtr texture(GCC_NEW Texture(animTile->textureAssetTag, animTile->tx, animTile->ty, animTile->w, animTile->h));
+					animationSet->animations["default"]->frames.push_back(texture);
+				}
+			}
 		}
 	}
 }
 
 void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder) {
+	DEBUG_LOG("Map Factory.loadTileLayer - Starting to build layer.");
 	auto data = layer->data;
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
@@ -178,6 +280,8 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 			continue;
 		}
 
+		auto start = std::chrono::high_resolution_clock::now();
+
 		int x = (index % width);
 		int y = (index / height);
 		TilePtr t = mapConfig.tileset.at(tileVal);
@@ -186,35 +290,38 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 		if (t->animated) {
 			auto animationSet = mapConfig.animatedTiles[tileVal];
 			tile = mTileFactory->createPhysicsEntity(x * tileWidth, y * tileHeight, tileWidth, tileHeight); 
-			TexturePtr texture(GCC_NEW Texture(""));
-			shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
-			graphicsSystem->registerDrawable(tile->id, textureDrawable);
-			AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
-			animationHandler->loop();
-			animationSystem->registerAnimation(tile->id, animationHandler);
-			AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(tile->id, animationHandler));
-
-			TileComponentPtr tileComponent(GCC_NEW TileComponent(tile->id, x, y));
-			tile->addComponent(tileComponent);
+			applyTile(this->mSystemManager, tile->id, t->tx, t->ty, t->collision);
+			applyAnimation(this->mSystemManager, tile->id, animationSet);
 		}
 		else {
-			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), t->tx, t->ty, t->w, t->h);
+			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), t->tx, t->ty, t->w, t->h, t->collision);
 			auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
-			//drawableComponent->setZOrder(drawOrder);
+			drawableComponent->setZOrder(drawOrder);
 		}
 		mapConfig.tiles.push_back(tile->id);
 
+		auto end = std::chrono::high_resolution_clock::now();
+		auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		DEBUG_LOG("Map Factory.loadTileLayer - createEntity: " + std::to_string(res.count()));
+
+		start = std::chrono::high_resolution_clock::now();
 
 		TileComponentPtr tileComponent(tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 		// TODO: Add this value as a property of the tile.
 		tileComponent->canOccupy = true;
 
 		if (t->collision) {
-			BodyPtr blockBody(GCC_NEW Body(tile->id, x, y, width, height));
-			physicsSystem->registerBody(tile->id, blockBody);
-			PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(tile->id, blockBody));
-			physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), t->collisionWidth, t->collisionHeight))));
+			tileComponent->canOccupy = false;
+			applyPhysics(this->mSystemManager, tile->id, x * tileWidth, y * tileHeight, tileWidth, tileHeight, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), t->collisionWidth, t->collisionHeight)));
 		}
+
+		if (!t->script.empty()) {
+			applyScript(mSystemManager, tile->id, t->script);
+		}
+
+		end = std::chrono::high_resolution_clock::now();
+		res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+		DEBUG_LOG("Map Factory.loadTileLayer - apply collision, and script: " + std::to_string(res.count()));
 	}
 }
 
@@ -247,20 +354,7 @@ void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig,
 			TilePtr t = mapConfig.tileset.at(id);
 			tile = mTileFactory->createPhysicsEntity(x, y, width, height);
 			if (t->animated) {
-				GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-				AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-				tile = mTileFactory->createPhysicsEntity(x, y, width, height);
-				TexturePtr texture(GCC_NEW Texture(""));
-				shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
-				textureDrawable->setDrawDepth(drawOrder);
-				graphicsSystem->registerDrawable(tile->id, textureDrawable);
-				AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, mapConfig.animatedTiles[id], mapConfig.animatedTiles[id]->fps));
-				animationHandler->loop();
-				animationSystem->registerAnimation(tile->id, animationHandler);
-				AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(tile->id, animationHandler));
-
-				TileComponentPtr tileComponent(GCC_NEW TileComponent(tile->id, x, y));
-				tile->addComponent(tileComponent);
+				applyAnimation(this->mSystemManager, tile->id, mapConfig.animatedTiles[id]);
 			}
 			else {
 				tile = mTileFactory->createTexturedEntity(t->textureAssetTag, x, y, width, height, t->tx, t->ty, t->w, t->h, true);
@@ -275,17 +369,7 @@ void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig,
 		mapConfig.objects.push_back(tile->id);
 
 		if (script.size() > 0) {
-			InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
-			InputListenerPtr inputListener(GCC_NEW InputListener(tile->id));
-			inputSystem->registerEventListener(inputListener);
-
-			LuaScriptPtr script(mLuaScriptFactory->create(script, tile->id));
-
-			LuaScriptComponent* luaScriptComponent = GCC_NEW LuaScriptComponent(tile->id, script);
-			tile->addComponent(ComponentPtr(luaScriptComponent));
-
-			LuaScriptSystemPtr scriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
-			scriptSystem->registerLuaScript(tile->id, script);
+			applyScript(this->mSystemManager, tile->id, script);
 		}
 	}
 }

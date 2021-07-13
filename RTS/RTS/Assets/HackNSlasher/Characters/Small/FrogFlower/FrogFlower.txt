@@ -1,0 +1,8 @@
+FrogFlower
+32x32 pixels sq
+9 frames
+
+Row
+1 Idle
+2 Jump
+3 Fall

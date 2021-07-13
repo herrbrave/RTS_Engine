@@ -1,0 +1,9 @@
+BigBeast
+32x32 pixels sq
+30 frames
+
+Row
+1 Idle
+2 Walking
+3 Hit/Throw
+4 Roll

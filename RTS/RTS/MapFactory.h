@@ -25,8 +25,10 @@ class TileFactory : public EntityFactory {
 public:
 	TileFactory(SystemManagerPtr systemManager) : EntityFactory(systemManager) {}
 
-	EntityPtr createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height);
+	EntityPtr createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height, bool canOccupy);
 };
+
+void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, int y, bool canOccupy);
 
 class MapFactory {
 public:

@@ -1,0 +1,11 @@
+Batwing Buttstomper
+40x40 pixels sq
+25 frames
+
+Row
+1 Idle
+2 Walking
+3 Breathing e.g. fire, magic orbs
+4 Crouch down into jump
+5 Flapping
+6 Buttstomping

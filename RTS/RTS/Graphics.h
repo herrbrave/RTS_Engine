@@ -350,6 +350,9 @@ public:
 	WeakDrawablePtr getDrawable() {
 		return mDrawable;
 	}
+	void setDrawable(DrawablePtr drawable) {
+		this->mDrawable = drawable;
+	}
 
 	void serialize(Serializer& serializer) const override {
 		serializer.writer.StartObject();

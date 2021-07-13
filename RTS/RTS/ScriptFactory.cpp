@@ -3,13 +3,15 @@
 LuaScriptPtr LuaScriptFactory::create(const string& scriptPath, unsigned long entityId) {
 	LuaScriptPtr script(GCC_NEW LuaScript(scriptPath));
 
-	script->state["entityId"] = (int) entityId;
-	this->initialize(script);
+	this->initialize(script, entityId);
 
 	return script;
 }
 
-void LuaScriptFactory::initialize(LuaScriptPtr& script) {
+void LuaScriptFactory::initialize(LuaScriptPtr& script, unsigned long entityId) {
+
+	script->state["entityId"] = (int) entityId;
+
 	int DRAWABLE = script->state["registrar"]["DRAWABLE"];
 	int ENTITY = script->state["registrar"]["ENTITY"];
 	int FACTORY = script->state["registrar"]["FACTORY"];
@@ -56,7 +58,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script) {
 		this->registerAnimation(script);
 	}
 	if (INPUT) {
-		this->registerInput(script);
+		this->registerInput(script, entityId);
 	}
 	if (SCRIPT) {
 		this->registerScript(script);
@@ -182,7 +184,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		physicsComponent->setSpeed(speed);
 	};
 
-	script->state["getSpeed"] = [this](int entityId, double speed) -> double {
+	script->state["getSpeed"] = [this](int entityId) -> double {
 		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
 
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
@@ -497,21 +499,7 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 	script->state["attachAnimationSet"] = [this](int entityId, string path) {
-		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
-		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
-
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		TexturePtr texture(GCC_NEW Texture(""));
-		shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
-		graphicsSystem->registerDrawable(entity->id, textureDrawable);
-		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-		AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
-		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
-		animationSystem->registerAnimation(entity->id, animationHandler);
-		AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(entity->id, animationHandler));
-
-		entity->addComponent(ComponentPtr(animationComponent));
+		applyAnimation(mSystemManager, entityId, path);
 	};
 
 	script->state["setAnimation"] = [this](int entityId, string animationName) {
@@ -565,7 +553,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 	};
 }
 
-void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
+void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityId) {
 
 	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
 	script->state["SDLK_UP"] = (int)SDLK_UP;
@@ -621,16 +609,38 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script) {
 	script->deleters.push_back([keyEventListener]() {
 		EventManager::getInstance().removeDelegate(keyEventListener, EventType::KEY_EVENT);
 	});
+
+	SystemManagerPtr systemManager = makeShared(mSystemManager);
+	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	auto entity = makeShared(entitySystem->getEntityById(entityId));
+	if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) == entity->getComponents().end()) {
+		applyPhysics(mSystemManager, entityId, -1, -1, 1, 1);
+	}
+
+	applyInput(mSystemManager, entityId, Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([script](EventPtr evt) {
+		script->invoke("onMouseEnterEntity");
+		return false;
+	}));
+
+	applyInput(mSystemManager, entityId, Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([script](EventPtr evt) {
+		script->invoke("onMouseExitEntity");
+		return false;
+	}));
+
+	applyInput(mSystemManager, entityId, Input::ON_CLICK, function<bool(EventPtr)>([script](EventPtr evt) {
+		script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
+		return false;
+	}));
+
+	applyInput(mSystemManager, entityId, Input::ON_DRAG, function<bool(EventPtr)>([script](EventPtr evt) {
+		script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
+		return false;
+	}));
 }
 
 void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
 	script->state["enableMouseMove"] = [this, script](int entityId) {
-		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
-		InputSystemPtr inputSystem(makeShared(systemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
-		InputListenerPtr inputListener(GCC_NEW InputListener(entityId));
-		inputSystem->registerEventListener(inputListener);
-
-		inputListener->eventCallbacks.emplace(Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
+		applyInput(mSystemManager, entityId, Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
 			script->invoke("onMouseMove", static_cast<int>(evt->mouseEvent->position->x), static_cast<int>(evt->mouseEvent->position->y), static_cast<int>(evt->mouseEvent->button));
 			return false;
 		}));
@@ -641,24 +651,7 @@ void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
 void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
 
 	script->state["setScript"] = [this](int entityId, string path) {
-		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
-		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
-
-		LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
-		LuaScriptPtr luaScript(GCC_NEW LuaScript(path));
-
-		luaScript->state["entityId"] = (int)entityId;
-		LuaScriptComponentPtr scriptComponent;
-		if (entity->getComponents().find(ComponentType::LUA_SCRIPT_COMPONENT) == entity->getComponents().end()) {
-			scriptComponent.reset(GCC_NEW LuaScriptComponent(entityId, luaScript));
-			entity->addComponent(scriptComponent);
-		}
-		else {
-			scriptComponent = makeShared<LuaScriptComponent>(entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT));
-		}
-		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, luaScript);
-		EventManager::getInstance().pushEvent(scriptLoaded);
+		applyScript(mSystemManager, entityId, path);
 	};
 }
 

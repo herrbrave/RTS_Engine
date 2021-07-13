@@ -275,6 +275,13 @@ private:
 	vector<SectionDrawablePtr> mSections;
 };
 
+void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, std::function<void()> callback);
+void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, const string& script);
+void applyButtonWithIcon(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& path, std::function<void()> callback);
+void applyButtonWithIcon(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& path, const string& script);
+void applyLabel(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, const string& text, const string& font);
+void applyProgress(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location);
+
 class WidgetFactory : public EntityFactory {
 public:
 	WidgetFactory(string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager);

@@ -1,0 +1,9 @@
+CentaurKnite
+32x32 pixels sq
+24 frames
+
+Row
+1 Idle
+2 Galloping
+3 Swinging Club
+4 Throwing Lance

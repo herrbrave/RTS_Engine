@@ -1,0 +1,13 @@
+Attack Templates
+Variable Sizes
+4 Frames
+
+Column:
+1: Startup
+2: Action
+3: Followthrough
+4: Recovery
+
+These four Right facing frames can be baked in any cardinal direction or used as a model for 360* of attacking synced with the nearest animation direction for the player sprites.
+
+*Simple Slash is a single frame that can be used with any of the Characters and Weapons. It is also the Right facing frame and can be rotated to fit any direction. You can also use the 3rd frame in the other Generic Sprites and sync with the 11th frame from the Characters.

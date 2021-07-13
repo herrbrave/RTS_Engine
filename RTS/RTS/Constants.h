@@ -49,6 +49,12 @@ inline void LOG(const string& message) {
 	std::cout << "LOG:" + message << std::endl;
 }
 
+inline void DEBUG_LOG(const string& message) {
+	if (__DEBUG__) {
+		std::cout << "DEBUG:" + message << std::endl;
+	}
+}
+
 inline void ERR(const string& error) {
 	std::cerr << "ERR: " << error << std::endl;
 }

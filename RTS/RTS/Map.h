@@ -1,6 +1,7 @@
 #ifndef __MAP_H__
 #define __MAP_H__
 
+#include<chrono>
 #include<queue>
 #include<unordered_set>
 #include<string.h>
@@ -191,6 +192,7 @@ public:
 	int collisionWidth = 0;
 	int collisionHeight = 0;
 	bool animated = false;
+	string script;
 
 	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) : textureAssetTag(textureAssetTag), tx(tx), ty(ty), w(w), h(h) {
 	}

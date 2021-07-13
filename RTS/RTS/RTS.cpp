@@ -6,31 +6,80 @@ void RTS::setup() {
 	}
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(512);
-	config->setWindowHeight(512);
+	config->setWindowWidth(1024);
+	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 	config->setFont("Digital_tech.otf");
+	
+	auto start = std::chrono::high_resolution_clock::now();
 
 	mSystemManager.reset(GCC_NEW SystemManager(config));
+
+	auto end = std::chrono::high_resolution_clock::now();
+	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "System Manager Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	mEntityFactory.reset(GCC_NEW EntityFactory(mSystemManager));
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Entity Factory Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	mWidgetFactory.reset(GCC_NEW WidgetFactory("Assets/BlueButton.json", "Assets/Panel.json", mSystemManager));
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Widget Factory Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	mSoundControllerFactory.reset(GCC_NEW SoundControllerFactory(mSystemManager));
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Sound Controller Factory Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS))->addFont("Digital_tech.otf", "Digital_tech", 20);
 
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Font Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	mTileFactory.reset(GCC_NEW TileFactory(mSystemManager));
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Tile Factory Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
+
 	mLuaScriptFactory.reset(GCC_NEW LuaScriptFactory(WeakEntityFactoryPtr(mEntityFactory), WeakWidgetFactoryPtr(mWidgetFactory), WeakSystemManagerPtr(mSystemManager)));
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Lua Script Factory Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	mMapFactory.reset(GCC_NEW MapFactory(mTileFactory, mLuaScriptFactory, mSystemManager));
 
-	EntityBuilder entityBuilder(mSystemManager, mLuaScriptFactory);
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Map Factory Setup: " << res.count() << std::endl;
 
-	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/collision_test.lua").build();
+	start = std::chrono::high_resolution_clock::now();
+
 	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
 
-	mMap = mMapFactory->createMap("Assets/orksvhumans/orks_v_humans.json");
-	//mEntity = entityBuilder.withPhysics(-1, -1, 1, 1, false).withScript("Games/test/message_test.lua").build();
+	mMap = mMapFactory->createMap("Assets/orksvhumans/test.json");
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "Load Map: " << res.count() << std::endl;
 }
 
 void RTS::handleEvents() {

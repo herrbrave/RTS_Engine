@@ -1,0 +1,9 @@
+Slash Multidirectional
+48x48 pixels sq
+36 frames
+
+These are separated into four frames. The Right direction shows the frames in order from left to right, and each other direction is a rotation of the Right direction. That means Left shows the frames in order from right to left, Down shows the frames from top to bottom, and Up shows the frames from bottom to top.
+
+I included .pdn files so you can open these up in a free transparent layering image editor like Paint.net.
+
+Cleaning up the images is as simple as removing the background layer. You can see the Final images in the parent folder.
