@@ -23,6 +23,9 @@ using std::unordered_set;
 using std::string;
 using std::wstring;
 
+#include<random>
+#include<ctime>
+
 #define __DEBUG__ 0
 
 #if __DEBUG__

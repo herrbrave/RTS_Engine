@@ -5,6 +5,8 @@ void RTS::setup() {
 		throw std::exception("Failed to initialize TTF");
 	}
 
+	srand(time(NULL));
+
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
 	config->setWindowWidth(1024);
 	config->setWindowHeight(768);
@@ -73,9 +75,26 @@ void RTS::setup() {
 
 	start = std::chrono::high_resolution_clock::now();
 
-	//mEntity = mEntityFactory->createFromSerialization("test_serialization.json");
+	mEntity = mEntityFactory->createPhysicsEntity(512, 348, 20, 20);
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
+	ParticleCloudPtr particleCloud = std::make_shared<ParticleCloud>();
+	particleCloud->particleLifeMillis = 3000;
+	particleCloud->spreadDist = 128;
 
-	mMap = mMapFactory->createMap("Assets/orksvhumans/test.json");
+	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 0, 0, 16, 16));
+	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 16, 0, 16, 16));
+	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 32, 0, 16, 16));
+	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 48, 0, 16, 16));
+	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 64, 0, 16, 16));
+
+	ParticleCloudDrawablePtr particleCloudDrawable = std::make_shared<ParticleCloudDrawable>(particleCloud);
+
+	DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(mEntity->id, particleCloudDrawable);
+	graphicsSystem->registerDrawable(mEntity->id, particleCloudDrawable);
+	mEntity->addComponent(drawableComponent);
+
+	//mMap = mMapFactory->createMap("Assets/orksvhumans/test.json");
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

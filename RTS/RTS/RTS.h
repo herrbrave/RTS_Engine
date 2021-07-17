@@ -16,6 +16,7 @@
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"
+#include"Particle.h"
 #include"ScriptFactory.h"
 #include"SoundControllerFactory.h"
 #include"System.h"
