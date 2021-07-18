@@ -95,6 +95,9 @@ void RTS::setup() {
 	mEntity->addComponent(drawableComponent);
 
 	//mMap = mMapFactory->createMap("Assets/orksvhumans/test.json");
+	/*
+	mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
+	*/
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

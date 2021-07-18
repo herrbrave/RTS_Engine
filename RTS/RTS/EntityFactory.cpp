@@ -178,7 +178,7 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, AnimationSe
 	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
 
 	AnimationComponentPtr animationComponent;
-	if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) != entity->getComponents().end()) {
+	if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));

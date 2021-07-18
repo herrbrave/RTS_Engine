@@ -19,7 +19,6 @@ struct SDL_DELETERS {
 	void operator()(Mix_Music* mix) const { Mix_FreeMusic(mix); }
 };
 
-
-
+typedef std::shared_ptr<SDL_Texture> SDL_TexturePtr;
 
 #endif // !__SDL_HELPERS_H__

@@ -1,6 +1,7 @@
 #ifndef __ANIMATION_H__
 #define __ANIMATION_H__
 
+#include"AsepriteAnimation.h"
 #include"Graphics.h"
 #include"Texture.h"
 
@@ -158,9 +159,9 @@ public:
 	}
 
 	void setAnimationSet(AnimationSetPtr animationSet) {
+		this->currentFrame = 0;
 		this->animationSet = animationSet;
 		this->currentAnimtionName = this->animationSet->defaultAnimationName;
-		this->currentFrame = 0;
 		this->frameTime = 0;
 
 		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
@@ -169,15 +170,18 @@ public:
 
 	void play() {
 		this->state = AnimationState::PLAYING;
+		this->textureDrawable->show();
 	}
 
 	void loop() {
 		this->state = AnimationState::LOOPING;
+		this->textureDrawable->show();
 	}
 
 	void stop() {
 		this->currentFrame = 0;
 		this->state = AnimationState::STOPPED;
+		this->textureDrawable->hide();
 	}
 
 	void update(Uint32 delta) {
@@ -256,5 +260,7 @@ public:
 		serializer.writer.EndObject();
 	}
 };
+
+AnimationSetPtr loadAsepriteAnimation(const string& path);
 
 #endif // !__ANIMATION_H__

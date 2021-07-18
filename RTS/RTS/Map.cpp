@@ -1,5 +1,9 @@
 #include"Map.h"
 
+unsigned int tmxClearFlags(unsigned int tileValue) {
+	return tileValue  & ~(TMX_FLIPPED_HORIZONTAL_FLAG | TMX_FLIPPED_VERTICAL_FLAG | TMX_FLIPPED_DIAGONAL_FLAG);
+}
+
 TMXMapPtr parseMap(const string& path) {
 	auto start = std::chrono::high_resolution_clock::now();
 
@@ -133,7 +137,8 @@ void parseLayers(const rapidjson::Value& layers, TMXLayers& layerList) {
 			newLayer->tileCount = data.Size();
 			unsigned int* newData = new unsigned int[data.Size()];
 			for (int d = 0; d < data.Size(); d++) {
-				newData[d] = (unsigned int) data[d].GetInt();
+				const rapidjson::Value& v = data[d];
+				newData[d] = (unsigned int)data[d].GetUint();
 			}
 			newLayer->data = newData;
 		}
@@ -342,4 +347,51 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 			}
 		}
 	}
+}
+/*
+void GridDrawable::initialize(SDL_Renderer* renderer, const SystemManager& systemManager) {
+	this->texture = std::make_shared<SDL_Texture>(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height));
+
+	// Draw the tiles onto the texturebatch.
+	SDL_Rect src, dest;
+	SDL_SetRenderTarget(renderer, this->texture.get());
+
+	AssetSystemPtr assetSystem = makeShared(systemManager.getSystemByType<AssetSystem>(SystemType::ASSET));
+	unordered_map<string, shared_ptr<SDL_Texture>> localTextureCache;
+
+	auto it = this->tileLayers.begin();
+	while (it != this->tileLayers.end()) {
+		auto layer = *it;
+
+		for (int y = 0; y < this->rows; y++) {
+			for (int x = 0; x < this->columns; x++) {
+				auto tile = layer[x][y];
+				if (tile == nullptr) {
+					continue;
+				}
+
+				if (localTextureCache.find(tile->textureAssetTag) == localTextureCache.end()) {
+					AssetPtr asset = assetSystem->getAsset(tile->textureAssetTag);
+					shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
+					localTextureCache[tile->textureAssetTag] = sdlTexture;
+				}
+				src.x = tile->tx;
+				src.y = tile->ty;
+				src.w = tile->w;
+				src.h = tile->h;
+
+				dest.x = x * tile->w;
+				dest.y = y * tile->h;
+				dest.w = tile->w;
+				dest.h = tile->h;
+				SDL_RenderCopyEx(renderer, localTextureCache[tile->textureAssetTag].get(), &src, &dest, angle, NULL, SDL_FLIP_NONE);
+			}
+		}
+	}
+
+	SDL_SetRenderTarget(renderer, NULL);
+}*/
+
+void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	graphicsRef.renderTexture(texture.get(), position.x, position.y, width, height, 0.0f, 0.0f, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 }

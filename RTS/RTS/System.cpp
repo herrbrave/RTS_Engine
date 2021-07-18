@@ -128,6 +128,10 @@ void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
 	for (auto drawable : mDrawableList) {
+		if (!drawable->isShowing()) {
+			continue;
+		}
+
 		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
 		EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 
@@ -377,6 +381,10 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 		}
 	case SDL_MOUSEMOTION: {
 			type = InputEventType::MOUSE_MOVE;
+
+			MouseEventData* mouseMoveEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::MOVE);
+			EventManager::getInstance().pushEvent(mouseMoveEventData);
+
 			break;
 		}
 	}

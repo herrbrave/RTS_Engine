@@ -20,7 +20,7 @@ void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, in
 }
 
 EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height, bool canOccupy) {
-	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, width, height, tx, ty, width, height, false);
+	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, std::abs(width), std::abs(height), tx, ty, width, height, canOccupy);
 
 	applyTile(this->mSystemManager, entity->id, xIndex, yIndex, canOccupy);
 
@@ -275,7 +275,14 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	for (int index = 0; index < layer->tileCount; index++) {
-		int tileVal(data[index]);
+		unsigned int tileVal(data[index]);
+
+		bool flippedHorizontal = tileVal & TMX_FLIPPED_HORIZONTAL_FLAG;
+		bool flippedVertical = tileVal & TMX_FLIPPED_VERTICAL_FLAG;
+		bool flippedDiagonal = tileVal & TMX_FLIPPED_DIAGONAL_FLAG;
+
+		tileVal = tmxClearFlags(tileVal);
+
 		if (mapConfig.tileset.find(tileVal) == mapConfig.tileset.end()) {
 			continue;
 		}
@@ -286,8 +293,37 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 		int y = (index / height);
 		TilePtr t = mapConfig.tileset.at(tileVal);
 
+		int tx = t->tx;
+		int ty = t->ty;
+		int tw = t->w;
+		int th = t->h;
+		int rotation = 0;
+		if (flippedDiagonal && flippedHorizontal) {
+			rotation = 90;
+		}
+		else if (flippedDiagonal && flippedVertical) {
+			rotation = 270;
+		}
+		else if (flippedDiagonal) {
+			tx += tw;
+			tw = -tw;
+			rotation = 90;
+		}
+		else if (flippedHorizontal) {
+			tx += tw;
+			tw = -tw;
+		}
+		else if (flippedVertical) {
+			ty += th;
+			th = -th;
+		}
+
+		LOG("Creating a tile at " + std::to_string(tx) + ", " + std::to_string(ty) + " w: " + std::to_string(tw) + " h: " + std::to_string(th) + " coords x[" + std::to_string(x) + "] y[" + std::to_string(y) + "]");
+
 		EntityPtr tile;
 		if (t->animated) {
+
+			// TODO; Add rotated/flipped animated tiles.
 			auto animationSet = mapConfig.animatedTiles[tileVal];
 			tile = mTileFactory->createPhysicsEntity(x * tileWidth, y * tileHeight, tileWidth, tileHeight); 
 			applyTile(this->mSystemManager, tile->id, t->tx, t->ty, t->collision);
@@ -295,8 +331,11 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 		}
 		else {
 			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), t->tx, t->ty, t->w, t->h, t->collision);
+
+			//tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), tx, ty, tw, th, t->collision);
 			auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 			drawableComponent->setZOrder(drawOrder);
+			drawableComponent->setAngle(rotation);
 		}
 		mapConfig.tiles.push_back(tile->id);
 

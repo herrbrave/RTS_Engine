@@ -9,6 +9,11 @@
 #include"EntityFactory.h"
 #include"Animation.h"
 
+const unsigned int TMX_FLIPPED_HORIZONTAL_FLAG = 0x80000000;
+const unsigned int TMX_FLIPPED_VERTICAL_FLAG = 0x40000000;
+const unsigned int TMX_FLIPPED_DIAGONAL_FLAG = 0x20000000;
+unsigned int tmxClearFlags(unsigned int tileValue);
+
 class TMXMap;
 typedef shared_ptr<TMXMap> TMXMapPtr;
 typedef weak_ptr<TMXMap> WeakTMXMapPtr;
@@ -148,6 +153,7 @@ void parseFrames(const rapidjson::Value& root, TMXFrames& frames);
 class Tile;
 typedef shared_ptr<Tile> TilePtr;
 typedef weak_ptr<Tile> WeakTilePtr;
+typedef vector<TilePtr> Tiles;
 typedef unordered_map<unsigned int, TilePtr> Tileset;
 typedef unordered_map<unsigned int, AnimationSetPtr> TileAnimationSet;
 
@@ -193,6 +199,7 @@ public:
 	int collisionHeight = 0;
 	bool animated = false;
 	string script;
+	int angle = 0;
 
 	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) : textureAssetTag(textureAssetTag), tx(tx), ty(ty), w(w), h(h) {
 	}
@@ -272,4 +279,24 @@ private:
 	}
 };
 
+class GridDrawable : public Drawable {
+public:
+	vector<Tile***> tileLayers;
+	unsigned int rows;
+	unsigned int columns;
+	unsigned int tileW;
+	unsigned int tileH;
+	SDL_TexturePtr texture{ nullptr };
+
+	GridDrawable(int rows, int columns, int tileWidth, int tileHeight) : Drawable(rows * tileWidth, columns * tileHeight) {
+		this->rows = rows;
+		this->columns = columns;
+		this->tileW = tileWidth;
+		this->tileH = tileHeight;
+	}
+	/*
+	void initialize(SDL_Renderer* renderer, const SystemManager& systemManager);
+	*/
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+};
 #endif // !__MAP_H__

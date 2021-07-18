@@ -115,6 +115,13 @@ void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
 		return (int)entity->id;
 	};
 
+	script->state["createPhysics"] = [this](int x, int y, int width, int height) -> int {
+		EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
+
+		EntityPtr entity = entityFactory->createPhysicsEntity(x, y, width, height);
+		return (int)entity->id;
+	};
+
 	script->state["createSerialized"] = [this](string path) -> int {
 		EntityFactoryPtr entityFactory = makeShared<EntityFactory>(mEntityFactory);
 
@@ -130,6 +137,19 @@ void LuaScriptFactory::registerEntity(LuaScriptPtr& script) {
 
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 		entitySystem->deregisterEntity(entityId);
+	};
+
+
+	script->state["setChild"] = [this](int parent, int child) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+
+		EntityPtr parentEntity = makeShared<Entity>(entitySystem->getEntityById(parent));
+		parentEntity->children.push_back(child);
+
+		EntityPtr childEntity = makeShared<Entity>(entitySystem->getEntityById(child));
+		childEntity->parent = parent;
 	};
 }
 
@@ -502,6 +522,11 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 		applyAnimation(mSystemManager, entityId, path);
 	};
 
+	script->state["attachAsepriteAnimationSet"] = [this](int entityId, string path) {
+		AnimationSetPtr animationSet = loadAsepriteAnimation(path);
+		applyAnimation(mSystemManager, entityId, animationSet);
+	};
+
 	script->state["setAnimation"] = [this](int entityId, string animationName) {
 		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
@@ -561,6 +586,10 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityI
 	script->state["SDLK_DOWN"] = (int)SDLK_DOWN;
 	script->state["SDLK_LEFT"] = (int)SDLK_LEFT;
 	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
+	script->state["SDLK_w"] = (int)SDLK_w;
+	script->state["SDLK_a"] = (int)SDLK_a;
+	script->state["SDLK_s"] = (int)SDLK_s;
+	script->state["SDLK_d"] = (int)SDLK_d;
 	script->state["SDLK_1"] = (int)SDLK_1;
 	script->state["SDLK_2"] = (int)SDLK_2;
 	script->state["SDLK_3"] = (int)SDLK_3;
@@ -578,7 +607,7 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityI
 		if (data.action == MouseAction::CLICK_UP) {
 			script->invoke("onMouseUp", (double)data.x, (double)data.y, static_cast<int>(data.button));
 		}
-		else {
+		else if (data.action == MouseAction::CLICK_DOWN) {
 			script->invoke("onMouseDown", (double)data.x, (double)data.y, static_cast<int>(data.button));
 		}
 		return false;
@@ -641,7 +670,9 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityI
 void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
 	script->state["enableMouseMove"] = [this, script](int entityId) {
 		applyInput(mSystemManager, entityId, Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
-			script->invoke("onMouseMove", static_cast<int>(evt->mouseEvent->position->x), static_cast<int>(evt->mouseEvent->position->y), static_cast<int>(evt->mouseEvent->button));
+			int x = (int) std::roundf(evt->mouseEvent->position->x);
+			int y = (int) std::roundf(evt->mouseEvent->position->y);
+			script->invoke("onMouseMove", x, y, static_cast<int>(evt->mouseEvent->button));
 			return false;
 		}));
 	};

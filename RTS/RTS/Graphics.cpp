@@ -175,17 +175,22 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
 	shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
+	
+	this->renderTexture(sdlTexture.get(), x, y, w, h, texture->x, texture->y, texture->w, texture->h, angle, r, g, b, a);
+}
+
+void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (a < 255) {
-		SDL_SetTextureAlphaMod(sdlTexture.get(), a);
+		SDL_SetTextureAlphaMod(sdlTexture, a);
 	}
 	SDL_SetRenderDrawColor(mRenderer.get(), r, g, b, a);
-	SDL_SetTextureColorMod(sdlTexture.get(), r, g, b);
+	SDL_SetTextureColorMod(sdlTexture, r, g, b);
 
-	SDL_Rect src{ texture->x, texture->y, texture->w, texture->h };
+	SDL_Rect src{ tx, ty, tw, th };
 	SDL_Rect dest{ x - (w / 2), y - (h / 2), w, h };
 	// if no size is specified
 	if (src.w == -1 || src.h == -1) {
-		SDL_QueryTexture(sdlTexture.get(), nullptr, nullptr, &src.w, &src.h);
+		SDL_QueryTexture(sdlTexture, nullptr, nullptr, &src.w, &src.h);
 	}
 	if (dest.w == -1 || dest.h == -1) {
 		dest.x = (x - src.w / 2);
@@ -200,10 +205,10 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 	dest.w *= mGraphicsConfig->mZoom;
 	dest.h *= mGraphicsConfig->mZoom;
 
-	SDL_RenderCopyEx(mRenderer.get(), sdlTexture.get(), &src, &dest, angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
+	SDL_RenderCopyEx(mRenderer.get(), sdlTexture, &src, &dest, angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
 
 	if (a < 255) {
-		SDL_SetTextureAlphaMod(sdlTexture.get(), 255);
+		SDL_SetTextureAlphaMod(sdlTexture, 255);
 	}
 
 	if (__DEBUG__) {
