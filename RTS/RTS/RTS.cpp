@@ -79,8 +79,10 @@ void RTS::setup() {
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
 	ParticleCloudPtr particleCloud = std::make_shared<ParticleCloud>();
-	particleCloud->particleLifeMillis = 3000;
-	particleCloud->spreadDist = 128;
+
+	particleCloud->particleLifeMillis = 5000;
+	particleCloud->spreadDist = 348;
+	particleCloud->gravity = std::make_shared<Vector2f>(0.0f, -2.7f);
 
 	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 0, 0, 16, 16));
 	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 16, 0, 16, 16));
@@ -89,6 +91,8 @@ void RTS::setup() {
 	particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 64, 0, 16, 16));
 
 	ParticleCloudDrawablePtr particleCloudDrawable = std::make_shared<ParticleCloudDrawable>(particleCloud);
+	ParticleSystemPtr particleSystem = makeShared(mSystemManager->getSystemByType<ParticleSystem>(SystemType::PARTICLE));
+	particleSystem->registerParticleEmitter(mEntity->id, particleCloudDrawable);
 
 	DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(mEntity->id, particleCloudDrawable);
 	graphicsSystem->registerDrawable(mEntity->id, particleCloudDrawable);
@@ -125,17 +129,7 @@ void RTS::update() {
 	Uint32 lastTime(SDL_GetTicks());
 	Uint32 delta(lastTime - mLastTime);
 
-	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
-	luaScriptSystem->update(delta);
-
-	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	physicsSystem->update(delta);
-
-	AnimationSystemPtr animationSystem(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-	animationSystem->update(delta);
-
-	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	entitySystem->update(delta);
+	mSystemManager->update(delta);
 
 	EventManager::getInstance().update();
 

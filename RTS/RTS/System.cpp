@@ -6,10 +6,28 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::ASSET, AssetSystemPtr(GCC_NEW AssetSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
+	systems.emplace(SystemType::PARTICLE, ParticleSystemPtr(GCC_NEW ParticleSystem(ptr)));
 	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
 	systems.emplace(SystemType::SOUND, SoundSystemPtr(GCC_NEW SoundSystem(ptr)));
 	systems.emplace(SystemType::LUA_SCRIPT, LuaScriptSystemPtr(GCC_NEW LuaScriptSystem(ptr)));
+}
+
+void SystemManager::update(Uint32 delta) {
+	LuaScriptSystemPtr luaScriptSystem = static_pointer_cast<LuaScriptSystem>(this->systems.at(SystemType::LUA_SCRIPT));
+	luaScriptSystem->update(delta);
+
+	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(this->systems.at(SystemType::PHYSICS));
+	physicsSystem->update(delta);
+
+	AnimationSystemPtr animationSystem = static_pointer_cast<AnimationSystem>(this->systems.at(SystemType::ANIMATION));
+	animationSystem->update(delta);
+
+	ParticleSystemPtr particleSystem = static_pointer_cast<ParticleSystem>(this->systems.at(SystemType::PARTICLE));
+	particleSystem->update(delta);
+
+	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(this->systems.at(SystemType::ENTITY));
+	entitySystem->update(delta);
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -256,6 +274,28 @@ void LuaScriptSystem::update(Uint32 delta) {
 
 void LuaScriptSystem::clear() {
 	mLuaScripts.clear();
+}
+
+void ParticleSystem::registerParticleEmitter(unsigned long id, const ParticleEmitterPtr& emitter) {
+	this->particleEmitters.emplace(id, emitter);
+}
+
+void ParticleSystem::deregisterParticleEmitter(unsigned long id) {
+	if (this->particleEmitters.find(id) == this->particleEmitters.end()) {
+		return;
+	}
+
+	this->particleEmitters.erase(this->particleEmitters.find(id));
+}
+
+void ParticleSystem::update(Uint32 delta) {
+	for (auto it = this->particleEmitters.begin(); it != this->particleEmitters.end(); it++) {
+		it->second->update(delta);
+	}
+}
+
+void ParticleSystem::clear() {
+	this->particleEmitters.clear();
 }
 
 void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {

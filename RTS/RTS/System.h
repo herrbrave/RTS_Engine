@@ -12,6 +12,7 @@
 #include"Event.h"
 #include"Input.h"
 #include"Graphics.h"
+#include"Particle.h"
 #include"Physics.h"
 #include"Script.h"
 #include"Sound.h"
@@ -25,6 +26,7 @@ enum class SystemType : Uint8 {
 	PHYSICS = 5,
 	SOUND = 6,
 	LUA_SCRIPT = 7,
+	PARTICLE = 8,
 };
 
 /* Early class definitions. */
@@ -60,6 +62,10 @@ class LuaScriptSystem;
 typedef shared_ptr<LuaScriptSystem> LuaScriptSystemPtr;
 typedef weak_ptr<LuaScriptSystem> WeakLuaScriptSystemPtr;
 
+class ParticleSystem;
+typedef shared_ptr<ParticleSystem> ParticleSystemPtr;
+typedef weak_ptr<ParticleSystem> WeakParticleSystemPtr;
+
 class PhysicsSystem;
 typedef shared_ptr<PhysicsSystem> PhysicsSystemPtr;
 typedef weak_ptr<PhysicsSystem> WeakPhysicsSystemPtr;
@@ -74,6 +80,8 @@ public:
 	unordered_map<SystemType, SystemPtr> systems;
 
 	SystemManager(GraphicsConfig* graphicsConfig);
+
+	void update(Uint32 delta);
 
 	template<class ClassType>
 	weak_ptr<ClassType> getSystemByType(SystemType systemType) const {
@@ -299,6 +307,24 @@ public:
 private:
 
 	LuaScripts mLuaScripts;
+};
+
+class ParticleSystem : public System {
+public:
+
+	ParticleSystem(SystemManagerPtr systemManager) : System(SystemType::PARTICLE, systemManager) {
+
+	}
+
+	void registerParticleEmitter(unsigned long id, const ParticleEmitterPtr& emitter);
+
+	void deregisterParticleEmitter(unsigned long id);
+
+	void update(Uint32 delta);
+
+	void clear() override;
+private:
+	unordered_map<unsigned long, ParticleEmitterPtr> particleEmitters;
 };
 
 class PhysicsSystem : public System {
