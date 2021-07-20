@@ -4,6 +4,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	SystemManagerPtr ptr(this);
 	systems.emplace(SystemType::ANIMATION, AnimationSystemPtr(GCC_NEW AnimationSystem(ptr)));
 	systems.emplace(SystemType::ASSET, AssetSystemPtr(GCC_NEW AssetSystem(ptr)));
+	systems.emplace(SystemType::DATA, DataSystemPtr(GCC_NEW DataSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
 	systems.emplace(SystemType::PARTICLE, ParticleSystemPtr(GCC_NEW ParticleSystem(ptr)));
@@ -114,6 +115,42 @@ AssetPtr AssetSystem::DefaultAssetVendor::getAsset(const string& tag) {
 
 void AssetSystem::clear() {
 	mAssets.clear();
+}
+
+void DataSystem::load(const string& path) {
+	if (data.find(path) != data.end()) {
+		throw "Data file with path " + path + " already exists.";
+	}
+
+	this->data.emplace(path, std::make_shared<SimpleDataStore>(path));
+}
+
+void DataSystem::save(const string& path) {
+	this->data.at(path)->save();
+}
+
+void DataSystem::close(const string& path, bool saveFirst) {
+	if (saveFirst) {
+		this->save(path);
+	}
+
+	this->data.erase(data.find(path));
+}
+
+const string& DataSystem::getData(const string& dataStore, const string& key) {
+	return this->data.at(dataStore)->getData(key);
+}
+
+void DataSystem::putData(const string& dataStore, const string& key, const string& val) {
+	this->data.at(dataStore)->pushData(key, val);
+}
+
+bool DataSystem::contains(const string& dataStore) {
+	return this->data.find(dataStore) != data.end();
+}
+
+void DataSystem::clear() {
+	this->data.clear();
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {

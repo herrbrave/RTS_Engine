@@ -15,6 +15,7 @@
 #include"Particle.h"
 #include"Physics.h"
 #include"Script.h"
+#include"SimpleDataStore.h"
 #include"Sound.h"
 
 enum class SystemType : Uint8 {
@@ -27,6 +28,7 @@ enum class SystemType : Uint8 {
 	SOUND = 6,
 	LUA_SCRIPT = 7,
 	PARTICLE = 8,
+	DATA = 9,
 };
 
 /* Early class definitions. */
@@ -45,6 +47,10 @@ typedef weak_ptr<AnimationSystem> WeakAnimationSystemPtr;
 class AssetSystem;
 typedef shared_ptr<AssetSystem> AssetSystemPtr;
 typedef weak_ptr<AssetSystem> WeakAssetSystemPtr;
+
+class DataSystem;
+typedef shared_ptr<DataSystem> DataSystemPtr;
+typedef weak_ptr<DataSystem> WeakDataSystemPtr;
 
 class EntitySystem;
 typedef shared_ptr<EntitySystem> EntitySystemPtr;
@@ -172,6 +178,26 @@ public:
 
 private:
 	unordered_map<string, AssetPtr> mAssets;
+};
+
+class DataSystem : public System {
+public:
+	DataSystem(SystemManagerPtr systemManager) : System(SystemType::DATA, systemManager) {
+	}
+
+	void load(const string& path);
+	void save(const string& path);
+	void close(const string& path, bool saveFirst = true);
+
+	const string& getData(const string& dataStore, const string& key);
+
+	void putData(const string& dataStore, const string& key, const string& val);
+
+	bool contains(const string& assetTag);
+
+	void clear() override;
+private:
+	unordered_map<string, SimpleDataStorePtr> data;
 };
 
 class GraphicsSystem : public System {

@@ -89,6 +89,36 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr& script) {
 
 		return scriptComponent->script->invoke("onMessage", message, value);
 	};
+
+	script->state["loadData"] = [this](string path) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		DataSystemPtr dataSystem = makeShared(systemManager->getSystemByType<DataSystem>(SystemType::DATA));
+		dataSystem->load(path);
+	};
+
+	script->state["getData"] = [this](string path, string key) -> string {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		DataSystemPtr dataSystem = makeShared(systemManager->getSystemByType<DataSystem>(SystemType::DATA));
+		return dataSystem->getData(path, key);
+	};
+
+	script->state["putData"] = [this](string path, string key, string val) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		DataSystemPtr dataSystem = makeShared(systemManager->getSystemByType<DataSystem>(SystemType::DATA));
+		dataSystem->putData(path, key, val);
+	};
+
+	script->state["saveData"] = [this](string path) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		DataSystemPtr dataSystem = makeShared(systemManager->getSystemByType<DataSystem>(SystemType::DATA));
+		dataSystem->save(path);
+	};
+
+	script->state["closeData"] = [this](string path) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		DataSystemPtr dataSystem = makeShared(systemManager->getSystemByType<DataSystem>(SystemType::DATA));
+		dataSystem->close(path);
+	};
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
