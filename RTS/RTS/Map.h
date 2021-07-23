@@ -8,6 +8,7 @@
 
 #include"EntityFactory.h"
 #include"Animation.h"
+#include"System.h"
 
 const unsigned int TMX_FLIPPED_HORIZONTAL_FLAG = 0x80000000;
 const unsigned int TMX_FLIPPED_VERTICAL_FLAG = 0x40000000;
@@ -157,6 +158,10 @@ typedef vector<TilePtr> Tiles;
 typedef unordered_map<unsigned int, TilePtr> Tileset;
 typedef unordered_map<unsigned int, AnimationSetPtr> TileAnimationSet;
 
+class Grid;
+typedef shared_ptr<Grid> GridPtr;
+typedef weak_ptr<Grid> WeakGridPtr;
+
 struct MapConfig {
 	int tileWidth;
 	int tileHeight;
@@ -279,24 +284,28 @@ private:
 	}
 };
 
-class GridDrawable : public Drawable {
+class Grid {
 public:
 	vector<Tile***> tileLayers;
 	unsigned int rows;
 	unsigned int columns;
 	unsigned int tileW;
 	unsigned int tileH;
-	SDL_TexturePtr texture{ nullptr };
+	string name;
 
-	GridDrawable(int rows, int columns, int tileWidth, int tileHeight) : Drawable(rows * tileWidth, columns * tileHeight) {
-		this->rows = rows;
-		this->columns = columns;
-		this->tileW = tileWidth;
-		this->tileH = tileHeight;
+};
+
+class GridDrawable : public Drawable {
+public:
+	TexturePtr texture;
+	GridPtr grid;
+
+	GridDrawable(GridPtr grid) : Drawable(grid->rows * grid->tileW, grid->columns * grid->tileH) {
+		 
 	}
-	/*
-	void initialize(SDL_Renderer* renderer, const SystemManager& systemManager);
-	*/
+
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+
+	void initialize(const SystemManager& systemManager);
 };
 #endif // !__MAP_H__

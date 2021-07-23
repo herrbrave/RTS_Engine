@@ -135,7 +135,7 @@ public:
 
 	void deregisterAnimation(unsigned long id);
 
-	AnimationSetPtr createAnimationSet(const string& path);
+	AnimationSetPtr loadAnimationSet(const string& path);
 
 	void clear() override;
 
@@ -239,6 +239,8 @@ public:
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
+	void drawTexture(const string& assetTag, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
 	void sortDrawableList();
 
 	void getDrawableById(unsigned long entityId, vector<WeakDrawablePtr>& drawables);
@@ -246,6 +248,13 @@ public:
 	WeakCameraPtr getCamera();
 
 	void addTexture(const string& path, const string& assetTag);
+
+	void addTexture(const string& assetTag, int width, int height);
+
+	void drawToTexture(const string& assetTag);
+
+	void drawToScreen();
+
 	void addFont(const string& path, const string&  assetTag, int fontsize);
 
 	void clear() override;

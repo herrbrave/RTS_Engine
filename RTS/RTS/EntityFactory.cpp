@@ -154,7 +154,7 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, const strin
 		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-		AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
+		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
 		animationComponent->animationHandler->setAnimationSet(animationSet);
 	}
 	else {
@@ -163,7 +163,7 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, const strin
 		shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
 		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-		AnimationSetPtr animationSet = animationSystem->createAnimationSet(path);
+		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
 		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
 		animationSystem->registerAnimation(entity->id, animationHandler);
 		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, animationHandler));
@@ -228,7 +228,7 @@ EntityPtr EntityFactory::createDefault(float x, float y, float width, float heig
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics(this->mSystemManager, entity->id, x, y, width, height);
+	applyPhysics(this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
 	applyDrawable(this->mSystemManager, entity->id, x, y, width, height, r, g, b, a);
 
 	return entity;

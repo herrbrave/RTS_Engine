@@ -295,6 +295,7 @@ public:
 	virtual void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
 	
 	void zoomBy(float value) {
@@ -302,7 +303,10 @@ public:
 	}
 
 	virtual AssetPtr createTexture(const std::string& path, const std::string& assetTag) = 0;
+	virtual AssetPtr createTexture(int width, int height, const std::string& assetTag) = 0;
 	virtual AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) = 0;
+	virtual void drawToTexture(SDL_Texture* texture) = 0;
+	virtual void drawToScreen() = 0;
 protected:
 	AssetVendorPtr mAssetVendor{ nullptr };
 	GraphicsConfigPtr mGraphicsConfig;
@@ -317,10 +321,14 @@ public:
 	void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float t, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
 
 	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
+	AssetPtr createTexture(int width, int height, const std::string& assetTag) override;
 	AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) override;
+	void drawToTexture(SDL_Texture* texture) override;
+	void drawToScreen() override;
 private:
 
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };

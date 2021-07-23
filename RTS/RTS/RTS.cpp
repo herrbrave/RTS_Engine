@@ -75,6 +75,7 @@ void RTS::setup() {
 
 	start = std::chrono::high_resolution_clock::now();
 
+	/*
 	mEntity = mEntityFactory->createPhysicsEntity(512, 348, 20, 20);
 	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 	graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
@@ -97,11 +98,12 @@ void RTS::setup() {
 	DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(mEntity->id, particleCloudDrawable);
 	graphicsSystem->registerDrawable(mEntity->id, particleCloudDrawable);
 	mEntity->addComponent(drawableComponent);
-
-	//mMap = mMapFactory->createMap("Assets/orksvhumans/test.json");
-	/*
-	mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
 	*/
+	
+	//mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
+
+	mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);
+	applyScript(mSystemManager, mEntity->id, "Games/test/sweep_test.lua");
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

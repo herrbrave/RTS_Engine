@@ -268,12 +268,47 @@ void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleCol
 
 	if (inside) {
 		manifold->normal->set(normal * -1.0f);
-		manifold->penetration - rad - dist;
+		//manifold->penetration - rad - dist;
 	}
 	else {
 		manifold->normal->set(normal);
-		manifold->penetration - rad - dist;
+		//manifold->penetration - rad - dist;
 	}
+}
+
+void intersectAABBSegment(const AABBColliderShape& aabb, const Vector2f& position, const Vector2f& delta, Manifold* manifold, float paddingX, float paddingY) {
+	float scaleX = 1.0f / delta.x;
+	float scaleY = 1.0f / delta.y;
+	float signX = scaleX > 0.0f ? 1.0 : -1.0;
+	float signY = scaleY > 0.0f ? 1.0 : -1.0;
+	float halfX = (float) aabb.width / 2.0f;
+	float halfY = (float) aabb.height / 2.0f;
+	float nearTimeX = (aabb.position->x - signX * (halfX + paddingX) - position.x) * scaleX;
+	float nearTimeY = (aabb.position->y - signY * (halfY + paddingY) - position.y) * scaleY;
+	float farTimeX = (aabb.position->x + signX * (halfX + paddingX) - position.x) * scaleX;
+	float farTimeY = (aabb.position->y + signY * (halfY + paddingY) - position.y) * scaleY;
+
+	if (nearTimeX > farTimeY || nearTimeY > farTimeX) {
+		return;
+	}
+
+	float nearTime = nearTimeX > nearTimeY ? nearTimeX : nearTimeY;
+	float farTime = farTimeX < farTimeY ? farTimeX : farTimeY;
+
+	if (nearTime >= 1.0f || farTime <= 0.0f) {
+		return;
+	}
+
+	manifold->time = clamp(nearTime, 0.0f, 1.0f);
+	if (nearTimeX > nearTimeY) {
+		manifold->normal->set(-signX, 0.0f);
+	}
+	else {
+		manifold->normal->set(0.0f, -signY);
+	}
+
+	manifold->delta->set((1.0f - manifold->time) * -delta.x, (1.0f - manifold->time) * -delta.y);
+	manifold->position->set(position.x + delta.x * manifold->time, position.y + delta.y * manifold->time);
 }
 
 float clamp(float value, float min, float max) {
@@ -284,6 +319,10 @@ const Vector2f& clamp(const Vector2f& value, const Vector2f& min, const Vector2f
 	return Vector2f(clamp(value.x, min.x, max.x), clamp(value.y, min.y, max.y));
 }
 
+void project(Vector2f& a, Vector2f& b, Vector2f& result) {
+	result.set(b * (a.dot(b) / b.dot(b)));
+}
+
 bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 
 	if (collider->colliderType() == ColliderType::AABB) {
@@ -291,10 +330,10 @@ bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 		ExtentPtr extent = getExtent();
 		ExtentPtr otherExtent = aabb->getExtent();
 
-		bool collision(extent->x0 <= otherExtent->x1
-			&& extent->x1 >= otherExtent->x0
-			&& extent->y0 <= otherExtent->y1
-			&& extent->y1 >= otherExtent->y0);
+		bool collision(extent->x0 < otherExtent->x1
+			&& extent->x1 > otherExtent->x0
+			&& extent->y0 < otherExtent->y1
+			&& extent->y1 > otherExtent->y0);
 
 		return collision;
 	}
@@ -312,37 +351,73 @@ bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 	return false;
 }
 
-
-void AABBColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+void AABBColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
 
 	if (collider->colliderType() == ColliderType::AABB) {
 		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
 
-		Vector2f norm = *aabb->position - *this->position;
+		Vector2f delta = *aabb->position - *this->position;
+		Vector2f halfThis((float)this->width / 2.0f, (float)this->height / 2.0f);
+		Vector2f halfAABB((float)aabb->width / 2.0f, (float)aabb->height / 2.0f);
+		Vector2f penetrate(halfThis.x + halfAABB.x - abs(delta.x), halfThis.y + halfAABB.y - abs(delta.y));
 
-		Vector2f thisMin(this->position->x - (this->width / 2.0f), this->position->y - (this->height / 2.0f));
-		Vector2f thisMax(this->position->x + (this->width / 2.0f), this->position->y + (this->height / 2.0f));
-		Vector2f otherMin(aabb->position->x - (aabb->width / 2.0f), aabb->position->y - (aabb->height / 2.0f));
-		Vector2f otherMax(aabb->position->x + (aabb->width / 2.0f), aabb->position->y + (aabb->height / 2.0f));
+		if (penetrate.x <= 0 || penetrate.y <= 0) {
+			return;
+		}
 
-		Vector2f extent = (thisMax - thisMin) * 0.5f;
-		Vector2f extentOther = (otherMax - otherMin) * 0.5f;
-
-		Vector2f absNorm(abs(norm.x), abs(norm.y));
-		Vector2f overlap = extent + extentOther - absNorm;
-
-		if (overlap.x < overlap.y) {
-			manifold->normal->set((norm.x < 0.0f) ? Vector2f(1.0f, 0.0f) : Vector2f(-1.0f, 0.0f));
-			manifold->penetration = overlap.x;
+		if (penetrate.x < penetrate.y) {
+			float sx = penetrate.x < 0 ? -1.0f : 1.0f;
+			manifold->delta->x = penetrate.x * sx;
+			manifold->normal->x = sx;
+			manifold->position->x = this->position->x + (halfThis.x * sx);
+			manifold->position->y = aabb->position->y;
 		}
 		else {
-			manifold->normal->set((norm.y < 0.0f) ? Vector2f(0.0f, 1.0f) : Vector2f(0.0f, -1.0f));
-			manifold->penetration = overlap.y;
+			float sy = penetrate.y < 0 ? -1.0f : 1.0f;
+			manifold->delta->y = penetrate.y * sy;
+			manifold->normal->y = sy;
+			manifold->position->x = aabb->position->x;
+			manifold->position->y = this->position->y + (halfThis.y * sy);
 		}
 	}
 	else if (collider->colliderType() == ColliderType::CIRCLE) {
 		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
 		constructManifoldAABB_Circle(*this, *circle, manifold);
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+	}
+}
+
+void AABBColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider->colliderType() == ColliderType::AABB) {
+		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+
+		if (delta.x == 0 && delta.y == 0) {
+			sweep->position->set(aabb->position);
+			this->intersect(collider, sweep->manifold.get());
+			sweep->time = 1;
+			return;
+		}
+
+		Vector2f halfThis((float)this->width / 2.0f, (float)this->height / 2.0f);
+		intersectAABBSegment(*this, *aabb->position.get(), delta, sweep->manifold.get(), (float)aabb->width / 2.0f, (float)aabb->height / 2.0f);
+
+		if (sweep->manifold->time < 1.0f) {
+			sweep->time = clamp(sweep->manifold->time - EPSILON, 0.0f, 1.0f);
+			sweep->position->set(aabb->position->x + delta.x * sweep->time, aabb->position->y + delta.y * sweep->time);
+			Vector2f direction(delta);
+			direction.normalize();
+			sweep->manifold->position->set(
+				clamp(sweep->manifold->position->x + direction.x * ((float)aabb->width / 2.0f), this->position->x - halfThis.x, this->position->x + halfThis.x),
+				clamp(sweep->manifold->position->y + direction.y * ((float)aabb->height / 2.0f), this->position->y - halfThis.y, this->position->y + halfThis.y)
+			);
+		}
+		else {
+			sweep->position->set(*aabb->position + delta);
+			sweep->time = 1.0f;
+		}
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
 	}
 	else if (collider->colliderType() == ColliderType::OBB) {
 	}
@@ -394,7 +469,7 @@ bool CircleColliderShape::checkCollision(const ColliderShapePtr& collider) const
 }
 
 
-void CircleColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+void CircleColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
 
 	if (collider->colliderType() == ColliderType::CIRCLE) {
 		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
@@ -407,12 +482,12 @@ void CircleColliderShape::constructManifold(const ColliderShapePtr& collider, Ma
 		float dist = norm.magnitude();
 
 		if (dist != 0) {
-			manifold->penetration - rads - dist;
+			//manifold->penetration - rads - dist;
 			norm *= 1.0f / dist;
 			manifold->normal->set(norm);
 		}
 		else {
-			manifold->penetration = this->radius;
+			//manifold->penetration = this->radius;
 			manifold->normal->x = 1;
 		}
 	}
@@ -422,6 +497,15 @@ void CircleColliderShape::constructManifold(const ColliderShapePtr& collider, Ma
 	}
 	else if (collider->colliderType() == ColliderType::OBB) {
 
+	}
+}
+
+void CircleColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider->colliderType() == ColliderType::AABB) {
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
 	}
 }
 
@@ -453,8 +537,17 @@ bool OBBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 	return false;
 }
 
-void OBBColliderShape::constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const {
+void OBBColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
 
+}
+
+void OBBColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider->colliderType() == ColliderType::AABB) {
+	}
+	else if (collider->colliderType() == ColliderType::CIRCLE) {
+	}
+	else if (collider->colliderType() == ColliderType::OBB) {
+	}
 }
 
 bool OBBColliderShape::overlapOneWay(const OBBColliderShape& obb) const {
@@ -786,9 +879,9 @@ void PhysicsComponent::setTag(const string& tag) {
 }
 
 bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
-	Vector2f velocity(body->getVelocity());
+	Vector2f delta(body->getVelocity());
 
-	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
+	if (delta.x == 0 && delta.y == 0 && !body->hasTarget()) {
 		return false;
 	}
 
@@ -802,41 +895,22 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 		float distance = velocityAtTarget.magnitude();
 		velocityAtTarget.normalize();
 
-		Vector2f velocityDiff = velocityAtTarget - velocity;
+		Vector2f velocityDiff = velocityAtTarget - delta;
 		if (velocityDiff.magnitude() > 0.1f) {
-			velocity.set(velocityAtTarget);
+			delta.set(velocityAtTarget);
 		}
 		
-		velocity *= body->getSpeed();
-		velocity *= step;
+		delta *= body->getSpeed();
+		delta *= step;
 
-		velocity.truncate(distance);
+		delta.truncate(distance);
 	}
 	else {
-		velocity *= body->getSpeed();
-		velocity *= step;
+		delta *= body->getSpeed() * step;
 	}
 
-	// Handle overlap
-	vector<WeakBodyPtr> bodies;
-	quadtree->getCollidingBodies(body, bodies);
-	Vector2f newPosition(position + velocity);
-	for (auto bod : bodies) {
-		auto bodPtr = makeShared<Body>(bod);
-		Manifold manifold;
-		body->collider->colliderShape->constructManifold(bodPtr->collider->colliderShape, &manifold);
-		if (manifold.penetration >= 0.0f) {
-			auto norm = *manifold.normal * manifold.penetration;
-
-			velocity += norm;
-			newPosition.set(position + velocity);
-			body->setPosition(newPosition);
-		}
-	}
-
-	body->setPosition(newPosition);
-	velocity.normalize();
-	body->setVelocity(velocity);
+	Vector2f newPosition;
+	this->handleCollision(delta, newPosition, body, quadtree);
 
 	if (body->hasTarget()) {
 		TargetPtr target = makeShared(body->getTarget());
@@ -851,6 +925,61 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 	}
 
 	return true;
+}
+
+void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPtr& body, QuadtreePtr quadtree) {
+
+	Vector2f position(body->getPosition());
+
+	// Handle overlap
+	vector<WeakBodyPtr> bodies;
+
+	// project body to potential new position
+	*body->position += delta;
+	*body->collider->colliderShape->position += delta;
+	quadtree->getCollidingBodies(body, bodies);
+
+	// remove position update so we can sweep the body for collisions.
+	*body->position -= delta;
+	*body->collider->colliderShape->position -= delta;
+	Vector2f newPosition(position + delta);
+
+	Sweep sweep;
+	sweep.time = 1.0f;
+	sweep.position->set(newPosition);
+	for (auto bod : bodies) {
+		auto bodPtr = makeShared<Body>(bod);
+		Sweep currentSweep;
+		bodPtr->collider->colliderShape->sweep(body->collider->colliderShape, delta, &currentSweep);
+		if (currentSweep.time < sweep.time) {
+			sweep = currentSweep;
+		}
+	}
+
+	Vector2f finalPos = *sweep.position;
+	if (sweep.time < 1.0f) {
+		Vector2f velocity(body->velocity);
+		Vector2f normal(sweep.manifold->normal);
+		normal.x = abs(normal.x);
+		normal.y = abs(normal.y);
+		Vector2f update;
+		project(velocity, normal, update);
+		velocity -= update;
+		velocity.normalize();
+		body->setVelocity(velocity);
+	}
+
+	body->setPosition(finalPos);
+	pos.set(finalPos);
+	DEBUG_LOG("==============START================");
+
+	DEBUG_LOG("Sweep Position: " + std::to_string(sweep.position->x) + ", " + std::to_string(sweep.position->y));
+	DEBUG_LOG("Final Position: " + std::to_string(finalPos.x) + ", " + std::to_string(finalPos.y));
+	DEBUG_LOG("Delta: " + std::to_string(sweep.manifold->delta->x) + ", " + std::to_string(sweep.manifold->delta->y));
+	DEBUG_LOG("Velocity: " + std::to_string(body->velocity->x) + ", " + std::to_string(body->velocity->y));
+	DEBUG_LOG("Time: " + std::to_string(sweep.time));
+
+	DEBUG_LOG("===============END-================");
 }
 
 bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {

@@ -35,6 +35,12 @@ typedef shared_ptr<Collider> ColliderPtr;
 typedef weak_ptr<Collider> WeakColliderPtr;
 
 class Manifold;
+typedef shared_ptr<Manifold> ManifoldPtr;
+typedef weak_ptr<Manifold> WeakManifoldPtr;
+
+class Sweep;
+typedef shared_ptr<Sweep> SweepPtr;
+typedef weak_ptr<Sweep> WeakSweepPtr;
 
 class ColliderShape;
 typedef shared_ptr<ColliderShape> ColliderShapePtr;
@@ -52,12 +58,17 @@ class OBBColliderShape;
 typedef shared_ptr<OBBColliderShape> OBBColliderShapePtr;
 typedef weak_ptr<OBBColliderShape> WeakOBBColliderShapePtr;
 
+const static float EPSILON = 0.000001f;
+
 bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb);
 bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle);
 bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle);
 void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle, Manifold* manifold);
+void intersectAABBSegment(const AABBColliderShape& aabb, const Vector2f& position, const Vector2f& delta, Manifold* manifold, float paddingX = 0.0f, float paddingY = 0.0f);
+
 float clamp(float value, float min, float max);
 const Vector2f& clamp(const Vector2f& value, const Vector2f& min, const Vector2f& max);
+void project(Vector2f& a, Vector2f& b, Vector2f& result);
 
 class Body;
 typedef shared_ptr<Body> BodyPtr;
@@ -92,11 +103,27 @@ public:
 class Manifold {
 public:
 	Vector2fPtr normal;
-	float penetration;
+	Vector2fPtr delta;
+	Vector2fPtr position;
+	float time;
 
 	Manifold() {
-		normal = std::make_shared<Vector2f>(Vector2f());
-		penetration = 0.0f;
+		normal = std::make_shared<Vector2f>(0.0f, 0.0f);
+		delta = std::make_shared<Vector2f>(0.0f, 0.0f);
+		position = std::make_shared<Vector2f>(0.0f, 0.0f);
+		time = 0.0f;
+	}
+};
+
+class Sweep {
+public:
+	ManifoldPtr manifold;
+	Vector2fPtr position;
+	float time;
+
+	Sweep() {
+		manifold = std::make_shared<Manifold>();
+		position = std::make_shared<Vector2f>(0.0f, 0.0f);
 	}
 };
 
@@ -131,7 +158,9 @@ public:
 
 	virtual bool checkCollision(const ColliderShapePtr& collider) const = 0;
 
-	virtual void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const = 0;
+	virtual void intersect(const ColliderShapePtr& collider, Manifold* manifold) const = 0;
+
+	virtual void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const = 0;
 
 	virtual ColliderType colliderType() = 0;
 
@@ -167,7 +196,8 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
 
 	ColliderType colliderType() override;
 
@@ -197,7 +227,8 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
 
 	ColliderType colliderType() override;
 };
@@ -279,11 +310,12 @@ public:
 	}
 
 	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void constructManifold(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
 
 	ColliderType colliderType() override;
 
 	void setPosition(const Vector2f& position) override;
+	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
 
 	void setAngle(int angle);
 
@@ -554,6 +586,8 @@ public:
 class BasicBehavior : public PhysicsBehavior {
 public:
 	bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) override;
+private:
+	void handleCollision(const Vector2f& delta, Vector2f& newPosition, BodyPtr& body, QuadtreePtr quadtree);
 };
 
 class SteeringBehavior : public PhysicsBehavior {

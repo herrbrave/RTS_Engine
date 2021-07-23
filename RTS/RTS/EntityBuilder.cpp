@@ -59,7 +59,7 @@ EntityBuilder& EntityBuilder::withAnimation(const string& animationSetPath) {
 	TextureDrawablePtr textureDrawable = dynamic_pointer_cast<TextureDrawable>(makeShared<Drawable>(drawableComponent->getDrawable()));
 
 	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-	AnimationSetPtr animationSet = animationSystem->createAnimationSet(animationSetPath);
+	AnimationSetPtr animationSet = animationSystem->loadAnimationSet(animationSetPath);
 	AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
 	animationSystem->registerAnimation(mEntity->id, animationHandler);
 	AnimationComponentPtr animationComponent(GCC_NEW AnimationComponent(mEntity->id, animationHandler));

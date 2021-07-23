@@ -53,7 +53,13 @@ void AnimationSystem::deregisterAnimation(unsigned long id) {
 	mAnimations.erase(id);
 }
 
-AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
+AnimationSetPtr AnimationSystem::loadAnimationSet(const string& path) {
+	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	AssetSystemPtr assetSystem = makeShared(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	if (assetSystem->contains(path)) {
+		throw "Animation already loaded: " + path;
+	}
+
 	std::ifstream file;
 	file.open(path);
 	if (!file.is_open()) {
@@ -74,10 +80,9 @@ AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 	std::string defaultAnimationName(doc["defaultAnimationName"].GetString());
 	int fps(doc["fps"].GetInt());
 
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
 	graphicsSystem->addTexture(imagePath, name);
 
-	AnimationSetPtr animationSet(GCC_NEW AnimationSet());
+	AnimationSet* animationSet(GCC_NEW AnimationSet());
 	animationSet->defaultAnimationName = defaultAnimationName;
 	animationSet->fps = fps;
 	animationSet->spritesheet = imagePath;
@@ -102,7 +107,11 @@ AnimationSetPtr AnimationSystem::createAnimationSet(const string& path) {
 		}
 	}
 
-	return animationSet;
+	VoidPtr voidPtr(animationSet);
+	AssetPtr asset = std::make_shared<Asset>(voidPtr, path, path);
+	assetSystem->registerAsset(asset);
+
+	return AnimationSetPtr(animationSet);
 }
 
 void  AnimationSystem::clear() {
@@ -213,6 +222,13 @@ void  GraphicsSystem::draw() {
 		}
 		
 		drawable->draw(*mGraphics, position);
+
+		if (__DEBUG__) {
+			if (body->collider != nullptr) {
+				Vector2f pos = *body->collider->colliderShape->position;
+				mGraphics->drawBox(pos.x, pos.y, body->width, body->height, 0, 255, 0, 255);
+			}
+		}
 	}
 
 	mGraphics->onAfterDraw();
@@ -238,6 +254,40 @@ void GraphicsSystem::addTexture(const std::string& path, const std::string& asse
 	assetSystem->registerAsset(mGraphics->createTexture(path, assetTag));
 }
 
+void GraphicsSystem::drawTexture(const string& assetTag, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	if (!assetSystem->contains(assetTag)) {
+		ERR("No texture with assetTag: " + assetTag);
+		return;
+	}
+
+	AssetPtr asset = assetSystem->getAsset(assetTag);
+	SDL_Texture* texture = &*makeShared(asset->getAsset<SDL_Texture>());
+	mGraphics->renderTexture(texture, x, y, w, h, tx, ty, tw, th, angle, r, g, b, a);
+}
+
+
+void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	if (assetSystem->contains(assetTag)) {
+		SDL_Log("Asset already loaded.");
+		return;
+	}
+
+	assetSystem->registerAsset(mGraphics->createTexture(width, height, assetTag));
+}
+
+void GraphicsSystem::drawToTexture(const string& assetTag) {
+	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetPtr textureAsset = assetSystem->getAsset(assetTag);
+	shared_ptr<SDL_Texture> texture = makeShared(textureAsset->getAsset<SDL_Texture>());
+
+	mGraphics->drawToTexture(&*texture);
+}
+
+void GraphicsSystem::drawToScreen() {
+	mGraphics->drawToScreen();
+}
 
 void GraphicsSystem::addFont(const string& path, const string&  assetTag, int fontsize) {
 	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));

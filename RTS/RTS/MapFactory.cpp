@@ -133,18 +133,17 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 		int row = 0;
 
 		while (count < tileCount) {
-			for (int i = 0; i < columns && count < tileCount; i++, count++) {
-				tiles.emplace(id, TilePtr(GCC_NEW Tile(image, i * tileWidth, row * tileHeight, tileHeight, tileWidth))); 
-				id++;
+			for (int i = 0; i < columns && count < tileCount; i++, count++, id++) {
+				tiles.emplace(id, TilePtr(GCC_NEW Tile(image, i * tileWidth, row * tileHeight, tileHeight, tileWidth)));
 			}
 			row++;
 		}
 
-		id = tileset->firstgid;
 		auto tilesArray = tileset->tiles;
 		for (TMXTilePtr tile : tilesArray) {
-			TilePtr newTile = tiles[id++];
+			TilePtr newTile = tiles[tile->id];
 			if (!tile->objectgroup.empty()) {
+				ERR("tile_with_collision: " + std::to_string(tile->id));
 				auto objectGroup = tile->objectgroup;
 				auto collisionObject = objectGroup[0];
 				newTile->collision = true;
@@ -163,16 +162,16 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 						auto shPtr = makeShared(ptr);
 						auto c = (char*)shPtr.get();
 						script = string(c);
+						newTile->script = script;
+						break;
 					}
 				}
 			}
-			newTile->script = script;
 
 			if (!tile->animation.empty()) {
 				AnimationSetPtr animationSet(GCC_NEW AnimationSet());
-				id = tileset->firstgid;
 				newTile->animated = true;
-				animations[id] = animationSet;
+				animations[tileset->firstgid] = animationSet;
 				
 				animationSet->spritesheet = image;
 				animationSet->fps = 0;
@@ -189,7 +188,7 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 						int fps = 1000 / frameTime;
 						animationSet->fps = fps;
 					}
-					int tileId = anim->tileid + id;
+					int tileId = anim->tileid + tileset->firstgid;
 					auto animTile = tiles[tileId];
 
 					TexturePtr texture(GCC_NEW Texture(animTile->textureAssetTag, animTile->tx, animTile->ty, animTile->w, animTile->h));
@@ -210,7 +209,7 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 			int tileWidth = tile->imageWidth;
 			int tileHeight = tile->imageHeight;
 			auto newTile = TilePtr(GCC_NEW Tile(image, 0, 0, tileHeight, tileWidth));
-			tiles.emplace(id++, newTile);
+			tiles.emplace(id, newTile);
 
 			string script = "";
 			if (!tile->properties.empty()) {
@@ -238,9 +237,8 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 
 			if (!tile->animation.empty()) {
 				AnimationSetPtr animationSet(GCC_NEW AnimationSet());
-				id = tileset->firstgid;
 				newTile->animated = true;
-				animations[id] = animationSet;
+				animations[tileset->firstgid] = animationSet;
 
 				animationSet->spritesheet = image;
 				animationSet->fps = 0;
@@ -257,13 +255,14 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 						int fps = 1000 / frameTime;
 						animationSet->fps = fps;
 					}
-					int tileId = anim->tileid + id;
+					int tileId = anim->tileid + tileset->firstgid;
 					auto animTile = tiles[tileId];
 
 					TexturePtr texture(GCC_NEW Texture(animTile->textureAssetTag, animTile->tx, animTile->ty, animTile->w, animTile->h));
 					animationSet->animations["default"]->frames.push_back(texture);
 				}
 			}
+			id++;
 		}
 	}
 }
@@ -290,7 +289,7 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 		auto start = std::chrono::high_resolution_clock::now();
 
 		int x = (index % width);
-		int y = (index / height);
+		int y = (index / width);
 		TilePtr t = mapConfig.tileset.at(tileVal);
 
 		int tx = t->tx;
@@ -309,6 +308,9 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 			tw = -tw;
 			rotation = 90;
 		}
+		else if (flippedHorizontal && flippedVertical) {
+			rotation = 180;
+		}
 		else if (flippedHorizontal) {
 			tx += tw;
 			tw = -tw;
@@ -317,8 +319,6 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 			ty += th;
 			th = -th;
 		}
-
-		LOG("Creating a tile at " + std::to_string(tx) + ", " + std::to_string(ty) + " w: " + std::to_string(tw) + " h: " + std::to_string(th) + " coords x[" + std::to_string(x) + "] y[" + std::to_string(y) + "]");
 
 		EntityPtr tile;
 		if (t->animated) {

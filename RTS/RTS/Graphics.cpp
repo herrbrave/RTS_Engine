@@ -159,6 +159,21 @@ void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 
 	}
 }
 
+void SDLGraphics::drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	SDL_Rect rect{
+		x - (width / 2),
+		y - (height / 2),
+		width,
+		height
+	};
+
+	SDL_SetRenderDrawColor(mRenderer.get(), r, g, b, a);
+	SDL_RenderDrawLine(mRenderer.get(), rect.x, rect.y, rect.x + rect.w, rect.y);
+	SDL_RenderDrawLine(mRenderer.get(), rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + rect.h);
+	SDL_RenderDrawLine(mRenderer.get(), rect.x + rect.w, rect.y + rect.h, rect.x, rect.y + rect.h);
+	SDL_RenderDrawLine(mRenderer.get(), rect.x, rect.y + rect.h, rect.x, rect.y);
+}
+
 void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	if (a < 255) {
 		SDL_SetRenderDrawBlendMode(mRenderer.get(), SDL_BLENDMODE_BLEND);
@@ -278,6 +293,24 @@ AssetPtr SDLGraphics::createTexture(const string& path, const string& assetTag) 
 
 	AssetPtr asset(GCC_NEW Asset(VoidPtr(texture, SDL_DELETERS()), path, assetTag));
 	return asset;
+}
+
+AssetPtr SDLGraphics::createTexture(int width, int height, const string& assetTag) {
+	SDL_Texture* texture = SDL_CreateTexture(&*mRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height);
+	if (texture == nullptr) {
+		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create texture");
+	}
+
+	AssetPtr asset(GCC_NEW Asset(VoidPtr(texture, SDL_DELETERS()), "virtual", assetTag));
+	return asset;
+}
+
+void SDLGraphics::drawToTexture(SDL_Texture* texture) {
+	SDL_SetRenderTarget(&*mRenderer, texture);
+}
+
+void SDLGraphics::drawToScreen() {
+	SDL_SetRenderTarget(&*mRenderer, NULL);
 }
 
 AssetPtr SDLGraphics::createFontAsset(const string& path, const string& assetTag, int fontsize) {

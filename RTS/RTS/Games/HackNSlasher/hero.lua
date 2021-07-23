@@ -158,7 +158,7 @@ function update(delta)
 	end
 
 	setVelocity(entityId, dx, dy)
-	setSpeed(entityId, 300)
+	setSpeed(entityId, 65)
 	if isAttacking then 
 		if not isAnimationPlaying(entityId) then
 			isAttacking = false

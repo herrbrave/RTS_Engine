@@ -348,50 +348,33 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 		}
 	}
 }
-/*
-void GridDrawable::initialize(SDL_Renderer* renderer, const SystemManager& systemManager) {
-	this->texture = std::make_shared<SDL_Texture>(SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, width, height));
 
-	// Draw the tiles onto the texturebatch.
-	SDL_Rect src, dest;
-	SDL_SetRenderTarget(renderer, this->texture.get());
+void GridDrawable::initialize(const SystemManager& systemManager) {
+	GraphicsSystem& graphicsSystem = *makeShared(systemManager.getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	graphicsSystem.addTexture(grid->name, width, height);
+	graphicsSystem.drawToTexture(grid->name);
 
-	AssetSystemPtr assetSystem = makeShared(systemManager.getSystemByType<AssetSystem>(SystemType::ASSET));
-	unordered_map<string, shared_ptr<SDL_Texture>> localTextureCache;
-
-	auto it = this->tileLayers.begin();
-	while (it != this->tileLayers.end()) {
+	auto it = this->grid->tileLayers.begin();
+	while (it != this->grid->tileLayers.end()) {
 		auto layer = *it;
 
-		for (int y = 0; y < this->rows; y++) {
-			for (int x = 0; x < this->columns; x++) {
+		for (int y = 0; y < this->grid->rows; y++) {
+			for (int x = 0; x < this->grid->columns; x++) {
 				auto tile = layer[x][y];
 				if (tile == nullptr) {
 					continue;
 				}
 
-				if (localTextureCache.find(tile->textureAssetTag) == localTextureCache.end()) {
-					AssetPtr asset = assetSystem->getAsset(tile->textureAssetTag);
-					shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
-					localTextureCache[tile->textureAssetTag] = sdlTexture;
-				}
-				src.x = tile->tx;
-				src.y = tile->ty;
-				src.w = tile->w;
-				src.h = tile->h;
-
-				dest.x = x * tile->w;
-				dest.y = y * tile->h;
-				dest.w = tile->w;
-				dest.h = tile->h;
-				SDL_RenderCopyEx(renderer, localTextureCache[tile->textureAssetTag].get(), &src, &dest, angle, NULL, SDL_FLIP_NONE);
+				graphicsSystem.drawTexture(grid->name, x * tile->w, y * tile->h, tile->w, tile->h, tile->tx, tile->ty, tile->w, tile->h, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 			}
 		}
 	}
 
-	SDL_SetRenderTarget(renderer, NULL);
-}*/
+	texture = std::make_shared<Texture>(grid->name, 0, 0, width, height);
+
+	graphicsSystem.drawToScreen();
+}
 
 void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
-	graphicsRef.renderTexture(texture.get(), position.x, position.y, width, height, 0.0f, 0.0f, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
+	graphicsRef.renderTexture(texture, position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 }
