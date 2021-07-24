@@ -5,8 +5,8 @@ void MoveState::begin() {
 }
 
 void MoveState::update() {
-	auto unitComponent = makeShared(mEntity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-	auto targetComponent = makeShared(mTarget->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+	auto unitComponent = mEntity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+	auto targetComponent = mTarget->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 
 	Vector2f& unitLocation = Vector2f(unitComponent->getPosition());
 	Vector2f& targetLocation = Vector2f(targetComponent->getPosition());

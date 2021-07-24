@@ -23,7 +23,7 @@ public:
 	}
 
 	void recalculate() {
-		shared_ptr<TileComponent> tileComponent = makeShared(mTargetTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		shared_ptr<TileComponent> tileComponent = mTargetTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 		if (tileComponent == nullptr) {
 			throw GCC_NEW std::exception("Failed to get tile component from weak pointer.");
 		}
@@ -38,7 +38,7 @@ public:
 
 		while (openList.size() > 0) {
 			auto currentTile = openList.front();
-			tileComponent = makeShared(currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+			tileComponent = currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 			openList.pop_front();
 			closedList.emplace(currentTile);
 			int currentCost = mCostMap[currentTile->id];
@@ -52,7 +52,7 @@ public:
 						continue;
 					}
 					auto neighborTile = mMap->getTileAt(x, y);
-					auto neighborTileComponent = makeShared(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+					auto neighborTileComponent = neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 
 					if (closedList.find(neighborTile) != closedList.end() || std::find(openList.begin(), openList.end(), neighborTile) != openList.end()) {
 						if (!neighborTileComponent->canOccupy) {
@@ -81,7 +81,7 @@ public:
 		for (int y = 0; y < mMap->getMapHeight(); y++) {
 			for (int x = 0; x < mMap->getMapWidth(); x++) {
 				auto currentTile = mMap->getTileAt(x, y);
-				tileComponent = makeShared(currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+				tileComponent = currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 				int costValue = mCostMap[currentTile->id];
 				std::string cost = std::to_string(costValue);
 
@@ -120,7 +120,7 @@ public:
 	}
 
 	void guideEntity(EntityPtr entity) {
-		auto physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		auto physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		EntityPtr tileAt = tileAtPoint(physicsComponent->getPosition());
 		auto velocity = getVectorForTile(tileAt->id);
 

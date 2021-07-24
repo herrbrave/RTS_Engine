@@ -7,7 +7,7 @@ void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, in
 
 	TileComponentPtr tileComponent;
 	if (entity->getComponents().find(ComponentType::TILE_COMPONENT) != entity->getComponents().end()) {
-		tileComponent = makeShared(entity->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		tileComponent = entity->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 	}
 	else {
 		tileComponent = TileComponentPtr(GCC_NEW TileComponent(entity->id, x, y));
@@ -340,7 +340,7 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 		}
 		else {
 			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth * scale, y * tileHeight * scale)), tileWidth * scale, tileHeight * scale, t->tx, t->ty, t->w, t->h, t->collision);
-			auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			auto drawableComponent = tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 			drawableComponent->setZOrder(drawOrder);
 			drawableComponent->setAngle(rotation);
 		}
@@ -404,7 +404,7 @@ void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig,
 			}
 			else {
 				tile = mTileFactory->createTexturedEntity(t->textureAssetTag, x, y, width, height, t->tx, t->ty, t->w, t->h, true);
-				auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+				auto drawableComponent = tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 				drawableComponent->setZOrder(drawOrder);
 			}
 		}

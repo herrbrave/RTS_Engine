@@ -282,9 +282,9 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
-		TileComponentPtr leftComponent(left.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
-		TileComponentPtr rightComponent(right.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
-		TileComponentPtr endComponent(endTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		TileComponentPtr leftComponent = left.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
+		TileComponentPtr rightComponent = right.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
+		TileComponentPtr endComponent = endTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 
 		// dumb heuristic based on distance.
 		int deltaX = leftComponent->x - endComponent->x;
@@ -315,7 +315,7 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 		openSet.pop();
 		closedSet.emplace(current.tile);
 
-		TileComponentPtr component(current.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+		TileComponentPtr component = current.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 		if (component->x == endX && component->y == endY) {
 			auto tile = current.tile;
 			while (tile != startTile) {
@@ -341,7 +341,7 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 				}
 
 				auto neighborTile = entitySystem->getEntityById(mMapConfig->tiles[index]);
-				TileComponentPtr component(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
+				TileComponentPtr component = neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
 				}

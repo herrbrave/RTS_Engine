@@ -7,7 +7,7 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, float
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
@@ -32,7 +32,7 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
@@ -56,7 +56,7 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, Textu
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
@@ -79,7 +79,7 @@ void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float 
 
 	PhysicsComponentPtr physicsComponent;
 	if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
-		physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 	}
 	else {
 		BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, w, h));
@@ -105,7 +105,7 @@ void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float 
 
 	PhysicsComponentPtr physicsComponent;
 	if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
-		physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 	}
 	else {
 		BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, w, h));
@@ -126,7 +126,7 @@ void applyInput(SystemManagerPtr systemManager, unsigned long entityId, Input in
 
 	InputComponentPtr inputComponent;
 	if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) != entity->getComponents().end()) {
-		inputComponent = makeShared(entity->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
+		inputComponent = entity->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT);
 	}
 	else {
 		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
@@ -145,7 +145,7 @@ void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, cons
 
 	AnimationComponentPtr animationComponent;
 	if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
@@ -171,7 +171,7 @@ void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, Anim
 
 	AnimationComponentPtr animationComponent;
 	if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);

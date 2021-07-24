@@ -261,19 +261,15 @@ void ButtonComponent::setCallback(function<void()>& callback) {
 }
 
 void setButtonText(EntityPtr entity, const std::string& text, const std::string& font, SystemManagerPtr systemManager) {
-	weak_ptr<ButtonComponent> buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
-	if (auto ptr = buttonComponent.lock()) {
-		ptr->setText(text, font, systemManager);
-	}
+	ButtonComponentPtr buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
+	buttonComponent->setText(text, font, systemManager);
 }
 
 void setIcon(EntityPtr entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManagerPtr systemManager) {
 	TexturePtr texture(GCC_NEW Texture(assetTag, tx, ty, tw, th));
 
-	weak_ptr<ButtonComponent> buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
-	if (auto ptr = buttonComponent.lock()) {
-		ptr->setIcon(texture, systemManager);
-	}
+	ButtonComponentPtr buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
+	buttonComponent->setIcon(texture, systemManager);
 }
 
 PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {

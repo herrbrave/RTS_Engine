@@ -84,7 +84,7 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr& script) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
-		LuaScriptComponentPtr scriptComponent = makeShared(entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT));
+		LuaScriptComponentPtr scriptComponent = entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT);
 
 		return scriptComponent->script->invoke("onMessage", message, value);
 	};
@@ -184,9 +184,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setVelocity"] = [this](int entityId, double x, double y) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		Vector2f velocity(x, y);
 		velocity.normalize();
 		physicsComponent->setVelocity(velocity);
@@ -195,37 +195,37 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["addVelocity"] = [this](int entityId, double x, double y) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		physicsComponent->setVelocity(physicsComponent->getVelocity() + Vector2f(x, y));
 	};
 
 	script->state["setSpeed"] = [this](int entityId, double speed) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		physicsComponent->setSpeed(speed);
 	};
 
 	script->state["getSpeed"] = [this](int entityId) -> double {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		return (double)physicsComponent->getSpeed();
 	};
 
 	script->state["getPosition"] = [this](int entityId) -> LuaFriendlyVector2f& {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-		const Vector2f& position(physicsComponent->getPosition());
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+		const Vector2f& position = physicsComponent->getPosition();
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(position);
 
 		return *vec;
@@ -234,9 +234,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setPosition"] = [this](int entityId, double x, double y) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		Vector2f position(x, y);
 		physicsComponent->setPosition(position);
 	};
@@ -244,9 +244,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["getVelocity"] = [this](int entityId) -> LuaFriendlyVector2f& {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
 	};
 
@@ -302,9 +302,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setAABBCollision"] = [this](int entityId, int width, int height) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = makeShared(physicsComponent->getBody());
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height))));
@@ -313,9 +313,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setCircleCollision"] = [this](int entityId, int radius) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = makeShared(physicsComponent->getBody());
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius))));
@@ -324,9 +324,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setOBBCollision"] = [this](int entityId, int width, int height, int angle) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = makeShared(physicsComponent->getBody());
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle))));
@@ -335,9 +335,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setTarget"] = [this](int entityId, double x, double y, double threshold) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		Vector2fPtr position(GCC_NEW Vector2f(x, y));
 		TargetPtr target(GCC_NEW PositionTarget(position));
 		target->setThreshold(threshold);
@@ -348,18 +348,18 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	script->state["setTag"] = [this](int entityId, string tag) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		physicsComponent->setTag(tag);
 	};
 
 	script->state["getTag"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		return physicsComponent->getTag();
 	};
 
@@ -389,9 +389,9 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 		DrawablePtr drawable = makeShared<Drawable>(drawableComponent->getDrawable());
 		TextureDrawablePtr textureDrawable = dynamic_pointer_cast<TextureDrawable>(drawable);
 		graphicsSystem->addTexture(tag, tag);
@@ -407,17 +407,15 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 	script->state["getZOrder"] = [this](int entityId) -> int {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
-
-		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 			return drawableComponent->getZOrder();
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			return animationComponent->getZOrder();
 		}
 
@@ -426,50 +424,50 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 	script->state["setZOrder"] = [this](int entityId, int order) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 			drawableComponent->setZOrder(order);
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			animationComponent->setZOrder(order);
 		}
 	};
 
 	script->state["setSize"] = [this](int entityId, double w, double h) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 			drawableComponent->setSize(w, h);
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			animationComponent->setSize(w, h);
 		}
 	};
 
 	script->state["setAngle"] = [this](int entityId, double angle) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 			drawableComponent->setAngle(angle);
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			animationComponent->setAngle(angle);
 		}
 
 		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
-			PhysicsComponentPtr physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+			PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 			BodyPtr body = makeShared(physicsComponent->getBody());
 			if (body->isCollidable() && body->collider->colliderShape->colliderType() == ColliderType::OBB) {
 				OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(body->collider->colliderShape);
@@ -480,15 +478,15 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 	script->state["getAngle"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 			return (double) drawableComponent->getAngle();
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			return (double) animationComponent->getAngle();
 		}
 
@@ -497,21 +495,21 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 	script->state["setColor"] = [this](int entityId, int r, int g, int b, int a) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 			drawableComponent->setColor(r, g, b, a);
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			animationComponent->setColor(r, g, b, a);
 		}
 	};
 
 	script->state["addParticle"] = [this](int entityId, int particleLifeMillis, int spreadDist, int gravX, int gravY, int partW, int partH) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
@@ -552,45 +550,45 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 	script->state["setAnimation"] = [this](int entityId, string animationName) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		animationComponent->setAnimation(animationName);
 	};
 
 	script->state["stopAnimation"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		animationComponent->stop();
 	};
 
 	script->state["playAnimation"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		animationComponent->play();
 	};
 
 	script->state["loopAnimation"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		animationComponent->loop();
 	};
 
 	script->state["isAnimationPlaying"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+		AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 
 		return animationComponent->getAnimationState() == AnimationState::PLAYING || animationComponent->getAnimationState() == AnimationState::LOOPING;
 	};
@@ -707,7 +705,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 
 	script->state["setText"] = [this](int entityId, string text, string font, int r, int g, int b) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		PhysicsComponentPtr physicsComponent;
 		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) == entity->getComponents().end()) {
@@ -718,7 +716,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 			entity->addComponent(physicsComponent);
 		}
 		else {
-			physicsComponent = makeShared<PhysicsComponent>(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+			physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		}
 		LabelComponentPtr labelComponent;
 		if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) == entity->getComponents().end()) {
@@ -733,7 +731,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 			entity->addComponent(labelComponent);
 		}
 		else {
-			labelComponent = makeShared<LabelComponent>(entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT));
+			labelComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
 		}
 
 		labelComponent->setText(text, mSystemManager);
@@ -741,7 +739,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 
 	script->state["setProgress"] = [this](int entityId, string location, int progress, int maxProgress) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		EntityPtr progressEntity{ nullptr };
 		auto it = entity->children.begin();
@@ -754,7 +752,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 		}
 
 		if (progressEntity != nullptr) {
-			ProgressComponentPtr progressBar = makeShared(progressEntity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT));
+			ProgressComponentPtr progressBar = progressEntity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT);
 			progressBar->setProgress(progress, maxProgress);
 		}
 		else {
@@ -764,7 +762,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 			int h = 8;
 			if (string("top").compare(location) == 0) {}
 			if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-				DrawableComponentPtr drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+				DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 				DrawablePtr drawable = makeShared(drawableComponent->getDrawable());
 				w = drawable->width;
 				if (string("top").compare(location) == 0) {
@@ -775,7 +773,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 				}
 			}
 			else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-				AnimationComponentPtr drawableComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+				AnimationComponentPtr drawableComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 				w = drawableComponent->aninmationDrawable->width;;
 				if (string("top").compare(location) == 0) {
 					y -= (drawableComponent->aninmationDrawable->height / 2) + 4;

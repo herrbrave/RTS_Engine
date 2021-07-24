@@ -14,7 +14,7 @@ void PathState::update() {
 		return;
 	}
 
-	auto component = makeShared(mUnit->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
+	auto component = mUnit->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 	if (mFlowfield->tileExistsAtPoint(component->getPosition()) || mFlowfield->tileAtPoint(component->getPosition())->id == mFlowfield->mTargetTile->id) {
 		end();
 		return;

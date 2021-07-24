@@ -35,21 +35,20 @@ public:
 	Entity() {}
 
 	const unsigned long id = sEntityId++;
-	Uint8 type;
 
 	virtual void update();
 	void pushState(StatePtr state);
 
 	template<class ClassType>
-	weak_ptr<ClassType> getComponentByType(ComponentType componentType) const {
+	shared_ptr<ClassType> getComponentByType(ComponentType componentType) const {
 		auto it = mComponents.find(componentType);
 		if (it == mComponents.end()) {
-			return weak_ptr<ClassType>();
+			return shared_ptr<ClassType>();
 		}
 
 		shared_ptr<Component> component = it->second;
 		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(component);
-		return weak_ptr<ClassType>(converted);
+		return converted;
 	}
 
 	Components& getComponents() {
