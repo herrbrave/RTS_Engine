@@ -2,8 +2,8 @@
 
 
 void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, int y, bool canOccupy) {
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	TileComponentPtr tileComponent;
 	if (entity->getComponents().find(ComponentType::TILE_COMPONENT) != entity->getComponents().end()) {
@@ -22,7 +22,7 @@ void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, in
 EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float width, float height, float tx, float ty, float tw, float th, bool canOccupy) {
 	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, std::abs(width), std::abs(height), tx, ty, tw, th, canOccupy);
 
-	applyTile(this->mSystemManager, entity->id, xIndex, yIndex, canOccupy);
+	applyTile(mSystemManager, entity->id, xIndex, yIndex, canOccupy);
 
 	return entity;
 }
@@ -106,10 +106,10 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 
 
 	// TODO: provide a factory for the entity vendor, or inject it into the map factory.
-	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), EntityVendorPtr(GCC_NEW EntitySystem::DefaultEntityVendor(entitySystem))));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), mSystemManager));
 
-	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
 	physicsSystem->setWorldSize(map->getMapWidth() * map->getTileWidth() * 2.0f, map->getMapHeight() * map->getTileHeight() * 2.0f);
 
 	MapLoadedSetEventData* eventData = GCC_NEW MapLoadedSetEventData(SDL_GetTicks());
@@ -279,9 +279,9 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder, float scale) {
 	DEBUG_LOG("Map Factory.loadTileLayer - Starting to build layer.");
 	auto data = layer->data;
-	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+	AnimationSystemPtr animationSystem = mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	for (int index = 0; index < layer->tileCount; index++) {
 		unsigned int tileVal(data[index]);
 

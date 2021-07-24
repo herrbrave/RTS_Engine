@@ -245,21 +245,25 @@ void parseFrames(const rapidjson::Value& frames, TMXFrames& frameList) {
 	}
 }
 
-Map::Map(MapConfigPtr config, EntityVendorPtr entityVendor) {
+Map::Map(MapConfigPtr config, SystemManagerPtr systemManager) {
 	mMapConfig = std::move(config);
-	mEntityVendor = entityVendor;
+	this->systemManager = systemManager;
 }
 
-WeakEntityPtr Map::getTileAt(int x, int y) {
+bool Map::tileExistsAtPoint(int x, int y) {
 	int index = getIndex(x, y);
-	if (index == -1) {
-		return WeakEntityPtr();
-	}
 
-	return mEntityVendor->getEntityById(mMapConfig->tiles[index]);
+	return index >= 0 && index < this->mMapConfig->tiles.size();
 }
 
-WeakEntityPtr Map::tileAtPoint(const Vector2f& point) {
+EntityPtr Map::getTileAt(int x, int y) {
+	int index = getIndex(x, y);
+
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	return entitySystem->getEntityById(mMapConfig->tiles[index]);
+}
+
+EntityPtr Map::tileAtPoint(const Vector2f& point) {
 	int xIndex = std::round(point.x / float(mMapConfig->tileWidth));
 	int yIndex = std::round(point.y / float(mMapConfig->tileHeight));
 
@@ -273,7 +277,8 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 		return;
 	}
 
-	auto endTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[endIndex]));
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	auto endTile = entitySystem->getEntityById(mMapConfig->tiles[endIndex]);
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
@@ -294,7 +299,7 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 	};
 
 	int startIndex = getIndex(startX, startY);
-	auto startTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[startIndex]));
+	auto startTile = entitySystem->getEntityById(mMapConfig->tiles[startIndex]);
 	std::unordered_set<EntityPtr> openSetLookup;
 	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
 	openSet.emplace(Node{ startTile, 0 });
@@ -335,7 +340,7 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 					continue;
 				}
 
-				auto neighborTile = makeShared(mEntityVendor->getEntityById(mMapConfig->tiles[index]));
+				auto neighborTile = entitySystem->getEntityById(mMapConfig->tiles[index]);
 				TileComponentPtr component(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
@@ -350,9 +355,9 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 }
 
 void GridDrawable::initialize(const SystemManager& systemManager) {
-	GraphicsSystem& graphicsSystem = *makeShared(systemManager.getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	graphicsSystem.addTexture(grid->name, width, height);
-	graphicsSystem.drawToTexture(grid->name);
+	GraphicsSystemPtr graphicsSystem = systemManager.getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	graphicsSystem->addTexture(grid->name, width, height);
+	graphicsSystem->drawToTexture(grid->name);
 
 	auto it = this->grid->tileLayers.begin();
 	while (it != this->grid->tileLayers.end()) {
@@ -365,14 +370,14 @@ void GridDrawable::initialize(const SystemManager& systemManager) {
 					continue;
 				}
 
-				graphicsSystem.drawTexture(grid->name, x * tile->w, y * tile->h, tile->w, tile->h, tile->tx, tile->ty, tile->w, tile->h, angle, mColor->r, mColor->g, mColor->b, mColor->a);
+				graphicsSystem->drawTexture(grid->name, x * tile->w, y * tile->h, tile->w, tile->h, tile->tx, tile->ty, tile->w, tile->h, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 			}
 		}
 	}
 
 	texture = std::make_shared<Texture>(grid->name, 0, 0, width, height);
 
-	graphicsSystem.drawToScreen();
+	graphicsSystem->drawToScreen();
 }
 
 void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {

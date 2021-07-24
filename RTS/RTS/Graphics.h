@@ -99,6 +99,29 @@ public:
 	void show() { this->visible = true; }
 	void hide() { this->visible = false; }
 
+	virtual bool isOnScreen(float x, float y, float camX, float camY, float screenWidth, float screenHeight) {
+		
+		float x0 = x - (this->width / 2.0f);
+		float y0 = y - (this->height / 2.0f);
+
+		float x1 = x + (this->width / 2.0f);
+		float y1 = y + (this->height / 2.0f);
+
+		float x2 = camX - (screenWidth / 2.0f);
+		float y2 = camY - (screenHeight / 2.0f);
+
+		float x3 = camX + (screenWidth / 2.0f);
+		float y3 = camY + (screenHeight / 2.0f);
+
+		bool collision(x0 < x3
+			&& x1 > x2
+			&& y0 < y3
+			&& y1 > y2);
+
+
+		return collision;
+	}
+
 	virtual void setSize(float width, float height);
 
 	virtual DrawableType getType() {

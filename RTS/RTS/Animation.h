@@ -241,6 +241,10 @@ public:
 	}
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override {
+		if (animationHandler->state == AnimationState::STOPPED) {
+			return;
+		}
+
 		graphicsRef.renderTexture(this->animationHandler->getCurrentFrame(), position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 	}
 

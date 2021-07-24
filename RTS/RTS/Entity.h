@@ -78,7 +78,7 @@ protected:
 
 class EntityVendor {
 public:
-	virtual WeakEntityPtr getEntityById(unsigned long entityId) = 0;
+	virtual EntityPtr getEntityById(unsigned long entityId) = 0;
 };
 
 #endif // !__ENTITY_H__

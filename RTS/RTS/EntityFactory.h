@@ -12,15 +12,15 @@ typedef shared_ptr<EntityFactory> EntityFactoryPtr;
 typedef weak_ptr<EntityFactory> WeakEntityFactoryPtr;
 
 
-void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h);
-void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture);
-void applyPhysics(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h);
-void applyPhysics(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider);
-void applyInput(WeakSystemManagerPtr systemManager, unsigned long entityId, Input input, std::function<bool(EventPtr)>& callback);
-void applyAnimation(WeakSystemManagerPtr systemManager, unsigned long entityId, const string& path);
-void applyAnimation(WeakSystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet);
-void applyScript(WeakSystemManagerPtr systemManager, unsigned long entityId, const string& script);
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h);
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture);
+void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h);
+void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider);
+void applyInput(SystemManagerPtr systemManager, unsigned long entityId, Input input, std::function<bool(EventPtr)>& callback);
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, const string& path);
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet);
+void applyScript(SystemManagerPtr systemManager, unsigned long entityId, const string& script);
 
 
 class EntityFactory {

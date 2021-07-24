@@ -944,6 +944,7 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 	*body->collider->colliderShape->position -= delta;
 	Vector2f newPosition(position + delta);
 
+	auto fireball = body->getTag() == "kobold fireball";
 	Sweep sweep;
 	sweep.time = 1.0f;
 	sweep.position->set(newPosition);
@@ -954,6 +955,10 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 		if (currentSweep.time < sweep.time) {
 			sweep = currentSweep;
 		}
+
+
+		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, bodPtr->id, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(eventData);
 	}
 
 	Vector2f finalPos = *sweep.position;
@@ -971,6 +976,8 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 
 	body->setPosition(finalPos);
 	pos.set(finalPos);
+
+	/*
 	DEBUG_LOG("==============START================");
 
 	DEBUG_LOG("Sweep Position: " + std::to_string(sweep.position->x) + ", " + std::to_string(sweep.position->y));
@@ -980,6 +987,7 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 	DEBUG_LOG("Time: " + std::to_string(sweep.time));
 
 	DEBUG_LOG("===============END-================");
+	*/
 }
 
 bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {

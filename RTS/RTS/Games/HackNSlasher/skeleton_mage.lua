@@ -16,15 +16,15 @@ registrar = {
 
 
 function setup()
-	print("setup hero", entityId)
-	setTag(entityId, "hero")
-	attachAsepriteAnimationSet(entityId, "Assets/HackNSlasher/Characters/Humanoid/Reptiles & Kobold/kobold.json")
+	print("setup skeleton mage", entityId)
+	setTag(entityId, "skeleton mage")
+	attachAsepriteAnimationSet(entityId, "Assets/HackNSlasher/Characters/Humanoid/SkeletonMage/SkeletonMage.json")
 	setSpeed(entityId, 64);
 	setZOrder(entityId, 3)
 	setSize(entityId, 64, 64)
 
 	weapon = createPhysics(0, 0, 64, 64)
-	attachAsepriteAnimationSet(weapon, "Assets/HackNSlasher/Characters/Humanoid/Reptiles & Kobold/Shortbow 48x48.json")
+	attachAsepriteAnimationSet(weapon, "Assets/HackNSlasher/Characters/Humanoid/Attack FX/Bowshot and Spells/Green Staff 48x48.json")
 	setChild(entityId, weapon)
 	setSize(weapon, 96, 96)
 	setZOrder(weapon, 4)
@@ -152,7 +152,7 @@ function updateIdle(delta)
 
 
 			fireball = createPhysics(math.floor(pos:getX()), math.floor(pos:getY()), 16, 16)
-			setScript(fireball, "Games/HackNSlasher/kobold_fireball.lua")
+			setScript(fireball, "Games/HackNSlasher/skeleton_mage_magic_missle.lua")
 			setVelocity(fireball, math.floor(dir:getX()), math.floor(dir:getY()))
 		end
 

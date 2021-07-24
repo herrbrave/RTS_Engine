@@ -1,6 +1,7 @@
 #ifndef __SYSTEM_H__
 #define __SYSTEM_H__
 
+#include<chrono>
 #include<functional>
 #include<memory>
 #include<string>
@@ -90,15 +91,15 @@ public:
 	void update(Uint32 delta);
 
 	template<class ClassType>
-	weak_ptr<ClassType> getSystemByType(SystemType systemType) const {
+	shared_ptr<ClassType> getSystemByType(SystemType systemType) const {
 		if (systems.find(systemType) == systems.end()) {
-			return weak_ptr<ClassType>();
+			throw "System does not exist.";
 		}
 
 		shared_ptr<System> systemPtr = systems.at(systemType);
 		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(systemPtr);
 
-		return weak_ptr<ClassType>(converted);
+		return converted;
 	}
 };
 
@@ -289,7 +290,7 @@ public:
 	}
 
 	void addEntity(EntityPtr entity);
-	WeakEntityPtr getEntityById(unsigned long id);
+	EntityPtr getEntityById(unsigned long id);
 	void deregisterEntity(unsigned long id);
 	void getAllEntities(std::vector<EntityPtr>& entity);
 	
@@ -300,7 +301,7 @@ public:
 	class DefaultEntityVendor : public EntityVendor {
 	public:
 		DefaultEntityVendor(EntitySystemPtr entitySystem) { mEntitySystem = entitySystem; }
-		WeakEntityPtr getEntityById(unsigned long entityId) override;
+		EntityPtr getEntityById(unsigned long entityId) override;
 	private:
 		EntitySystemPtr mEntitySystem;
 	};
@@ -367,7 +368,7 @@ public:
 	QuadtreePtr quadTree{ nullptr };
 
 	PhysicsSystem(SystemManagerPtr systemManager) : System(SystemType::PHYSICS, systemManager) {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		GraphicsConfigPtr graphicsConfig = makeShared(graphicsSystem->getGraphicsConfig());
 		this->setWorldSize(graphicsConfig->mWidth, graphicsConfig->mHeight);
 

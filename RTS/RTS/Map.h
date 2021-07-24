@@ -247,9 +247,13 @@ public:
 
 class Map {
 public:
-	Map(MapConfigPtr config, EntityVendorPtr entityVendor);
+	Map(MapConfigPtr config, SystemManagerPtr systemManager);
 
-	WeakEntityPtr getTileAt(int x, int y);
+	EntityPtr getTileAt(int x, int y);
+
+	bool tileExistsAtPoint(int x, int y);
+
+	EntityPtr tileAtPoint(const Vector2f& point);
 
 	void findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX, int endY);
 
@@ -269,10 +273,8 @@ public:
 		return mMapConfig->tileHeight;
 	}
 
-	WeakEntityPtr tileAtPoint(const Vector2f& point);
-
 private:
-	EntityVendorPtr mEntityVendor{ nullptr };
+	SystemManagerPtr systemManager;
 	MapConfigPtr mMapConfig{ nullptr };
 
 	inline int getIndex(int x, int y) {

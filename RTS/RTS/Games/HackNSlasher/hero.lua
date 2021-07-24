@@ -22,11 +22,13 @@ function setup()
 	attachAsepriteAnimationSet(entityId, "Assets/HackNSlasher/Characters/Humanoid/Colt/colt.json")
 	setSpeed(entityId, 150);
 	setSize(entityId, 64, 64)
+	setZOrder(entityId, 3)
 
 	weapon = createPhysics(0, 0, 64, 64)
 	attachAsepriteAnimationSet(weapon, "Assets/HackNSlasher/Characters/Humanoid/Attack FX/Long Slash/great_sword_long_slash.json")
 	setChild(entityId, weapon)
 	setSize(weapon, 128, 64)
+	setZOrder(weapon, 4)
 
 	direction = "RIGHT"
 	setAnimation(entityId, "idle_right")
@@ -168,6 +170,8 @@ function onCollision(id)
 end
 
 function update(delta)
+	heroPos = getPosition(entityId)
+	setCameraPosition(math.floor(heroPos:getX()) - 512, math.floor(heroPos:getY()) - 384)
 	if keyChange then
 		dx = 0
 		dy = 0

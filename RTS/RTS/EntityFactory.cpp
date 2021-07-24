@@ -1,16 +1,15 @@
 #include"EntityFactory.h"
 
 
-void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
 		graphicsSystem->deregisterDrawable(entity->id);
 		graphicsSystem->registerDrawable(entity->id, blockDrawable);
@@ -18,7 +17,7 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, float x, flo
 		drawableComponent->setDrawable(blockDrawable);
 	}
 	else {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS)); 
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS); 
 		DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
 		graphicsSystem->registerDrawable(entity->id, blockDrawable);
 		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, blockDrawable));
@@ -27,17 +26,16 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, float x, flo
 	}
 }
 
-void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 	}
 	else {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		TexturePtr texture(GCC_NEW Texture(texturePath, tx, ty, w, h));
 		DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
 		textureDrawable->setSize(width, height);
@@ -52,17 +50,16 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, const string
 	drawable->setTexture(texture);
 }
 
-void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, TexturePtr texture) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = makeShared(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 	}
 	else {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
 		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, textureDrawable));
@@ -74,12 +71,11 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, TexturePtr t
 	drawable->setTexture(texture);
 }
 
-void applyPhysics(WeakSystemManagerPtr sm, unsigned long entityId, float x, float y, float w, float h) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
-	PhysicsSystemPtr physicsSystem = makeShared(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
 
 	PhysicsComponentPtr physicsComponent;
 	if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
@@ -101,12 +97,11 @@ void applyPhysics(WeakSystemManagerPtr sm, unsigned long entityId, float x, floa
 	}
 }
 
-void applyPhysics(WeakSystemManagerPtr sm, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
-	PhysicsSystemPtr physicsSystem = makeShared(systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
+	PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
 
 	PhysicsComponentPtr physicsComponent;
 	if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
@@ -125,17 +120,16 @@ void applyPhysics(WeakSystemManagerPtr sm, unsigned long entityId, float x, floa
 	physicsComponent->setSize(w, h);
 }
 
-void applyInput(WeakSystemManagerPtr sm, unsigned long entityId, Input input, std::function<bool(EventPtr)>& callback) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyInput(SystemManagerPtr systemManager, unsigned long entityId, Input input, std::function<bool(EventPtr)>& callback) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	InputComponentPtr inputComponent;
 	if (entity->getComponents().find(ComponentType::INPUT_COMPONENT) != entity->getComponents().end()) {
 		inputComponent = makeShared(entity->getComponentByType<InputComponent>(ComponentType::INPUT_COMPONENT));
 	}
 	else {
-		InputSystemPtr inputSystem = makeShared(systemManager->getSystemByType<InputSystem>(SystemType::INPUT));
+		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
 		InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
 		inputSystem->registerEventListener(inputListener);
 		inputComponent = InputComponentPtr(GCC_NEW InputComponent(entity->id, inputListener));
@@ -145,22 +139,21 @@ void applyInput(WeakSystemManagerPtr sm, unsigned long entityId, Input input, st
 	inputComponent->setInputCallback(input, callback);
 }
 
-void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, const string& path) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, const string& path) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	AnimationComponentPtr animationComponent;
 	if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
 		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
 	}
 	else {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
 		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(animationSet, animationSet->fps));
 		AnimationDrawablePtr aninmationDrawable = std::make_shared<AnimationDrawable>(animationHandler);
@@ -172,21 +165,20 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, const strin
 	}
 }
 
-void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, AnimationSetPtr animationSet) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	AnimationComponentPtr animationComponent;
 	if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
 	}
 	else {
-		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(animationSet, animationSet->fps));
 		AnimationDrawablePtr aninmationDrawable = std::make_shared<AnimationDrawable>(animationHandler);
 		animationSystem->registerAnimation(entity->id, animationHandler);
@@ -197,17 +189,16 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, AnimationSe
 	}
 }
 
-void applyScript(WeakSystemManagerPtr sm, unsigned long entityId, const string& script) {
-	SystemManagerPtr systemManager = makeShared(sm);
-	EntitySystemPtr entitySystem(makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY)));
-	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
+void applyScript(SystemManagerPtr systemManager, unsigned long entityId, const string& script) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	if (entity->getComponents().find(ComponentType::LUA_SCRIPT_COMPONENT) != entity->getComponents().end()) {
 		ERR("Script " + script + " cannont be applied to entity");
 		throw std::exception("Cannot add new script to entity that already has a script.");
 	}
 
-	LuaScriptSystemPtr luaScriptSystem = makeShared<LuaScriptSystem>(systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT));
+	LuaScriptSystemPtr luaScriptSystem = systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
 	LuaScriptPtr luaScript(GCC_NEW LuaScript(script));
 
 	LuaScriptComponentPtr scriptComponent(GCC_NEW LuaScriptComponent(entity->id, luaScript));
@@ -223,39 +214,39 @@ EntityFactory::EntityFactory(SystemManagerPtr systemManager) {
 }
 
 EntityPtr EntityFactory::createDefault(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics(this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
-	applyDrawable(this->mSystemManager, entity->id, x, y, width, height, r, g, b, a);
+	applyPhysics((SystemManagerPtr) this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+	applyDrawable((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, r, g, b, a);
 
 	return entity;
 }
 
 EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, float y, float width, float height, float tx, float ty, float w, float h, bool isCollidable) {
-	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyDrawable(this->mSystemManager, entity->id, assetTag, width, height, tx, ty, w, h);
+	applyDrawable((SystemManagerPtr)this->mSystemManager, entity->id, assetTag, width, height, tx, ty, w, h);
 	if (isCollidable) {
-		applyPhysics(this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
 	}
 	else {
-		applyPhysics(this->mSystemManager, entity->id, x, y, width, height);
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);
 	}
 
 	return entity;
 }
 
 EntityPtr EntityFactory::createAnimatedEntity(const string& path, float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem = makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics(this->mSystemManager, entity->id, x, y, width, height);
-	applyAnimation(this->mSystemManager, entity->id, path);
+	applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);
+	applyAnimation((SystemManagerPtr)this->mSystemManager, entity->id, path);
 
 	return entity;
 }
@@ -272,14 +263,14 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 	rapidjson::Document doc;
 	doc.Parse(builder.c_str());
 
-	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(mSystemManager->systems.at(SystemType::ENTITY));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 	const rapidjson::Value& componentContainer = doc["components"];
 
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(mSystemManager->systems.at(SystemType::GRAPHICS));
-	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(mSystemManager->systems.at(SystemType::PHYSICS));
-	AnimationSystemPtr animationSystem = makeShared(mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+	AnimationSystemPtr animationSystem = mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 	for (rapidjson::SizeType index = 0; index < componentContainer.Size(); index++) {
 		const rapidjson::Value& component = componentContainer[index];
 		ComponentType componentId = (ComponentType) component["componentId"].GetUint();
@@ -307,7 +298,7 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 			animationSystem->registerAnimation(entity->id, animationComponent->aninmationDrawable->animationHandler);
 		}
 		else if (componentId == ComponentType::LUA_SCRIPT_COMPONENT) {
-			InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));
+			InputSystemPtr inputSystem = mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT);
 			InputListenerPtr inputListener(GCC_NEW InputListener(entity->id));
 			inputSystem->registerEventListener(inputListener);
 
@@ -348,22 +339,22 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 }
 
 EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem(makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY)));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics(this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+	applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
 
 	return entity;
 }
 
 EntityPtr EntityFactory::createScriptEntity(const string& path) {
-	EntitySystemPtr entitySystem(makeShared(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY)));
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics(this->mSystemManager, entity->id, -1, -1, 1, 1);
-	applyScript(this->mSystemManager, entity->id, path);
+	applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, -1, -1, 1, 1);
+	applyScript((SystemManagerPtr)this->mSystemManager, entity->id, path);
 
 	return entity;
 }

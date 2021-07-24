@@ -15,20 +15,46 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 }
 
 void SystemManager::update(Uint32 delta) {
+
+	auto start = std::chrono::high_resolution_clock::now();
 	LuaScriptSystemPtr luaScriptSystem = static_pointer_cast<LuaScriptSystem>(this->systems.at(SystemType::LUA_SCRIPT));
 	luaScriptSystem->update(delta);
 
+	auto end = std::chrono::high_resolution_clock::now();
+	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "	Script System Update: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(this->systems.at(SystemType::PHYSICS));
 	physicsSystem->update(delta);
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "	Physics System Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	AnimationSystemPtr animationSystem = static_pointer_cast<AnimationSystem>(this->systems.at(SystemType::ANIMATION));
 	animationSystem->update(delta);
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "	Animation System Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	ParticleSystemPtr particleSystem = static_pointer_cast<ParticleSystem>(this->systems.at(SystemType::PARTICLE));
 	particleSystem->update(delta);
 
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "	Particle System Setup: " << res.count() << std::endl;
+
+	start = std::chrono::high_resolution_clock::now();
 	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(this->systems.at(SystemType::ENTITY));
 	entitySystem->update(delta);
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	std::cout << "	Entity System Setup: " << res.count() << std::endl;
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -54,8 +80,8 @@ void AnimationSystem::deregisterAnimation(unsigned long id) {
 }
 
 AnimationSetPtr AnimationSystem::loadAnimationSet(const string& path) {
-	GraphicsSystemPtr graphicsSystem = makeShared(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	AssetSystemPtr assetSystem = makeShared(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (assetSystem->contains(path)) {
 		throw "Animation already loaded: " + path;
 	}
@@ -191,16 +217,25 @@ void GraphicsSystem::sortDrawableList() {
 void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
 
+	int totalCount = 0;
+	int drawnCount = 0;
+
 	for (auto drawable : mDrawableList) {
+		totalCount++;
 		if (!drawable->isShowing()) {
 			continue;
 		}
 
-		PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-		EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
 		BodyPtr body(physicsSystem->getBody(mReverseLookup.at(drawable)));
 		Vector2f& position = Vector2f(body->getPosition());
+
+		if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
+			continue;
+		}
+		drawnCount++;
 
 		EntityPtr entity(entitySystem->getEntityById(body->id));
 		if (entity->parent != (unsigned long) ULLONG_MAX) {
@@ -212,7 +247,7 @@ void  GraphicsSystem::draw() {
 					parent = nullptr;
 				}
 				else {
-					parent = makeShared(entitySystem->getEntityById(parent->parent));
+					parent = entitySystem->getEntityById(parent->parent);
 				}
 			}
 		}
@@ -222,14 +257,18 @@ void  GraphicsSystem::draw() {
 		}
 		
 		drawable->draw(*mGraphics, position);
-
+		/*
 		if (__DEBUG__) {
 			if (body->collider != nullptr) {
 				Vector2f pos = *body->collider->colliderShape->position;
 				mGraphics->drawBox(pos.x, pos.y, body->width, body->height, 0, 255, 0, 255);
 			}
 		}
+		*/
 	}
+
+	std::cout << "	Drawn:" << std::to_string(drawnCount) << std::endl;
+	std::cout << "	Total To Draw:" << std::to_string(totalCount) << std::endl;
 
 	mGraphics->onAfterDraw();
 }
@@ -245,7 +284,7 @@ void GraphicsSystem::getDrawableById(unsigned long entityId, vector<WeakDrawable
 }
 
 void GraphicsSystem::addTexture(const std::string& path, const std::string& assetTag) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (assetSystem->contains(assetTag)) {
 		SDL_Log("Asset already loaded.");
 		return;
@@ -255,7 +294,7 @@ void GraphicsSystem::addTexture(const std::string& path, const std::string& asse
 }
 
 void GraphicsSystem::drawTexture(const string& assetTag, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (!assetSystem->contains(assetTag)) {
 		ERR("No texture with assetTag: " + assetTag);
 		return;
@@ -268,7 +307,7 @@ void GraphicsSystem::drawTexture(const string& assetTag, float x, float y, float
 
 
 void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (assetSystem->contains(assetTag)) {
 		SDL_Log("Asset already loaded.");
 		return;
@@ -278,7 +317,7 @@ void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
 }
 
 void GraphicsSystem::drawToTexture(const string& assetTag) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	AssetPtr textureAsset = assetSystem->getAsset(assetTag);
 	shared_ptr<SDL_Texture> texture = makeShared(textureAsset->getAsset<SDL_Texture>());
 
@@ -290,7 +329,7 @@ void GraphicsSystem::drawToScreen() {
 }
 
 void GraphicsSystem::addFont(const string& path, const string&  assetTag, int fontsize) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (assetSystem->contains(assetTag)) {
 		SDL_Log("Asset already loaded.");
 		return;
@@ -309,14 +348,14 @@ void EntitySystem::addEntity(EntityPtr entity) {
 	EventManager::getInstance().pushEvent(eventData);
 }
 
-WeakEntityPtr EntitySystem::getEntityById(unsigned long id) {
+EntityPtr EntitySystem::getEntityById(unsigned long id) {
 	return mEntityMap.at(id);
 }
 
-WeakEntityPtr EntitySystem::DefaultEntityVendor::getEntityById(unsigned long entityId) {
+EntityPtr EntitySystem::DefaultEntityVendor::getEntityById(unsigned long entityId) {
 
 
-	return WeakEntityPtr( mEntitySystem->getEntityById(entityId) );
+	return mEntitySystem->getEntityById(entityId);
 }
 
 void EntitySystem::getAllEntities(std::vector<EntityPtr>& entities) {
@@ -428,6 +467,8 @@ void PhysicsSystem::update(Uint32 delta) {
 			quadTree->removeBody(element.second);
 			quadTree->addBody(element.second);
 
+			// Some behaviours stop the body before overlapping with other bodies. Move the body forward one pixel to catch any potential collisions.
+			/*
 			vector<WeakBodyPtr> collidingBodies;
 			quadTree->getCollidingBodies(element.second, collidingBodies);
 
@@ -437,6 +478,7 @@ void PhysicsSystem::update(Uint32 delta) {
 				EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, collidedBody->id, SDL_GetTicks());
 				EventManager::getInstance().pushEvent(eventData);
 			}
+			*/
 		}
 	}
 }
@@ -539,9 +581,9 @@ void InputSystem::clear() {
 }
 
 bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vector2f& position) {
-	GraphicsSystemPtr graphicsSystem(mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-	PhysicsSystemPtr physicsSystem(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	EntitySystemPtr entitySystem(mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	auto ent = entitySystem->getEntityById(id);
 	BodyPtr body(physicsSystem->getBody(id));
 
@@ -553,7 +595,7 @@ bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vect
 }
 
 void DefaultSoundController::play(int loop) {
-	AssetSystemPtr assetSystem(mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET));
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	AssetPtr asset(assetSystem->getAsset(mSound->assetTag));
 	if (SoundType::SOUND == mSound->soundType) {
 		shared_ptr<Mix_Chunk> mix = makeShared(asset->getAsset<Mix_Chunk>());

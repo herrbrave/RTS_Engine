@@ -14,9 +14,9 @@ typedef weak_ptr<LuaScriptFactory> WeakLuaScriptFactoryPtr;
 class LuaScriptFactory {
 public:
 	LuaScriptFactory(
-		WeakEntityFactoryPtr& entityFactory,
-		WeakWidgetFactoryPtr& widgetFactory,
-		WeakSystemManagerPtr& systemManager) {
+		EntityFactoryPtr& entityFactory,
+		WidgetFactoryPtr& widgetFactory,
+		SystemManagerPtr& systemManager) {
 
 		this->mEntityFactory = entityFactory;
 		this->mWidgetFactory = widgetFactory;
@@ -48,9 +48,9 @@ private:
 	void registerCamera(LuaScriptPtr& script);
 	void registerMouseMove(LuaScriptPtr& script);
 
-	WeakEntityFactoryPtr mEntityFactory;
-	WeakWidgetFactoryPtr mWidgetFactory;
-	WeakSystemManagerPtr mSystemManager;
+	EntityFactoryPtr mEntityFactory;
+	WidgetFactoryPtr mWidgetFactory;
+	SystemManagerPtr mSystemManager;
 };
 
 // This is required to expose the Vector2f to Lua

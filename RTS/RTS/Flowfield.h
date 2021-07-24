@@ -31,7 +31,7 @@ public:
 		int targetX = tileComponent->x;
 		int targetY = tileComponent->y;
 		
-		std::list<EntityPtr> openList({ mTargetTile });
+		std::list<EntityPtr> openList({mTargetTile});
 		std::unordered_set<EntityPtr> closedList;
 
 		mCostMap[mTargetTile->id] = 0;
@@ -51,7 +51,7 @@ public:
 					if (x < 0 || x >= mMap->getMapWidth() || y < 0 || y >= mMap->getMapHeight() || (i == 0 && j == 0) || (std::abs(i) == std::abs(j))) {
 						continue;
 					}
-					auto neighborTile = makeShared(mMap->getTileAt(x, y));
+					auto neighborTile = mMap->getTileAt(x, y);
 					auto neighborTileComponent = makeShared(neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 
 					if (closedList.find(neighborTile) != closedList.end() || std::find(openList.begin(), openList.end(), neighborTile) != openList.end()) {
@@ -80,7 +80,7 @@ public:
 
 		for (int y = 0; y < mMap->getMapHeight(); y++) {
 			for (int x = 0; x < mMap->getMapWidth(); x++) {
-				auto currentTile = makeShared(mMap->getTileAt(x, y));
+				auto currentTile = mMap->getTileAt(x, y);
 				tileComponent = makeShared(currentTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT));
 				int costValue = mCostMap[currentTile->id];
 				std::string cost = std::to_string(costValue);
@@ -91,7 +91,7 @@ public:
 				}
 
 				Vector2f nextDir{ 0, 0 };
-				if (currentTile == mTargetTile) {
+				if (currentTile->id == mTargetTile->id) {
 					mVectorMap[currentTile->id] = std::unique_ptr<Vector2f>(new Vector2f(nextDir));
 					continue;
 				}
@@ -105,7 +105,7 @@ public:
 						continue;
 					}
 
-					auto tileAt = makeShared(mMap->getTileAt(xIndex, yIndex));
+					auto tileAt = mMap->getTileAt(xIndex, yIndex);
 					int cost = mCostMap[tileAt->id];
 					if (cost < shortest) {
 						shortest = cost;
@@ -121,13 +121,20 @@ public:
 
 	void guideEntity(EntityPtr entity) {
 		auto physicsComponent = makeShared(entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT));
-		EntityPtr tileAt = makeShared(tileAtPoint(physicsComponent->getPosition()));
+		EntityPtr tileAt = tileAtPoint(physicsComponent->getPosition());
 		auto velocity = getVectorForTile(tileAt->id);
 
 		physicsComponent->setVelocity(velocity);
 	}
 
-	WeakEntityPtr tileAtPoint(const Vector2f& point) {
+	bool tileExistsAtPoint(const Vector2f& point) {
+		int xIndex = std::round(point.x / float(mMap->getTileWidth()));
+		int yIndex = std::round(point.y / float(mMap->getTileHeight()));
+
+		return mMap->tileExistsAtPoint(xIndex, yIndex);
+	}
+
+	EntityPtr tileAtPoint(const Vector2f& point) {
 		return mMap->tileAtPoint(point);
 	}
 
