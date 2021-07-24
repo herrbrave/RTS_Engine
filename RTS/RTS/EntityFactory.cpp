@@ -27,7 +27,7 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, float x, flo
 	}
 }
 
-void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, const string& texturePath, float tx, float ty, float w, float h) {
+void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h) {
 	SystemManagerPtr systemManager = makeShared(sm);
 	EntitySystemPtr entitySystem = makeShared(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 	EntityPtr entity = makeShared(entitySystem->getEntityById(entityId));
@@ -40,6 +40,7 @@ void applyDrawable(WeakSystemManagerPtr sm, unsigned long entityId, const string
 		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
 		TexturePtr texture(GCC_NEW Texture(texturePath, tx, ty, w, h));
 		DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
+		textureDrawable->setSize(width, height);
 		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, textureDrawable));
 
@@ -155,18 +156,17 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, const strin
 
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
-		animationComponent->animationHandler->setAnimationSet(animationSet);
+		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		TexturePtr texture(GCC_NEW Texture(""));
-		shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
-		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
-		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
+		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(animationSet, animationSet->fps));
+		AnimationDrawablePtr aninmationDrawable = std::make_shared<AnimationDrawable>(animationHandler);
+		graphicsSystem->registerDrawable(entity->id, aninmationDrawable);
 		animationSystem->registerAnimation(entity->id, animationHandler);
-		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, animationHandler));
+		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, aninmationDrawable));
 
 		entity->addComponent(animationComponent);
 	}
@@ -182,17 +182,16 @@ void applyAnimation(WeakSystemManagerPtr sm, unsigned long entityId, AnimationSe
 		animationComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-		animationComponent->animationHandler->setAnimationSet(animationSet);
+		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
-		TexturePtr texture(GCC_NEW Texture(""));
-		shared_ptr<TextureDrawable> textureDrawable(GCC_NEW TextureDrawable(texture));
-		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		AnimationSystemPtr animationSystem = makeShared(systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION));
-		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(textureDrawable, animationSet, animationSet->fps));
+		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(animationSet, animationSet->fps));
+		AnimationDrawablePtr aninmationDrawable = std::make_shared<AnimationDrawable>(animationHandler);
 		animationSystem->registerAnimation(entity->id, animationHandler);
-		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, animationHandler));
+		graphicsSystem->registerDrawable(entity->id, aninmationDrawable);
+		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, aninmationDrawable));
 
 		entity->addComponent(animationComponent);
 	}
@@ -239,7 +238,7 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, f
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyDrawable(this->mSystemManager, entity->id, assetTag, tx, ty, w, h);
+	applyDrawable(this->mSystemManager, entity->id, assetTag, width, height, tx, ty, w, h);
 	if (isCollidable) {
 		applyPhysics(this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
 	}
@@ -304,8 +303,8 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 		else if (componentId == ComponentType::ANIMATION_COMPONENT) {
 			AnimationComponent* animationComponent = GCC_NEW AnimationComponent(entity->id, component);
 			entity->addComponent(ComponentPtr(animationComponent));
-			graphicsSystem->registerDrawable(entity->id, animationComponent->animationHandler->textureDrawable); 
-			animationSystem->registerAnimation(entity->id, animationComponent->animationHandler);
+			graphicsSystem->registerDrawable(entity->id, animationComponent->aninmationDrawable); 
+			animationSystem->registerAnimation(entity->id, animationComponent->aninmationDrawable->animationHandler);
 		}
 		else if (componentId == ComponentType::LUA_SCRIPT_COMPONENT) {
 			InputSystemPtr inputSystem(makeShared(mSystemManager->getSystemByType<InputSystem>(SystemType::INPUT)));

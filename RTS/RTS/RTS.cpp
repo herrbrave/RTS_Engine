@@ -100,10 +100,10 @@ void RTS::setup() {
 	mEntity->addComponent(drawableComponent);
 	*/
 	
-	//mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
+	mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
 
-	mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);
-	applyScript(mSystemManager, mEntity->id, "Games/test/sweep_test.lua");
+	//mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);
+	//applyScript(mSystemManager, mEntity->id, "Games/test/sweep_test.lua");
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);

@@ -13,7 +13,7 @@ typedef weak_ptr<EntityFactory> WeakEntityFactoryPtr;
 
 
 void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, const string& texturePath, float tx, float ty, float w, float h);
+void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, const string& texturePath, float width, float height, float tx, float ty, float w, float h);
 void applyDrawable(WeakSystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture);
 void applyPhysics(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h);
 void applyPhysics(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider);

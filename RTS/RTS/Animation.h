@@ -25,6 +25,10 @@ class AnimationHandler;
 typedef shared_ptr<AnimationHandler> AnimationHandlerPtr;
 typedef weak_ptr<AnimationHandler> WeakAnimationHandlerPtr;
 
+class AnimationDrawable;
+typedef shared_ptr<AnimationDrawable> AnimationDrawablePtr;
+typedef weak_ptr<AnimationDrawable> WeakAnimationDrawablePtr;
+
 class AnimationComponent;
 typedef shared_ptr<AnimationComponent> AnimationComponentPtr;
 typedef weak_ptr<AnimationComponent> WeakAnimationComponentPtr;
@@ -128,8 +132,7 @@ public:
 
 class AnimationHandler : public Serializable {
 public:
-	AnimationHandler(TextureDrawablePtr& textureDrawable, AnimationSetPtr animationSet, int fps) {
-		this->textureDrawable = textureDrawable;
+	AnimationHandler(AnimationSetPtr animationSet, int fps) {
 		this->fps = fps;
 		this->state = AnimationState::STOPPED;
 		this->timePerFrame = (1000 / fps);
@@ -138,8 +141,6 @@ public:
 	}
 
 	AnimationHandler(const rapidjson::Value& root) {
-		this->textureDrawable = TextureDrawablePtr(GCC_NEW TextureDrawable(TexturePtr(GCC_NEW Texture(""))));
-
 		const rapidjson::Value& animationSet = root["animationSet"];
 		this->animationSet = AnimationSetPtr(GCC_NEW AnimationSet(animationSet));
 		this->fps = root["fps"].GetInt();
@@ -153,9 +154,6 @@ public:
 
 	void setAnimation(std::string animationName) {
 		this->currentAnimtionName = animationName;
-
-		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
-		this->textureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
 	void setAnimationSet(AnimationSetPtr animationSet) {
@@ -163,25 +161,19 @@ public:
 		this->animationSet = animationSet;
 		this->currentAnimtionName = this->animationSet->defaultAnimationName;
 		this->frameTime = 0;
-
-		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
-		this->textureDrawable->setTexture(currentAnimation->frames[0]);
 	}
 
 	void play() {
 		this->state = AnimationState::PLAYING;
-		this->textureDrawable->show();
 	}
 
 	void loop() {
 		this->state = AnimationState::LOOPING;
-		this->textureDrawable->show();
 	}
 
 	void stop() {
 		this->currentFrame = 0;
 		this->state = AnimationState::STOPPED;
-		this->textureDrawable->hide();
 	}
 
 	void update(Uint32 delta) {
@@ -202,8 +194,14 @@ public:
 				stop();
 			}
 		}
-		this->textureDrawable->setTexture(currentAnimation->frames[currentFrame]);
+
 		this->frameTime = 0;
+	}
+
+	TexturePtr getCurrentFrame() {
+		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
+		TexturePtr texture = currentAnimation->frames[this->currentFrame];
+		return texture;
 	}
 
 	void serialize(Serializer& serializer) const override {
@@ -221,7 +219,6 @@ public:
 		serializer.writer.EndObject();
 	}
 
-	TextureDrawablePtr textureDrawable;
 	AnimationSetPtr animationSet;
 	int fps;
 	int currentFrame;
@@ -231,20 +228,88 @@ public:
 	Uint32 timePerFrame;
 };
 
-class AnimationComponent : public Component {
+class AnimationDrawable : public Drawable {
 public:
 	AnimationHandlerPtr animationHandler;
 
-	AnimationComponent(unsigned long entityId, AnimationHandlerPtr animationHandler) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
+	AnimationDrawable(AnimationHandlerPtr animationHandler) : Drawable(-1, -1) {
 		this->animationHandler = animationHandler;
 	}
 
+	AnimationDrawable(float width, float height, AnimationHandlerPtr animationHandler) : Drawable(width, height) {
+		this->animationHandler = animationHandler;
+	}
+
+	void draw(Graphics& graphicsRef, const Vector2f& position) override {
+		graphicsRef.renderTexture(this->animationHandler->getCurrentFrame(), position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
+	}
+
+	void onSerialize(Serializer& serializer) const override {
+
+	}
+};
+
+class AnimationComponent : public Component {
+public:
+	AnimationDrawablePtr aninmationDrawable;
+
+	AnimationComponent(unsigned long entityId, AnimationDrawablePtr aninmationDrawable) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
+		this->aninmationDrawable = aninmationDrawable;
+	}
+
 	AnimationComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
-		this->animationHandler = AnimationHandlerPtr(new AnimationHandler(root["animationHandler"]));
+		//this->animationHandler = AnimationHandlerPtr(new AnimationHandler(root["animationHandler"]));
+	}
+
+	float getAngle() {
+		return this->aninmationDrawable->getAngle();
 	}
 
 	void setAngle(float angle) {
-		this->animationHandler->textureDrawable->setAngle(angle);
+		this->aninmationDrawable->setAngle(angle);
+	}
+
+	Uint8 getZOrder() {
+		return aninmationDrawable->getDrawDepth();
+	}
+
+	void setZOrder(Uint8 zOrder) {
+		aninmationDrawable->setDrawDepth(zOrder);
+
+		EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(eventData);
+	}
+
+	void setSize(float width, float height) {
+		this->aninmationDrawable->setSize(width, height);
+	}
+
+	void setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+		this->aninmationDrawable->setColor(r, g, b, a);
+	}
+
+	void setAnimationSet(AnimationSetPtr animationSet) {
+		this->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
+	}
+
+	void setAnimation(const string& name) {
+		this->aninmationDrawable->animationHandler->setAnimation(name);
+	}
+
+	void play() {
+		this->aninmationDrawable->animationHandler->play();
+	}
+
+	void loop() {
+		this->aninmationDrawable->animationHandler->loop();
+	}
+
+	void stop() {
+		this->aninmationDrawable->animationHandler->stop();
+	}
+
+	AnimationState getAnimationState() {
+		return this->aninmationDrawable->animationHandler->state;
 	}
 
 	void serialize(Serializer& serializer) const override {
@@ -254,8 +319,8 @@ public:
 		serializer.writer.String("componentId");
 		serializer.writer.Uint((Uint8) this->componentId);
 
-		serializer.writer.String("animationHandler");
-		this->animationHandler->serialize(serializer);
+		serializer.writer.String("aninmationDrawable");
+		this->aninmationDrawable->serialize(serializer);
 
 		serializer.writer.EndObject();
 	}

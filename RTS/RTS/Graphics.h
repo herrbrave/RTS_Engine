@@ -49,6 +49,8 @@ enum DrawableType : Uint8 {
 	PANEL = 5,
 	SECTION = 6,
 	PROGRESS_BAR = 7,
+	ANIMATION = 8,
+	PARTICLE = 9,
 };
 
 class Drawable {

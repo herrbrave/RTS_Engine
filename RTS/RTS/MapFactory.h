@@ -25,7 +25,7 @@ class TileFactory : public EntityFactory {
 public:
 	TileFactory(SystemManagerPtr systemManager) : EntityFactory(systemManager) {}
 
-	EntityPtr createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height, bool canOccupy);
+	EntityPtr createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float width, float height, float tx, float ty, float tw, float th, bool canOccupy);
 };
 
 void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, int y, bool canOccupy);
@@ -37,10 +37,10 @@ public:
 	MapPtr createMap(const string& pathToMap);
 
 private:
-	void loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder);
-	void loadObjectLayer(const TMXLayerPtr& layer , MapConfig& mapConfig, int drawOrder);
+	void loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder, float scale);
+	void loadObjectLayer(const TMXLayerPtr& layer , MapConfig& mapConfig, int drawOrder, float scale);
 
-	void loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, TileAnimationSet& animations);
+	void loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, TileAnimationSet& animations, float scale);
 
 	SystemManagerPtr mSystemManager{ nullptr };
 	TileFactoryPtr mTileFactory{ nullptr };

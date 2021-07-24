@@ -12,7 +12,6 @@
 #include<vector>
 
 #include"Animation.h"
-#include"EntityBuilder.h"
 #include"Flowfield.h"
 #include"Game.h"
 #include"MapFactory.h"

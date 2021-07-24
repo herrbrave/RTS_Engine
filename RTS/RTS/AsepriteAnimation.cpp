@@ -3,24 +3,47 @@
 
 
 void parseFrames(const rapidjson::Value& value, AsepriteFrames& frames) {
-	auto it = value.Begin();
-	while (it != value.End()) {
-		const rapidjson::Value& val = (*it);
-		AsepriteFramePtr frame = std::make_shared<AsepriteFrame>();
+	if (value.IsArray()) {
+		auto it = value.Begin();
+		while (it != value.End()) {
+			const rapidjson::Value& val = (*it);
+			AsepriteFramePtr frame = std::make_shared<AsepriteFrame>();
 
-		frame->x = val["frame"]["x"].GetInt();
-		frame->y = val["frame"]["y"].GetInt();
-		frame->w = val["frame"]["w"].GetInt();
-		frame->h = val["frame"]["h"].GetInt();
-		frame->sourceW = val["sourceSize"]["w"].GetInt();
-		frame->sourceH = val["sourceSize"]["h"].GetInt();
-		frame->duration = val["duration"].GetInt();
-		frame->rotated = val["rotated"].GetBool();
-		frame->trimmed = val["trimmed"].GetBool();
+			frame->x = val["frame"]["x"].GetInt();
+			frame->y = val["frame"]["y"].GetInt();
+			frame->w = val["frame"]["w"].GetInt();
+			frame->h = val["frame"]["h"].GetInt();
+			frame->sourceW = val["sourceSize"]["w"].GetInt();
+			frame->sourceH = val["sourceSize"]["h"].GetInt();
+			frame->duration = val["duration"].GetInt();
+			frame->rotated = val["rotated"].GetBool();
+			frame->trimmed = val["trimmed"].GetBool();
 
-		frames.push_back(frame);
+			frames.push_back(frame);
 
-		it++;
+			it++;
+		}
+	}
+	else {
+		auto it = value.MemberBegin();
+		while (it != value.MemberEnd()) {
+			const rapidjson::Value& val = it->value;
+			AsepriteFramePtr frame = std::make_shared<AsepriteFrame>();
+
+			frame->x = val["frame"]["x"].GetInt();
+			frame->y = val["frame"]["y"].GetInt();
+			frame->w = val["frame"]["w"].GetInt();
+			frame->h = val["frame"]["h"].GetInt();
+			frame->sourceW = val["sourceSize"]["w"].GetInt();
+			frame->sourceH = val["sourceSize"]["h"].GetInt();
+			frame->duration = val["duration"].GetInt();
+			frame->rotated = val["rotated"].GetBool();
+			frame->trimmed = val["trimmed"].GetBool();
+
+			frames.push_back(frame);
+
+			it++;
+		}
 	}
 }
 

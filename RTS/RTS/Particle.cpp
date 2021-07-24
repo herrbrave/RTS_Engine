@@ -3,14 +3,15 @@
 void ParticleCloudDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	for (ParticlePtr particle : particles) {
 		Vector2f pos = *particle->position + position;
-		graphicsRef.renderTexture(particleCloud->particleTextures[particle->frame], pos.x, pos.y, 20, 20, 0, 255, 255, 0, particle->fade * 255);
+		graphicsRef.renderTexture(particleCloud->particleTextures[particle->frame], pos.x, pos.y, this->width, this->height, 0, 255, 255, 0, particle->fade * 255);
 	}
 }
 
 void ParticleCloudDrawable::update(Uint32 delta) {
 	if (particles.size() < MAX_PARTICLES) {
 		for (int count = 0; count < GENERATED_PER_FRAME; count++) {
-			float angle = rand() % 360;
+			int range = (int) round(particleCloud->endAngle - particleCloud->startAngle);
+			float angle = rand() % range + particleCloud->startAngle;
 			angle = M_PI / 180.0f * angle;
 			ParticlePtr particle = std::make_shared<Particle>();
 			particle->lifespan = 0;
@@ -53,4 +54,33 @@ void ParticleCloudDrawable::update(Uint32 delta) {
 	while (!particles.empty() && particles.front()->lifespan > particleCloud->particleLifeMillis) {
 		particles.remove(particles.front());
 	}
+}
+
+DrawableType  ParticleCloudDrawable::getType() {
+	return DrawableType::PARTICLE;
+}
+
+void ParticleCloudComponent::setParticleLifeMillis(Uint32 time) {
+	this->particleCloudDrawable->particleCloud->particleLifeMillis = time;
+}
+
+void  ParticleCloudComponent::setParticleMaxRadius(float radius) {
+	this->particleCloudDrawable->particleCloud->spreadDist = radius;
+}
+
+void  ParticleCloudComponent::setSpeed(float pps) {
+	this->particleCloudDrawable->particleCloud->speed = pps;
+}
+
+void  ParticleCloudComponent::setFade(float fade) {
+	this->particleCloudDrawable->particleCloud->fade = fade;
+}
+
+void  ParticleCloudComponent::setGravity(float x, float y) {
+	this->particleCloudDrawable->particleCloud->gravity->set(x, y);
+}
+
+void  ParticleCloudComponent::setSpawnAngleRange(float start, float end) {
+	this->particleCloudDrawable->particleCloud->startAngle = start;
+	this->particleCloudDrawable->particleCloud->endAngle = end;
 }

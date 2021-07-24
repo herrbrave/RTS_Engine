@@ -465,7 +465,17 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 
 		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 
-		return (int)drawableComponent->getZOrder();
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+
+			return drawableComponent->getZOrder();
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			return animationComponent->getZOrder();
+		}
+
+		return 0;
 	};
 
 	script->state["setZOrder"] = [this](int entityId, int order) {
@@ -473,9 +483,15 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
-		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 
-		drawableComponent->setZOrder(order);
+			drawableComponent->setZOrder(order);
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			animationComponent->setZOrder(order);
+		}
 	};
 
 	script->state["setSize"] = [this](int entityId, double w, double h) {
@@ -483,9 +499,15 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
 
-		DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = makeShared<DrawableComponent>(entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 
-		drawableComponent->setSize(w, h);
+			drawableComponent->setSize(w, h);
+		}
+		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
+			animationComponent->setSize(w, h);
+		}
 	};
 
 	script->state["setAngle"] = [this](int entityId, double angle) {
@@ -525,7 +547,7 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
-			return (double) animationComponent->animationHandler->textureDrawable->getAngle();
+			return (double) animationComponent->getAngle();
 		}
 
 		return 0.0;
@@ -542,8 +564,39 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 			AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
-			animationComponent->animationHandler->textureDrawable->setColor(r, g, b, a);
+			animationComponent->setColor(r, g, b, a);
 		}
+	};
+
+	script->state["addParticle"] = [this](int entityId, int particleLifeMillis, int spreadDist, int gravX, int gravY, int partW, int partH) {
+		SystemManagerPtr systemManager = makeShared<SystemManager>(mSystemManager);
+		EntitySystemPtr entitySystem = makeShared<EntitySystem>(systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY));
+		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
+
+		GraphicsSystemPtr graphicsSystem = makeShared(systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS));
+		graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
+		ParticleCloudPtr particleCloud = std::make_shared<ParticleCloud>();
+
+		particleCloud->particleLifeMillis = particleLifeMillis;
+		particleCloud->spreadDist = spreadDist;
+		particleCloud->gravity = std::make_shared<Vector2f>((float) gravX, (float) gravY);
+		particleCloud->fade = 0.95f;
+
+		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 0, 0, 16, 16));
+		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 16, 0, 16, 16));
+		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 32, 0, 16, 16));
+		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 48, 0, 16, 16));
+		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 64, 0, 16, 16));
+
+		ParticleCloudDrawablePtr particleCloudDrawable = std::make_shared<ParticleCloudDrawable>(particleCloud);
+		particleCloudDrawable->setSize(partW, partH);
+		ParticleSystemPtr particleSystem = makeShared(systemManager->getSystemByType<ParticleSystem>(SystemType::PARTICLE));
+		particleSystem->registerParticleEmitter(entity->id, particleCloudDrawable);
+
+		DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(entity->id, particleCloudDrawable);
+		graphicsSystem->registerDrawable(entity->id, particleCloudDrawable);
+		drawableComponent->setZOrder(10);
+		entity->addComponent(drawableComponent);
 	};
 }
 
@@ -564,7 +617,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->setAnimation(animationName);
+		animationComponent->setAnimation(animationName);
 	};
 
 	script->state["stopAnimation"] = [this](int entityId) {
@@ -574,7 +627,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->stop();
+		animationComponent->stop();
 	};
 
 	script->state["playAnimation"] = [this](int entityId) {
@@ -584,7 +637,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->play();
+		animationComponent->play();
 	};
 
 	script->state["loopAnimation"] = [this](int entityId) {
@@ -594,7 +647,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		animationComponent->animationHandler->loop();
+		animationComponent->loop();
 	};
 
 	script->state["isAnimationPlaying"] = [this](int entityId) {
@@ -604,7 +657,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 
 		AnimationComponentPtr animationComponent = makeShared<AnimationComponent>(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
 
-		return animationComponent->animationHandler->state == AnimationState::PLAYING || animationComponent->animationHandler->state == AnimationState::LOOPING;
+		return animationComponent->getAnimationState() == AnimationState::PLAYING || animationComponent->getAnimationState() == AnimationState::LOOPING;
 	};
 }
 
@@ -793,13 +846,12 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 			}
 			else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 				AnimationComponentPtr drawableComponent = makeShared(entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT));
-				TextureDrawablePtr drawable = drawableComponent->animationHandler->textureDrawable;
-				w = drawable->width;
+				w = drawableComponent->aninmationDrawable->width;;
 				if (string("top").compare(location) == 0) {
-					y -= (drawable->height / 2) + 4;
+					y -= (drawableComponent->aninmationDrawable->height / 2) + 4;
 				}
 				else if (string("bottom").compare(location) == 0) {
-					y += (drawable->height / 2) + 4;
+					y += (drawableComponent->aninmationDrawable->height / 2) + 4;
 				}
 			}
 

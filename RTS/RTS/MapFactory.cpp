@@ -19,8 +19,8 @@ void applyTile(SystemManagerPtr systemManager, unsigned long entityId, int x, in
 	tileComponent->canOccupy = canOccupy;
 }
 
-EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float tx, float ty, float width, float height, bool canOccupy) {
-	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, std::abs(width), std::abs(height), tx, ty, width, height, canOccupy);
+EntityPtr TileFactory::createTile(const string& assetTag, int xIndex, int yIndex, const Vector2f& position, float width, float height, float tx, float ty, float tw, float th, bool canOccupy) {
+	EntityPtr entity = createTexturedEntity(assetTag, position.x, position.y, std::abs(width), std::abs(height), tx, ty, tw, th, canOccupy);
 
 	applyTile(this->mSystemManager, entity->id, xIndex, yIndex, canOccupy);
 
@@ -38,11 +38,30 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 
 	auto start = std::chrono::high_resolution_clock::now();
 
+	float scale = 1.0f;
+	string script;
+	if (!tmxMap->properties.empty()) {
+		auto properties = tmxMap->properties;
+		for (TMXPropertyPtr prop : properties) {
+			if (string("script").compare(prop->name) == 0) {
+				auto ptr = prop->getValue<char*>();
+				auto shPtr = makeShared(ptr);
+				auto c = (char*)shPtr.get();
+				script = string(c);
+			} 
+			else if (string("scale").compare(prop->name) == 0) {
+				auto ptr = prop->getValue<float>();
+				auto shPtr = makeShared(ptr);
+				scale = *shPtr.get();
+			}
+		}
+	}
+
 	Tileset tileset;
 	TileAnimationSet animations;
 	auto tilesets = tmxMap->tilesets;
 	for (TMXTilesetPtr _tileset : tilesets) {
-		this->loadGridTileset(_tileset, tileset, animations);
+		this->loadGridTileset(_tileset, tileset, animations, 2.0f);
 	}
 
 	auto end = std::chrono::high_resolution_clock::now();
@@ -67,10 +86,10 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 
 		std::string type = layer->type;
 		if (type == "tilelayer") {
-			loadTileLayer(layer, tmxMap->width, tmxMap->height, tmxMap->tileWidth, tmxMap->tileHeight, *mapConfig, index);
+			loadTileLayer(layer, tmxMap->width, tmxMap->height, tmxMap->tileWidth, tmxMap->tileHeight, *mapConfig, index, 2.0f);
 		}
 		else {
-			loadObjectLayer(layer, *mapConfig, index);
+			loadObjectLayer(layer, *mapConfig, index, 2.0f);
 		}
 
 		auto after = std::chrono::high_resolution_clock::now();
@@ -91,22 +110,13 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	MapPtr map(GCC_NEW Map(MapConfigPtr(mapConfig), EntityVendorPtr(GCC_NEW EntitySystem::DefaultEntityVendor(entitySystem))));
 
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
-	physicsSystem->setWorldSize(map->getMapWidth() * map->getTileWidth(), map->getMapHeight() * map->getTileHeight());
+	physicsSystem->setWorldSize(map->getMapWidth() * map->getTileWidth() * 2.0f, map->getMapHeight() * map->getTileHeight() * 2.0f);
 
 	MapLoadedSetEventData* eventData = GCC_NEW MapLoadedSetEventData(SDL_GetTicks());
 	EventManager::getInstance().pushEvent(eventData);
 
-	if (!tmxMap->properties.empty()) {
-		auto properties = tmxMap->properties;
-		for (TMXPropertyPtr prop : properties) {
-			if (string("script").compare(prop->name) == 0) {
-				auto ptr = prop->getValue<char*>();
-				auto shPtr = makeShared(ptr);
-				auto c = (char*)shPtr.get();
-				string script(c);
-				mTileFactory->createScriptEntity(script);
-			}
-		}
+	if (!script.empty()) {
+		mTileFactory->createScriptEntity(script);
 	}
 
 	end = std::chrono::high_resolution_clock::now();
@@ -116,7 +126,7 @@ MapPtr MapFactory::createMap(const string& pathToMap) {
 	return map;
 }
 
-void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, TileAnimationSet& animations) {
+void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, TileAnimationSet& animations, float scale) {
 	// If the tileset contains an image then it is a grid based tileset.
 	if (!tileset->image.empty()) {
 		string image = tileset->image;
@@ -143,7 +153,6 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 		for (TMXTilePtr tile : tilesArray) {
 			TilePtr newTile = tiles[tile->id];
 			if (!tile->objectgroup.empty()) {
-				ERR("tile_with_collision: " + std::to_string(tile->id));
 				auto objectGroup = tile->objectgroup;
 				auto collisionObject = objectGroup[0];
 				newTile->collision = true;
@@ -267,7 +276,7 @@ void MapFactory::loadGridTileset(const TMXTilesetPtr& tileset, Tileset& tiles, T
 	}
 }
 
-void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder) {
+void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, int tileWidth, int tileHeight, MapConfig& mapConfig, int drawOrder, float scale) {
 	DEBUG_LOG("Map Factory.loadTileLayer - Starting to build layer.");
 	auto data = layer->data;
 	PhysicsSystemPtr physicsSystem = makeShared(mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS));
@@ -325,14 +334,12 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 
 			// TODO; Add rotated/flipped animated tiles.
 			auto animationSet = mapConfig.animatedTiles[tileVal];
-			tile = mTileFactory->createPhysicsEntity(x * tileWidth, y * tileHeight, tileWidth, tileHeight); 
+			tile = mTileFactory->createPhysicsEntity(x * tileWidth * scale, y * tileHeight * scale, tileWidth * scale, tileHeight * scale); 
 			applyTile(this->mSystemManager, tile->id, t->tx, t->ty, t->collision);
 			applyAnimation(this->mSystemManager, tile->id, animationSet);
 		}
 		else {
-			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), t->tx, t->ty, t->w, t->h, t->collision);
-
-			//tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth, y * tileHeight)), tx, ty, tw, th, t->collision);
+			tile = mTileFactory->createTile(t->textureAssetTag, x, y, Vector2fPtr(GCC_NEW Vector2f(x * tileWidth * scale, y * tileHeight * scale)), tileWidth * scale, tileHeight * scale, t->tx, t->ty, t->w, t->h, t->collision);
 			auto drawableComponent = makeShared(tile->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT));
 			drawableComponent->setZOrder(drawOrder);
 			drawableComponent->setAngle(rotation);
@@ -351,7 +358,7 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 
 		if (t->collision) {
 			tileComponent->canOccupy = false;
-			applyPhysics(this->mSystemManager, tile->id, x * tileWidth, y * tileHeight, tileWidth, tileHeight, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), t->collisionWidth, t->collisionHeight)));
+			applyPhysics(this->mSystemManager, tile->id, x * tileWidth * scale, y * tileHeight * scale, tileWidth * scale, tileHeight * scale, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x * scale, y * scale), t->collisionWidth * scale, t->collisionHeight * scale)));
 		}
 
 		if (!t->script.empty()) {
@@ -364,16 +371,16 @@ void MapFactory::loadTileLayer(const TMXLayerPtr& layer, int width, int height, 
 	}
 }
 
-void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig, int drawOrder) {
+void MapFactory::loadObjectLayer(const TMXLayerPtr& layer, MapConfig& mapConfig, int drawOrder, float scale) {
 	auto data = layer->objects;
 	for (TMXObjectPtr object : data) {
-		int width = object->width;
-		int height = object->height;
+		int width = object->width * scale;
+		int height = object->height * scale;
 		int id = object->gid;
 
 		// Tiled stored location from the top left corner.
-		int x = (int)round(object->x);
-		int y = (int)round(object->y) - height;
+		int x = (int)round(object->x * scale);
+		int y = (int)round(object->y * scale) - height;
 
 		string script = "";
 		if (!object->properties.empty()) {

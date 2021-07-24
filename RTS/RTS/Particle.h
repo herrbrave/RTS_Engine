@@ -45,6 +45,8 @@ public:
 	vector<TexturePtr> particleTextures;
 	float fade = 0.9f;
 	Vector2fPtr gravity{ nullptr };
+	float startAngle = 90.0f;
+	float endAngle = 270.0f;
 };
 
 class ParticleEmitter {
@@ -65,8 +67,26 @@ public:
 
 	void update(Uint32 delta) override;
 
+	DrawableType getType() override;
+
 protected:
 	void onSerialize(Serializer& serializer) const override {
 
 	}
+};
+
+class ParticleCloudComponent : public Component {
+public:
+	ParticleCloudDrawablePtr particleCloudDrawable;
+
+	ParticleCloudComponent(unsigned long entityId, ParticleCloudDrawablePtr particleCloud) : Component(entityId, ComponentType::PARTICLE_COMPONENT), particleCloudDrawable(particleCloud) {
+
+	}
+
+	void setParticleLifeMillis(Uint32 time);
+	void setParticleMaxRadius(float radius);
+	void setSpeed(float pps);
+	void setFade(float fade);
+	void setGravity(float x, float y);
+	void setSpawnAngleRange(float start, float end);
 };
