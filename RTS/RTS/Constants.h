@@ -62,4 +62,6 @@ inline void ERR(const string& error) {
 	std::cerr << "ERR: " << error << std::endl;
 }
 
+typedef shared_ptr<void> VoidPtr;
+
 #endif // !__CONSTANTS_H__

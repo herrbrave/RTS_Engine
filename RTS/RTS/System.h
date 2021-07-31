@@ -14,6 +14,7 @@
 #include"Input.h"
 #include"Graphics.h"
 #include"Particle.h"
+#include"Map.h"
 #include"Physics.h"
 #include"Script.h"
 #include"SimpleDataStore.h"
@@ -30,6 +31,7 @@ enum class SystemType : Uint8 {
 	LUA_SCRIPT = 7,
 	PARTICLE = 8,
 	DATA = 9,
+	MAP = 10,
 };
 
 /* Early class definitions. */
@@ -69,6 +71,10 @@ class LuaScriptSystem;
 typedef shared_ptr<LuaScriptSystem> LuaScriptSystemPtr;
 typedef weak_ptr<LuaScriptSystem> WeakLuaScriptSystemPtr;
 
+class MapSystem;
+typedef shared_ptr<MapSystem> MapSystemPtr;
+typedef weak_ptr<MapSystem> WeakMapSystemPtr;
+
 class ParticleSystem;
 typedef shared_ptr<ParticleSystem> ParticleSystemPtr;
 typedef weak_ptr<ParticleSystem> WeakParticleSystemPtr;
@@ -89,6 +95,8 @@ public:
 	SystemManager(GraphicsConfig* graphicsConfig);
 
 	void update(Uint32 delta);
+
+	void clear();
 
 	template<class ClassType>
 	shared_ptr<ClassType> getSystemByType(SystemType systemType) const {
@@ -210,37 +218,17 @@ public:
 		mCamera->position.reset(GCC_NEW Vector2f(0, 0));
 		mCamera->width = mGraphicsConfig->mWidth;
 		mCamera->height = mGraphicsConfig->mHeight;
-
-		EventDelegate zOrderChangeDelegate([this](const EventData& eventData){
-			sortDrawableList();
-		});
-		EventListenerDelegate zOrderChanged(zOrderChangeDelegate);
-		EventManager::getInstance().addDelegate(zOrderChanged, EventType::ENTITY_ZORDER_SET);
-
-		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
-			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
-
-			deregisterDrawable(data.getEntityId());
-		});
-
-		EventDelegate loadAsset([this](const EventData& eventData) {
-			LoadAssetEventData loadAssetEvent = dynamic_cast<const LoadAssetEventData&>(eventData);
-			if (loadAssetEvent.path.find(".png") != std::string::npos) {
-				this->addTexture(loadAssetEvent.path, loadAssetEvent.assetTag);
-			}
-		});
-		EventListenerDelegate loadAssetDelegate(loadAsset);
-		EventManager::getInstance().addDelegate(loadAssetDelegate, EventType::LOAD_ASSET);
-
-		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
-		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 	}
+
+	void initialize();
 
 	void registerDrawable(const unsigned long, DrawablePtr drawable);
 	void deregisterDrawable(const unsigned long);
 	void draw();
 
 	void drawTexture(const string& assetTag, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
+	void drawTexture(TexturePtr texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 	void sortDrawableList();
 
@@ -260,8 +248,12 @@ public:
 
 	void clear() override;
 
-	WeakGraphicsConfigPtr getGraphicsConfig() {
-		return WeakGraphicsConfigPtr(this->mGraphicsConfig);
+	GraphicsConfigPtr getGraphicsConfig() {
+		return this->mGraphicsConfig;
+	}
+
+	GraphicsPtr getGraphics() {
+		return this->mGraphics;
 	}
 
 private:
@@ -271,6 +263,7 @@ private:
 	unordered_map<unsigned long, vector<DrawablePtr>> mDrawables;
 	unordered_map<DrawablePtr, unsigned long> mReverseLookup;
 	std::list<DrawablePtr> mDrawableList;
+	bool sortedThisFrame = false;
 };
 
 class EntitySystem : public System {
@@ -290,8 +283,11 @@ public:
 	}
 
 	void addEntity(EntityPtr entity);
+
 	EntityPtr getEntityById(unsigned long id);
+
 	void deregisterEntity(unsigned long id);
+
 	void getAllEntities(std::vector<EntityPtr>& entity);
 	
 	void update(Uint32 delta);
@@ -345,6 +341,36 @@ private:
 	LuaScripts mLuaScripts;
 };
 
+class MapSystem : public System {
+public:
+	MapSystem(SystemManagerPtr systemManager) : System(SystemType::MAP, systemManager) {
+
+		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+				deregisterGridHandler(data.getEntityId());
+			});
+
+		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+	}
+
+	void setMap(MapPtr map);
+
+	MapPtr getMap();
+
+	void registerGridHandler(unsigned long entityId, GridHandlerPtr gridHandler);
+
+	void deregisterGridHandler(unsigned long entityId);
+
+	void update(Uint32 delta);
+
+	void clear() override;
+
+private:
+	MapPtr map;
+	unordered_map<unsigned long, GridHandlerPtr> grids;
+};
+
 class ParticleSystem : public System {
 public:
 
@@ -369,7 +395,7 @@ public:
 
 	PhysicsSystem(SystemManagerPtr systemManager) : System(SystemType::PHYSICS, systemManager) {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-		GraphicsConfigPtr graphicsConfig = makeShared(graphicsSystem->getGraphicsConfig());
+		GraphicsConfigPtr graphicsConfig = graphicsSystem->getGraphicsConfig();
 		this->setWorldSize(graphicsConfig->mWidth, graphicsConfig->mHeight);
 
 		EventListenerDelegate positionChangeListener([this](const EventData& eventData) {

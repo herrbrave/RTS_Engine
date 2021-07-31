@@ -24,16 +24,17 @@ void RTS::setup() {
 
 	mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS)->addFont("Digital_tech.otf", "Digital_tech", 20);
 
-	mTileFactory = std::make_shared<TileFactory>(mSystemManager);
-
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
-	mMapFactory = std::make_shared<MapFactory>(mTileFactory, mLuaScriptFactory, mSystemManager);
+	mMapFactory = std::make_shared<MapFactory>(mEntityFactory, mLuaScriptFactory, mSystemManager);
 	
-	mMap = mMapFactory->createMap("Assets/HackNSlasher/maps/dungeon_test.json");
+	mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
 
 	//mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);
 	//applyScript(mSystemManager, mEntity->id, "Games/test/sweep_test.lua");
+
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	graphicsSystem->initialize();
 }
 
 void RTS::handleEvents() {
@@ -60,6 +61,8 @@ void RTS::update() {
 	mSystemManager->update(delta);
 
 	EventManager::getInstance().update();
+
+	mLuaScriptFactory->clean();
 
 	mLastTime = lastTime;
 }

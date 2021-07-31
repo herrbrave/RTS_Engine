@@ -14,9 +14,9 @@ typedef weak_ptr<LuaScriptFactory> WeakLuaScriptFactoryPtr;
 class LuaScriptFactory {
 public:
 	LuaScriptFactory(
-		EntityFactoryPtr& entityFactory,
-		WidgetFactoryPtr& widgetFactory,
-		SystemManagerPtr& systemManager) {
+		EntityFactoryPtr entityFactory,
+		WidgetFactoryPtr widgetFactory,
+		SystemManagerPtr systemManager) {
 
 		this->mEntityFactory = entityFactory;
 		this->mWidgetFactory = widgetFactory;
@@ -33,24 +33,29 @@ public:
 
 	LuaScriptPtr create(const string& scriptPath, unsigned long entityId);
 
+	void clean();
+
 private:
-	void initialize(LuaScriptPtr& script, unsigned long entityId);
-	void registerGeneral(LuaScriptPtr& script);
-	void registerFactory(LuaScriptPtr& script);
-	void registerEntity(LuaScriptPtr& script);
-	void registerPhysics(LuaScriptPtr& script);
-	void registerDrawable(LuaScriptPtr& script);
-	void registerAnimation(LuaScriptPtr& script);
-	void registerInput(LuaScriptPtr& script, unsigned long entityId);
-	void registerScript(LuaScriptPtr& script);
-	void registerUi(LuaScriptPtr& script);
-	void registerAsset(LuaScriptPtr& script);
-	void registerCamera(LuaScriptPtr& script);
-	void registerMouseMove(LuaScriptPtr& script);
+	void initialize(LuaScriptPtr script, unsigned long entityId);
+	void registerGeneral(LuaScriptPtr script);
+	void registerFactory(LuaScriptPtr script);
+	void registerEntity(LuaScriptPtr script);
+	void registerPhysics(LuaScriptPtr script);
+	void registerDrawable(LuaScriptPtr script);
+	void registerAnimation(LuaScriptPtr script);
+	void registerInput(LuaScriptPtr script, unsigned long entityId);
+	void registerScript(LuaScriptPtr script);
+	void registerUi(LuaScriptPtr script);
+	void registerAsset(LuaScriptPtr script);
+	void registerCamera(LuaScriptPtr script);
+	void registerMouseMove(LuaScriptPtr script);
+	void registerMap(LuaScriptPtr script);
 
 	EntityFactoryPtr mEntityFactory;
 	WidgetFactoryPtr mWidgetFactory;
 	SystemManagerPtr mSystemManager;
+
+	vector<VoidPtr> toDelete;
 };
 
 // This is required to expose the Vector2f to Lua

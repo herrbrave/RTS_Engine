@@ -20,6 +20,7 @@ static std::atomic_ulong sEntityFactoryId{ 1 };
 class Entity;
 typedef shared_ptr<Entity> EntityPtr;
 typedef weak_ptr<Entity> WeakEntityPtr;
+typedef vector<vector<EntityPtr>> EntityMatrix;
 
 class EntityVendor;
 typedef shared_ptr<EntityVendor> EntityVendorPtr;
@@ -27,16 +28,19 @@ typedef weak_ptr<EntityVendor> WeakEntityVendorPtr;
 
 typedef unordered_map<ComponentType, shared_ptr<Component>> Components;
 
-class Entity {
+class Entity : public Serializable {
 public:
-	unsigned long parent = ULLONG_MAX;
-	std::vector<unsigned long> children;
+public:
+	const unsigned long id = sEntityId++;
+	EntityPtr parent{ nullptr };
+	std::vector<EntityPtr> children;
 
 	Entity() {}
 
-	const unsigned long id = sEntityId++;
+	Entity(const rapidjson::Value& root);
 
 	virtual void update();
+
 	void pushState(StatePtr state);
 
 	template<class ClassType>
@@ -51,24 +55,12 @@ public:
 		return converted;
 	}
 
-	Components& getComponents() {
-		return mComponents;
-	}
+
+	Components& getComponents();
 
 	void addComponent(ComponentPtr component); 
 
-	void serialize(Serializer& serializer) const {
-		serializer.writer.StartObject();
-
-		serializer.writer.String("components");
-		serializer.writer.StartArray();
-		for (auto entry : mComponents) {
-			entry.second->serialize(serializer);
-		}
-		serializer.writer.EndArray();
-
-		serializer.writer.EndObject();
-	}
+	void serialize(Serializer& serializer) const override;
 
 protected:
 	Components mComponents;

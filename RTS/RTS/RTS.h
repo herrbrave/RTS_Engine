@@ -27,8 +27,6 @@ private:
 
 	EntityFactoryPtr mEntityFactory{ nullptr };
 	EntityPtr mEntity{ nullptr };
-
-	TileFactoryPtr mTileFactory{ nullptr };
 	MapFactoryPtr mMapFactory{ nullptr };
 	MapPtr mMap{ nullptr };
 

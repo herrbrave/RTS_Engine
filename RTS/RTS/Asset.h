@@ -16,8 +16,6 @@ class AssetVendor;
 typedef shared_ptr<AssetVendor> AssetVendorPtr;
 typedef weak_ptr<AssetVendor> WeakAssetVendorPtr;
 
-typedef shared_ptr<void> VoidPtr;
-
 class Asset {
 public:
 	std::string path;
@@ -29,10 +27,10 @@ public:
 	}
 
 	template<class ClassType>
-	weak_ptr<ClassType> getAsset() {
+	shared_ptr<ClassType> getAsset() {
 		shared_ptr<void> asset = mAsset;
 		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(asset);
-		return weak_ptr<ClassType>(converted);
+		return converted;
 	}
 
 private:

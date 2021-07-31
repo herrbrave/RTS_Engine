@@ -6,256 +6,209 @@
 #include<unordered_set>
 #include<string.h>
 
-#include"EntityFactory.h"
 #include"Animation.h"
-#include"System.h"
 
-const unsigned int TMX_FLIPPED_HORIZONTAL_FLAG = 0x80000000;
-const unsigned int TMX_FLIPPED_VERTICAL_FLAG = 0x40000000;
-const unsigned int TMX_FLIPPED_DIAGONAL_FLAG = 0x20000000;
-unsigned int tmxClearFlags(unsigned int tileValue);
-
-class TMXMap;
-typedef shared_ptr<TMXMap> TMXMapPtr;
-typedef weak_ptr<TMXMap> WeakTMXMapPtr;
-
-class TMXLayer;
-typedef shared_ptr<TMXLayer> TMXLayerPtr;
-typedef weak_ptr<TMXLayer> WeakTMXLayerPtr;
-typedef vector<TMXLayerPtr> TMXLayers;
-
-class TMXObject;
-typedef shared_ptr<TMXObject> TMXObjectPtr;
-typedef weak_ptr<TMXObject> WeakTMXObjectPtr;
-typedef vector<TMXObjectPtr> TMXObjects;
-
-class TMXTileset;
-typedef shared_ptr<TMXTileset> TMXTilesetPtr;
-typedef weak_ptr<TMXTileset> WeakTMXTilesetPtr;
-typedef vector<TMXTilesetPtr> TMXTilesets;
-
-class TMXProperty;
-typedef shared_ptr<TMXProperty> TMXPropertyPtr;
-typedef weak_ptr<TMXProperty> WeakTMXPropertyPtr;
-typedef vector<TMXPropertyPtr> TMXProperties;
-
-class TMXTile;
-typedef shared_ptr<TMXTile> TMXTilePtr;
-typedef weak_ptr<TMXTile> WeakTMXTilePtr;
-typedef vector<TMXTilePtr> TMXTiles;
-
-class TMXFrame;
-typedef shared_ptr<TMXFrame> TMXFramePtr;
-typedef weak_ptr<TMXFrame> WeakTMXFramePtr;
-typedef vector<TMXFramePtr> TMXFrames;
-
-class TMXMap {
-public:
-	string backgroundColor;
-	unsigned int width;
-	unsigned int height;
-	unsigned int tileWidth;
-	unsigned int tileHeight;
-	TMXProperties properties;
-	TMXLayers layers;
-	TMXTilesets tilesets;
-};
-
-class TMXLayer {
-public:
-	int gid;
-	string name;
-	string type;
-	unsigned int width;
-	unsigned int height;
-	int x;
-	int y;
-	int tileCount;
-	unsigned int* data;
-	TMXObjects objects;
-	TMXProperties properties;
-};
-
-class TMXObject {
-public:
-	int gid;
-	string name;
-	unsigned int width;
-	unsigned int height;
-	string type;
-	float rotation;
-	float x;
-	float y;
-	bool visible;
-	TMXProperties properties;
-};
-
-class TMXTileset {
-public:
-	unsigned int firstgid;
-	string name;
-	unsigned int columns;
-	unsigned int tileCount;
-	unsigned int tileWidth;
-	unsigned int tileHeight;
-	string image;
-	unsigned int imageWidth;
-	unsigned int imageHeight;
-	unsigned int margin;
-	unsigned int spacing;
-	TMXTiles tiles;
-	TMXProperties properties;
-};
-
-class TMXTile {
-public:
-	unsigned int id;
-	string image;
-	unsigned int imageWidth;
-	unsigned int imageHeight;
-	TMXLayers objectgroup;
-	TMXFrames animation;
-	TMXProperties properties;
-};
-
-class TMXFrame {
-public:
-	unsigned int duration;
-	unsigned int tileid;
-};
-
-class TMXProperty {
-public:
-	string name;
-	string type;
-	VoidPtr value;
-
-	void setValue(VoidPtr voidPtr) {
-		value = std::move(voidPtr);
-	}
-
-	template<class ClassType>
-	weak_ptr<ClassType> getValue() {
-		shared_ptr<void> val = value;
-		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(val);
-		return weak_ptr<ClassType>(converted);
-	}
-};
-
-TMXMapPtr parseMap(const string& file);
-void parseProperties(const rapidjson::Value& root, TMXProperties& props);
-void parseLayers(const rapidjson::Value& root, TMXLayers& layers);
-void parseTilesets(const rapidjson::Value& root, TMXTilesets& tilesets);
-void parseObjects(const rapidjson::Value& root, TMXObjects& objects);
-void parseTiles(const rapidjson::Value& root, TMXTiles& tiles);
-void parseFrames(const rapidjson::Value& root, TMXFrames& frames);
-
+static const unsigned int GRID_WIDTH = 10;
+static const unsigned int GRID_HEIGHT = 10;
 
 class Tile;
 typedef shared_ptr<Tile> TilePtr;
 typedef weak_ptr<Tile> WeakTilePtr;
-typedef vector<TilePtr> Tiles;
-typedef unordered_map<unsigned int, TilePtr> Tileset;
-typedef unordered_map<unsigned int, AnimationSetPtr> TileAnimationSet;
+
+class Tileset;
+typedef shared_ptr<Tileset> TilesetPtr;
+typedef weak_ptr<Tileset> WeakTilesetPtr;
+
+class Cell;
+typedef shared_ptr<Cell> CellPtr;
+typedef weak_ptr<Cell> WeakCellPtr;
 
 class Grid;
 typedef shared_ptr<Grid> GridPtr;
 typedef weak_ptr<Grid> WeakGridPtr;
 
-struct MapConfig {
-	int tileWidth;
-	int tileHeight;
-	int mapWidth;
-	int mapHeight;
-	std::vector<unsigned long> tiles;
-	std::vector<unsigned long> objects;
-	Tileset tileset;
-	TileAnimationSet animatedTiles;
-};
+class GridHandler;
+typedef shared_ptr<GridHandler> GridHandlerPtr;
+typedef weak_ptr<GridHandler> WeakGridHandlerPtr;
+
+class GridDrawable;
+typedef shared_ptr<GridDrawable> GridDrawablePtr;
+typedef weak_ptr<GridDrawable> WeakGridDrawablePtr;
+
+class GridComponent;
+typedef shared_ptr<GridComponent> GridComponentPtr;
+typedef weak_ptr<GridComponent> WeakGridComponentPtr;
+
+class MapConfig;
 typedef shared_ptr<MapConfig> MapConfigPtr;
 typedef weak_ptr<MapConfig> WeakMapConfigPtr;
-
-struct Node {
-	EntityPtr tile;
-	int cost;
-};
-typedef shared_ptr<Node> NodePtr;
-typedef weak_ptr<Node> WeakNodePtr;
-
-class TileComponent;
-typedef shared_ptr<TileComponent> TileComponentPtr;
-typedef weak_ptr<TileComponent> WeakTileComponentPtr;
 
 class Map;
 typedef shared_ptr<Map> MapPtr;
 typedef weak_ptr<Map> WeakMapPtr;
 
-class Tile {
+class MapConfig : public Serializable {
 public:
-	string textureAssetTag;
-	int tx;
-	int ty;
-	int w;
-	int h;
-	bool collision = false;
-	int xOff = 0;
-	int yOff = 0;
-	int collisionWidth = 0;
-	int collisionHeight = 0;
-	bool animated = false;
+	int mapWidth;
+	int mapHeight;
+	float scale;
+	TilesetPtr tileset;
 	string script;
-	int angle = 0;
+	vector<string> images;
 
-	Tile(const string& textureAssetTag, int tx, int ty, int w, int h) : textureAssetTag(textureAssetTag), tx(tx), ty(ty), w(w), h(h) {
-	}
+	MapConfig() :mapWidth(0), mapHeight(0), scale(0.0), script("") {}
+
+	MapConfig(const rapidjson::Value& root);
+
+	void serialize(Serializer& serializer) const override;
 };
 
-class TileComponent : public Component {
+class Tile : public Serializable {
 public:
-	int x, y;
-	bool canOccupy{ true };
+	TexturePtr texture;
+	AnimationPtr animation;
+	bool collision;
+	int collisionWidth;
+	int collisionHeight;
+	bool animated;
+	string script;
 
-	TileComponent(unsigned long entityId, int x, int y) : Component(entityId, ComponentType::TILE_COMPONENT) {
-		this->x = x;
-		this->y = y;
-	}
+	Tile() : collision(false), collisionWidth(0), collisionHeight(0), animated(false), script("") {}
 
-	TileComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::TILE_COMPONENT) {
-		x = root["x"].GetInt();
-		y = root["y"].GetInt(); 
-		canOccupy = root["canOccupy"].GetBool();
-	}
+	Tile(const Tile& tile);
 
-	void serialize(Serializer& serializer) const {
-		serializer.writer.StartObject();
+	Tile(const rapidjson::Value& root);
 
-		serializer.writer.String("componentId");
-		serializer.writer.Uint((Uint8)componentId);
-
-		serializer.writer.String("x");
-		serializer.writer.Uint(x);
-
-		serializer.writer.String("y");
-		serializer.writer.Uint(y);
-
-		serializer.writer.String("canOccupy");
-		serializer.writer.Bool(canOccupy);
-
-		serializer.writer.EndObject();
-	}
+	void serialize(Serializer& serializer) const override;
 };
 
-class Map {
+class Tileset : public Serializable {
 public:
-	Map(MapConfigPtr config, SystemManagerPtr systemManager);
+	int tileWidth;
+	int tileHeight;
+	unordered_map<unsigned int, TilePtr> tiles;
 
-	EntityPtr getTileAt(int x, int y);
+	Tileset() : tileWidth(0), tileHeight(0) {}
 
-	bool tileExistsAtPoint(int x, int y);
+	Tileset(const rapidjson::Value& root);
 
-	EntityPtr tileAtPoint(const Vector2f& point);
+	void serialize(Serializer& serializer) const override;
+};
 
-	void findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX, int endY);
+class Cell : public Serializable {
+public:
+	vector<TilePtr> tiles;
+	int x = 0;
+	int y = 0;
+	Uint8 r = 255;
+	Uint8 g = 255;
+	Uint8 b = 255;
+	Uint8 a = 255;
+
+	Cell() : x(0), y(0), r(255), g(255), b(255), a(255) {}
+
+	Cell(const rapidjson::Value& root);
+
+	void serialize(Serializer& serializer) const override;
+};
+
+class Grid : public Serializable {
+public:
+	vector<CellPtr> cells;
+	unsigned int rows;
+	unsigned int columns;
+	unsigned int startX;
+	unsigned int startY;
+	unsigned int tileW;
+	unsigned int tileH;
+	string name;
+
+	Grid() : rows(0), columns(0), startX(0), startY(0), tileW(0), tileH(0), name("") {}
+
+	Grid(const rapidjson::Value& root);
+
+	CellPtr at(int x, int y);
+
+	void serialize(Serializer& serializer) const override;
+};
+
+class GridHandler {
+public:
+
+	virtual GridPtr getGrid() = 0;
+
+	virtual void update(Graphics& graphicsRef) = 0;
+};
+
+class GridDrawable : public Drawable, public GridHandler {
+public:
+	TexturePtr texture;
+	GridPtr grid;
+
+	GridDrawable(GridPtr grid) : Drawable(GRID_WIDTH * grid->tileW, GRID_HEIGHT * grid->tileH), grid(grid) {
+		texture = std::make_shared<Texture>(grid->name, 0, 0, width, height);
+	}
+
+	GridDrawable(const rapidjson::Value& root);
+
+	GridPtr getGrid() override;
+
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+
+	void update(Graphics& graphicsRef) override;
+
+	void forceRedraw();
+
+protected:
+	bool redraw = true;
+	void onSerialize(Serializer& serializer) const override;
+};
+
+class GridComponent : public Component {
+public:
+	GridDrawablePtr gridDrawable;
+
+	GridComponent(unsigned long entityId, GridDrawablePtr gridDrawable, TilesetPtr tileset) : Component(entityId, ComponentType::GRID_COMPONENT), gridDrawable(gridDrawable) {}
+
+	GridComponent(const rapidjson::Value& root);
+
+	void setColorAtPoint(const Vector2f& point, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
+	void setColor(int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+
+	void setTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+
+	void setTexture(int x, int y, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+
+	void pushTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+
+	void pushTexture(int x, int y, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+
+	void popTextureAtPoint(const Vector2f& point);
+
+	void popTexture(int x, int y);
+
+	void serialize(Serializer& serializer) const override;
+
+private: 
+	TilesetPtr tileset;
+};
+
+class Map : public Serializable {
+public:
+	std::vector<GridPtr> grids;
+
+	Map(MapConfigPtr config);
+
+	Map(const rapidjson::Value& root) { }
+
+	GridPtr gridAt(int x, int y);
+
+	CellPtr getCellAt(int x, int y);
+
+	CellPtr cellAtPoint(const Vector2f& point);
+
+	void findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, int endY);
 
 	int getMapWidth() {
 		return mMapConfig->mapWidth;
@@ -265,16 +218,29 @@ public:
 		return mMapConfig->mapHeight;
 	}
 
+	int getGridWidth() {
+		return std::ceil((float)getMapWidth() / (float)GRID_WIDTH);
+	}
+
+	int getGridHeight() {
+		return std::ceil((float)getMapHeight() / (float)GRID_HEIGHT);
+	}
+
 	int getTileWidth() {
-		return mMapConfig->tileWidth;
+		return mMapConfig->tileset->tileWidth * mMapConfig->scale;
 	}
 
 	int getTileHeight() {
-		return mMapConfig->tileHeight;
+		return mMapConfig->tileset->tileHeight * mMapConfig->scale;
 	}
 
+	MapConfigPtr getMapConfig() {
+		return this->mMapConfig;
+	}
+
+	void serialize(Serializer& serializer) const override {}
+
 private:
-	SystemManagerPtr systemManager;
 	MapConfigPtr mMapConfig{ nullptr };
 
 	inline int getIndex(int x, int y) {
@@ -284,30 +250,5 @@ private:
 
 		return (y * mMapConfig->mapWidth) + x;
 	}
-};
-
-class Grid {
-public:
-	vector<Tile***> tileLayers;
-	unsigned int rows;
-	unsigned int columns;
-	unsigned int tileW;
-	unsigned int tileH;
-	string name;
-
-};
-
-class GridDrawable : public Drawable {
-public:
-	TexturePtr texture;
-	GridPtr grid;
-
-	GridDrawable(GridPtr grid) : Drawable(grid->rows * grid->tileW, grid->columns * grid->tileH) {
-		 
-	}
-
-	void draw(Graphics& graphicsRef, const Vector2f& position) override;
-
-	void initialize(const SystemManager& systemManager);
 };
 #endif // !__MAP_H__

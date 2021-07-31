@@ -10,7 +10,7 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, float
 		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-		DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
+		DrawablePtr blockDrawable = std::make_shared<BlockDrawable>(width, height, r, g, b, a);
 		graphicsSystem->deregisterDrawable(entity->id);
 		graphicsSystem->registerDrawable(entity->id, blockDrawable);
 
@@ -18,9 +18,9 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, float
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS); 
-		DrawablePtr blockDrawable(GCC_NEW BlockDrawable(width, height, r, g, b, a));
+		DrawablePtr blockDrawable = std::make_shared<BlockDrawable>(width, height, r, g, b, a);
 		graphicsSystem->registerDrawable(entity->id, blockDrawable);
-		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, blockDrawable));
+		drawableComponent = std::make_shared<DrawableComponent>(entity->id, blockDrawable);
 
 		entity->addComponent(ComponentPtr(drawableComponent));
 	}
@@ -287,9 +287,6 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 			BodyPtr body = makeShared(comp->getBody());
 			physicsSystem->registerBody(entity->id, body);
 			comp->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(body->getPosition().x, body->getPosition().y), body->getWidth(), body->getHeight()))));
-		}
-		else if (componentId == ComponentType::TILE_COMPONENT) {
-			entity->addComponent(ComponentPtr(GCC_NEW TileComponent(entity->id, component)));
 		}
 		else if (componentId == ComponentType::ANIMATION_COMPONENT) {
 			AnimationComponent* animationComponent = GCC_NEW AnimationComponent(entity->id, component);

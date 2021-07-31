@@ -122,7 +122,7 @@ SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetV
 		);
 
 	mRenderer.reset(
-		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED)
+		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE)
 	);
 }
 
@@ -189,7 +189,7 @@ void SDLGraphics::drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint
 void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
-	shared_ptr<SDL_Texture> sdlTexture = makeShared(asset->getAsset<SDL_Texture>());
+	shared_ptr<SDL_Texture> sdlTexture = asset->getAsset<SDL_Texture>();
 	
 	this->renderTexture(sdlTexture.get(), x, y, w, h, texture->x, texture->y, texture->w, texture->h, angle, r, g, b, a);
 }
@@ -238,7 +238,7 @@ void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float
 void SDLGraphics::renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
 	AssetPtr asset(mAssetVendor->getAsset(font));
-	shared_ptr<TTF_Font> fontPtr = makeShared(asset->getAsset<TTF_Font>());
+	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
 
 	SDL_Color color{ r, g, b, a };
 

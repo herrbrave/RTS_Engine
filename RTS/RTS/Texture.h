@@ -14,13 +14,19 @@ typedef weak_ptr<Texture> WeakTexturePtr;
 
 class Texture {
 public:
-	float x;
-	float y; 
-	float w;
-	float h;
-	std::string assetTag;
+	float x = 0.0f;
+	float y = 0.0f;
+	float w = 0.0f;
+	float h = 0.0f;
+	std::string assetTag = "";
+	bool flippedHorizontal = false;
+	bool flippedVertical = false;
+	bool flippedDiagonal = false;
+	float angleRad = 0.0f;
 
-	Texture(const Texture& texture) : assetTag(texture.assetTag), x(texture.x), y(texture.y), w(texture.w), h(texture.h) {}
+	Texture() {}
+
+	Texture(const Texture& texture) : assetTag(texture.assetTag), x(texture.x), y(texture.y), w(texture.w), h(texture.h), flippedDiagonal(texture.flippedDiagonal), flippedHorizontal(texture.flippedHorizontal), flippedVertical(texture.flippedVertical), angleRad(texture.angleRad) {}
 
 	Texture(std::string tag, float tx, float ty, float width, float height);
 

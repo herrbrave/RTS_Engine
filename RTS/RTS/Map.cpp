@@ -1,290 +1,386 @@
 #include"Map.h"
 
-unsigned int tmxClearFlags(unsigned int tileValue) {
-	return tileValue  & ~(TMX_FLIPPED_HORIZONTAL_FLAG | TMX_FLIPPED_VERTICAL_FLAG | TMX_FLIPPED_DIAGONAL_FLAG);
+MapConfig::MapConfig(const rapidjson::Value& root) {
+	mapWidth = root["mapWidth"].GetInt();
+	mapHeight = root["mapHeight"].GetInt();
+	scale = root["scale"].GetDouble();
+	tileset = std::make_shared<Tileset>(root["tileset"]);
+	script = root["script"].GetString();
 }
 
-TMXMapPtr parseMap(const string& path) {
-	auto start = std::chrono::high_resolution_clock::now();
+void MapConfig::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
 
-	std::ifstream file;
-	file.open(path);
-	if (!file.is_open()) {
-		ERR("Unable to open file: " + path);
-	}
-	std::string line;
-	std::string builder;
-	while (std::getline(file, line)) {
-		builder.append(line);
-	}
-	file.close();
+	serializer.writer.String("mapWidth");
+	serializer.writer.Int(mapWidth);
 
-	rapidjson::Document doc;
-	doc.Parse(builder.c_str());
+	serializer.writer.String("mapHeight");
+	serializer.writer.Int(mapHeight);
 
-	auto end = std::chrono::high_resolution_clock::now();
-	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("Map - Parse Map File: " + std::to_string(res.count()));
+	serializer.writer.String("scale");
+	serializer.writer.Double(scale);
 
-	start = std::chrono::high_resolution_clock::now();
+	serializer.writer.String("script");
+	serializer.writer.String(script.c_str());
 
-	TMXMapPtr map(GCC_NEW TMXMap());
+	serializer.writer.String("tileset");
+	tileset->serialize(serializer);
 
-	if (doc.FindMember("backgroundcolor") != doc.MemberEnd()) {
-		map->backgroundColor = doc["backgroundcolor"].GetString();
-	}
-
-	map->width = doc["width"].GetInt();
-	map->height = doc["height"].GetInt();
-	map->tileWidth = doc["tilewidth"].GetInt();
-	map->tileHeight = doc["tileheight"].GetInt();
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("Map - Read Map Attributes: " + std::to_string(res.count()));
-
-	start = std::chrono::high_resolution_clock::now();
-
-	if (doc.FindMember("properties") != doc.MemberEnd()) {
-		parseProperties(doc["properties"], map->properties);
-	}
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("Map - Read Map Properties: " + std::to_string(res.count()));
-
-	start = std::chrono::high_resolution_clock::now();
-
-	if (doc.FindMember("tilesets") != doc.MemberEnd()) {
-		parseTilesets(doc["tilesets"], map->tilesets);
-	}
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("Map - Read Tilesets: " + std::to_string(res.count()));
-
-	start = std::chrono::high_resolution_clock::now();
-
-	if (doc.FindMember("layers") != doc.MemberEnd()) {
-		parseLayers(doc["layers"], map->layers);
-	}
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("Map - Read Layers: " + std::to_string(res.count()));
-
-	start = std::chrono::high_resolution_clock::now();
-
-	return map;
+	serializer.writer.EndObject();
 }
 
-void parseProperties(const rapidjson::Value& tiles, TMXProperties& props) {
-	for (int index = 0; index < tiles.Size(); index++) {
-		const rapidjson::Value& tile = tiles[index];
-		TMXPropertyPtr prop(GCC_NEW TMXProperty());
-		prop->name = tile["name"].GetString();
-		prop->type = tile["type"].GetString();
-		if (prop->type == "string") {
-			auto v = tile["value"].GetString();
-			auto len = strlen(v) + 1;
-			char* cpy = new char[len];
-			for (int index = 0; index < len; index++) {
-				cpy[index] = v[index];
+Tile::Tile(const Tile& tile) {
+	if (tile.texture != nullptr) {
+		texture = std::make_shared<Texture>((Texture&)*tile.texture.get());
+	}
+	if (tile.animation != nullptr) {
+		animation = std::make_shared<Animation>((Animation&)*tile.animation.get());
+	}
+	animated = tile.animated;
+	collision = tile.collision;
+	collisionWidth = tile.collisionWidth;
+	collisionHeight = tile.collisionHeight;
+	script = string(tile.script);
+}
+
+Tile::Tile(const rapidjson::Value& root) {
+	if (root.FindMember("texture") != root.MemberEnd()) {
+		texture = std::make_shared<Texture>(root["texture"]);
+	}
+
+	if (root.FindMember("animation") != root.MemberEnd()) {
+		animation = std::make_shared<Animation>(root["animation"]);
+	}
+	collision = root["collision"].GetBool();
+	collisionWidth = root["collisionWidth"].GetInt();
+	collisionHeight = root["collisionHeight"].GetInt();
+	animated = root["animated"].GetBool();
+	script = root["script"].GetString();
+}
+
+void Tile::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	if (texture != nullptr) {
+		serializer.writer.String("texture");
+		texture->serialize(serializer);
+	}
+
+	if (animation != nullptr) {
+		serializer.writer.String("animation");
+		animation->serialize(serializer);
+	}
+
+	serializer.writer.String("collision");
+	serializer.writer.Bool(collision);
+
+	serializer.writer.String("collisionWidth");
+	serializer.writer.Int(collisionWidth);
+
+	serializer.writer.String("collisionHeight");
+	serializer.writer.Int(collisionHeight);
+
+	serializer.writer.String("animated");
+	serializer.writer.Bool(animated);
+
+	serializer.writer.String("script");
+	serializer.writer.String(script.c_str());
+
+	serializer.writer.EndObject();
+}
+
+Tileset::Tileset(const rapidjson::Value& root) {
+	tileWidth = root["tileWidth"].GetInt();
+	tileHeight = root["tileHeight"].GetInt();
+
+	auto it = root["tiles"].MemberBegin();
+	auto end = root["tiles"].MemberEnd();
+	while (it != end) {
+		int key = std::stoi(it->name.GetString());
+		this->tiles[key] = std::make_shared<Tile>(it->value);
+	}
+}
+
+void Tileset::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("tileWidth");
+	serializer.writer.Int(tileWidth);
+
+	serializer.writer.String("tileHeight");
+	serializer.writer.Int(tileHeight);
+
+	serializer.writer.String("tiles");
+	serializer.writer.StartObject();
+	for (auto it = tiles.begin(); it != tiles.end(); it++) {
+		serializer.writer.String(std::to_string(it->first).c_str());
+		it->second->serialize(serializer);
+	}
+	serializer.writer.EndObject();
+
+	serializer.writer.EndObject();
+}
+
+Cell::Cell(const rapidjson::Value& root) {
+	for (auto it = root["tiles"].Begin(); it != root["tiles"].End(); it++) {
+		this->tiles.push_back(std::make_shared<Tile>(*it));
+	}
+
+	x = root["x"].GetInt();
+	y = root["y"].GetInt();
+	r = root["r"].GetInt();
+	g = root["g"].GetInt();
+	b = root["b"].GetInt();
+	a = root["a"].GetInt();
+}
+
+void Cell::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("tiles");
+	serializer.writer.StartArray();
+	for (auto tile : this->tiles) {
+		tile->serialize(serializer);
+	}
+	serializer.writer.EndArray();
+
+	serializer.writer.String("x");
+	serializer.writer.Int(x);
+	serializer.writer.String("y");
+	serializer.writer.Int(y);
+	serializer.writer.String("r");
+	serializer.writer.Int(r);
+	serializer.writer.String("g");
+	serializer.writer.Int(g);
+	serializer.writer.String("b");
+	serializer.writer.Int(b);
+	serializer.writer.String("a");
+	serializer.writer.Int(a);
+
+	serializer.writer.EndObject();
+}
+
+Grid::Grid(const rapidjson::Value& root) {
+	for (auto it = root["cells"].Begin(); it != root["cells"].End(); it++) {
+		this->cells.push_back(std::make_shared<Cell>(*it));
+	}
+
+	rows = root["rows"].GetInt();
+	columns = root["columns"].GetInt();
+	startX = root["startX"].GetInt();
+	startY = root["startY"].GetInt();
+	tileW = root["tileW"].GetInt();
+	tileH = root["tileH"].GetInt();
+}
+
+void Grid::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("cells");
+	serializer.writer.StartArray();
+	for (auto cell : this->cells) {
+		cell->serialize(serializer);
+	}
+	serializer.writer.EndArray();
+
+	serializer.writer.String("rows");
+	serializer.writer.Int(rows);
+	serializer.writer.String("columns");
+	serializer.writer.Int(columns);
+	serializer.writer.String("startX");
+	serializer.writer.Int(startX);
+	serializer.writer.String("startY");
+	serializer.writer.Int(startY);
+	serializer.writer.String("tileW");
+	serializer.writer.Int(tileW);
+	serializer.writer.String("tileH");
+	serializer.writer.Int(tileH);
+
+	serializer.writer.EndObject();
+}
+
+CellPtr Grid::at(int x, int y) {
+	auto index = (y - startY) * columns + ((x - startX) % columns);
+	if (index >= columns * rows) {
+		throw "Index out of bounds.";
+	}
+
+	return this->cells.at(index);
+}
+
+GridDrawable::GridDrawable(const rapidjson::Value& root) : Drawable(root) {
+	texture = std::make_shared<Texture>(root["texture"]);
+	grid = std::make_shared<Grid>(root["grid"]);
+}
+
+void GridDrawable::onSerialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("texture");
+	texture->serialize(serializer);
+
+	serializer.writer.String("grid");
+	grid->serialize(serializer);
+
+	serializer.writer.EndObject();
+}
+
+GridPtr GridDrawable::getGrid() {
+	return this->grid;
+}
+
+void GridDrawable::forceRedraw() {
+	this->redraw = true;
+}
+
+void GridDrawable::update(Graphics& graphicsRef) {
+	if (!redraw) {
+		return;
+	}
+
+	int index = 0;
+	for (int y = 0; y < grid->rows; y++) {
+		for (int x = 0; x < grid->columns; x++) {
+			auto cell = this->grid->cells.at(index++);
+			for (auto tile : cell->tiles) {
+				graphicsRef.renderTexture(
+					tile->texture,
+					x * grid->tileW + (grid->tileW / 2),
+					y * grid->tileH + (grid->tileH / 2),
+					grid->tileW,
+					grid->tileH,
+					tile->texture->angleRad,
+					mColor->r,
+					mColor->g,
+					mColor->b,
+					mColor->a);
 			}
-
-			auto ptr = VoidPtr(static_cast<void*>(cpy));
-			prop->value = ptr;
 		}
-		else if (prop->type == "int") {
-			prop->setValue(VoidPtr(new int { tile["value"].GetInt() }));
-		}
-		else if (prop->type == "float") {
-			prop->setValue(VoidPtr(new float { (float) tile["value"].GetDouble() }));
-		}
-		else if (prop->type == "bool") {
-			prop->setValue(VoidPtr(new bool{ tile["value"].GetBool() }));
-		}
-		props.push_back(prop);
 	}
+
+	redraw = false;
 }
 
-void parseLayers(const rapidjson::Value& layers, TMXLayers& layerList) {
-	for (int index = 0; index < layers.Size(); index++) {
-		const rapidjson::Value& layer = layers[index];
-
-		TMXLayerPtr newLayer(GCC_NEW TMXLayer());
-		newLayer->name = layer["name"].GetString();
-		newLayer->type = layer["type"].GetString();
-		newLayer->gid = -1;
-		if (layer.FindMember("gid") != layer.MemberEnd()) {
-			newLayer->gid = layer["gid"].GetInt();
-		}
-
-		if (layer.FindMember("width") != layer.MemberEnd()) {
-			newLayer->width = layer["width"].GetInt();
-		}
-		if (layer.FindMember("height") != layer.MemberEnd()) {
-			newLayer->height = layer["height"].GetInt();
-		}
-		if (layer.FindMember("properties") != layer.MemberEnd()) {
-			parseProperties(layer["properties"], newLayer->properties);
-		}
-		if (layer.FindMember("objects") != layer.MemberEnd()) {
-			parseObjects(layer["objects"], newLayer->objects);
-		}
-		if (layer.FindMember("data") != layer.MemberEnd()) {
-			const rapidjson::Value& data = layer["data"];
-			newLayer->tileCount = data.Size();
-			unsigned int* newData = new unsigned int[data.Size()];
-			for (int d = 0; d < data.Size(); d++) {
-				const rapidjson::Value& v = data[d];
-				newData[d] = (unsigned int)data[d].GetUint();
-			}
-			newLayer->data = newData;
-		}
-
-		layerList.push_back(newLayer);
-	}
+void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	graphicsRef.renderTexture(texture, position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
-void parseTilesets(const rapidjson::Value& tilesets, TMXTilesets& tilesetList) {
-	for (int index = 0; index < tilesets.Size(); index++) {
-		const rapidjson::Value& tileset = tilesets[index];
-		TMXTilesetPtr newTileset(GCC_NEW TMXTileset());
-
-		newTileset->firstgid = tileset["firstgid"].GetInt();
-		newTileset->name = tileset["name"].GetString();
-		newTileset->columns = tileset["columns"].GetInt();
-		newTileset->tileWidth = tileset["tilewidth"].GetInt();
-		newTileset->tileHeight = tileset["tileheight"].GetInt();
-		newTileset->tileCount = tileset["tilecount"].GetInt();
-		if (tileset.FindMember("image") != tileset.MemberEnd()) {
-			newTileset->image = tileset["image"].GetString();
-			newTileset->imageWidth = tileset["imagewidth"].GetInt();
-			newTileset->imageHeight = tileset["imageheight"].GetInt();
-			newTileset->margin = tileset["margin"].GetInt();
-			newTileset->spacing = tileset["spacing"].GetInt();
-		}
-		if (tileset.FindMember("properties") != tileset.MemberEnd()) {
-			parseProperties(tileset["properties"], newTileset->properties);
-		}
-		if (tileset.FindMember("tiles") != tileset.MemberEnd()) {
-			parseTiles(tileset["tiles"], newTileset->tiles);
-		}
-
-		tilesetList.push_back(newTileset);
-	}
+GridComponent::GridComponent(const rapidjson::Value& root) : Component(0, ComponentType::GRID_COMPONENT) {
+	gridDrawable = std::make_shared<GridDrawable>(root["gridDrawable"]);
 }
 
-void parseObjects(const rapidjson::Value& objects, TMXObjects& objectList) {
-	for (int index = 0; index < objects.Size(); index++) {
-		const rapidjson::Value& object = objects[index];
-		TMXObjectPtr newObject(GCC_NEW TMXObject());
+void GridComponent::setColorAtPoint(const Vector2f& point, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
+	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
 
-		if (object.FindMember("gid") != object.MemberEnd()) {
-			newObject->gid = object["gid"].GetInt();
-		}
-		else {
-			newObject->gid = -1;
-		}
-		newObject->name = object["name"].GetString();
-		newObject->type = object["type"].GetString();
-		newObject->rotation = object["rotation"].GetDouble();
-		newObject->width = object["width"].GetInt();
-		newObject->height = object["height"].GetInt();
-		if (object.FindMember("x") != object.MemberEnd()) {
-			newObject->x = (float) object["x"].GetDouble();
-		}
-		if (object.FindMember("y") != object.MemberEnd()) {
-			newObject->y = (float) object["y"].GetDouble();
-		}
-		newObject->visible = object["visible"].GetBool();
-		if (object.FindMember("properties") != object.MemberEnd()) {
-			parseProperties(object["properties"], newObject->properties);
-		}
-
-		objectList.push_back(newObject);
-	}
+	this->setColor(x, y, r, g, b, a);
 }
 
-void parseTiles(const rapidjson::Value& tiles, TMXTiles& tileList) {
-	for (int index = 0; index < tiles.Size(); index++) {
-		const rapidjson::Value& tile = tiles[index];
-		TMXTilePtr newTile(GCC_NEW TMXTile());
-
-		newTile->id = tile["id"].GetInt();
-
-		if (tile.FindMember("properties") != tile.MemberEnd()) {
-			parseProperties(tile["properties"], newTile->properties);
-		}
-		if (tile.FindMember("image") != tile.MemberEnd()) {
-			newTile->image = tile["image"].GetString();
-			newTile->imageWidth = tile["imagewidth"].GetInt();
-			newTile->imageHeight = tile["imageheight"].GetInt();
-		}
-		if (tile.FindMember("objectgroup") != tile.MemberEnd()) {
-			parseLayers(tile["objectgroup"]["objects"], newTile->objectgroup);
-		}
-		if (tile.FindMember("animation") != tile.MemberEnd()) {
-			parseFrames(tile["animation"], newTile->animation);
-		}
-
-		tileList.push_back(newTile);
-	}
+void GridComponent::setColor(int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+	cell->r = r;
+	cell->g = g;
+	cell->b = b;
+	cell->a = a;
+	this->gridDrawable->forceRedraw();
 }
 
-void parseFrames(const rapidjson::Value& frames, TMXFrames& frameList) {
-	for (int index = 0; index < frames.Size(); index++) {
-		const rapidjson::Value& frame = frames[index];
-		TMXFramePtr newFrame(GCC_NEW TMXFrame());
+void GridComponent::setTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
+	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
 
-		newFrame->duration = frame["duration"].GetInt();
-		newFrame->tileid = frame["tileid"].GetInt();
-
-		frameList.push_back(newFrame);
-	}
+	setTexture(x, y, tileId, flipHorizontal, flipHorizontal, flipDiagonal, angle);
 }
 
-Map::Map(MapConfigPtr config, SystemManagerPtr systemManager) {
+void GridComponent::setTexture(int x, int y, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+
+	TilePtr tileToCopy = tileset->tiles.at(tileId);
+	TilePtr tile = std::make_shared<Tile>((Tile&)*tileToCopy.get());
+
+	cell->tiles.clear();
+	cell->tiles.push_back(tile);
+}
+
+void GridComponent::pushTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
+	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
+
+	pushTexture(x, y, tileId, flipHorizontal, flipHorizontal, flipDiagonal, angle);
+}
+
+void GridComponent::pushTexture(int x, int y, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+
+	TilePtr tileToCopy = tileset->tiles.at(tileId);
+	TilePtr tile = std::make_shared<Tile>((Tile&)*tileToCopy.get());
+
+	cell->tiles.push_back(tile);
+}
+
+void GridComponent::popTextureAtPoint(const Vector2f& point) {
+	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
+	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
+
+	popTexture(x, y);
+}
+
+void GridComponent::popTexture(int x, int y) {
+	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+
+	cell->tiles.pop_back();
+}
+
+void GridComponent::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("gridDrawable");
+	gridDrawable->serialize(serializer);
+
+	serializer.writer.EndObject();
+}
+
+Map::Map(MapConfigPtr config) {
 	mMapConfig = std::move(config);
-	this->systemManager = systemManager;
 }
 
-bool Map::tileExistsAtPoint(int x, int y) {
+CellPtr Map::getCellAt(int x, int y) {
 	int index = getIndex(x, y);
+	GridPtr grid = this->gridAt(x, y);
 
-	return index >= 0 && index < this->mMapConfig->tiles.size();
+	return grid->at(x, y);
 }
 
-EntityPtr Map::getTileAt(int x, int y) {
-	int index = getIndex(x, y);
+CellPtr Map::cellAtPoint(const Vector2f& point) {
+	int xIndex = std::round(point.x / float(mMapConfig->tileset->tileWidth));
+	int yIndex = std::round(point.y / float(mMapConfig->tileset->tileHeight));
+	GridPtr grid = this->gridAt(xIndex, yIndex);
 
-	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	return entitySystem->getEntityById(mMapConfig->tiles[index]);
+	return grid->at(xIndex, yIndex);
 }
 
-EntityPtr Map::tileAtPoint(const Vector2f& point) {
-	int xIndex = std::round(point.x / float(mMapConfig->tileWidth));
-	int yIndex = std::round(point.y / float(mMapConfig->tileHeight));
+GridPtr Map::gridAt(int x, int y) {
+	int gridWidth = std::ceil((float)mMapConfig->mapWidth / (float)GRID_WIDTH);
+	int gridHeight = std::ceil((float)mMapConfig->mapHeight / (float)GRID_HEIGHT);
+	x = x / GRID_WIDTH;
+	y = y / GRID_HEIGHT;
 
-	return this->getTileAt(xIndex, yIndex);
+	return this->grids.at(y * gridWidth + (x % gridWidth));
 }
 
-void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX, int endY) {
+void Map::findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, int endY) {
 	int endIndex = getIndex(endX, endY);
 	if (endIndex == -1) {
 		// return an empty path.
 		return;
 	}
+	/*
 
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	auto endTile = entitySystem->getEntityById(mMapConfig->tiles[endIndex]);
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
-		TileComponentPtr leftComponent = left.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
-		TileComponentPtr rightComponent = right.tile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
-		TileComponentPtr endComponent = endTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 
 		// dumb heuristic based on distance.
 		int deltaX = leftComponent->x - endComponent->x;
@@ -352,34 +448,5 @@ void Map::findPath(vector<WeakEntityPtr> path, int startX, int startY, int endX,
 			}
 		}
 	}
-}
-
-void GridDrawable::initialize(const SystemManager& systemManager) {
-	GraphicsSystemPtr graphicsSystem = systemManager.getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	graphicsSystem->addTexture(grid->name, width, height);
-	graphicsSystem->drawToTexture(grid->name);
-
-	auto it = this->grid->tileLayers.begin();
-	while (it != this->grid->tileLayers.end()) {
-		auto layer = *it;
-
-		for (int y = 0; y < this->grid->rows; y++) {
-			for (int x = 0; x < this->grid->columns; x++) {
-				auto tile = layer[x][y];
-				if (tile == nullptr) {
-					continue;
-				}
-
-				graphicsSystem->drawTexture(grid->name, x * tile->w, y * tile->h, tile->w, tile->h, tile->tx, tile->ty, tile->w, tile->h, angle, mColor->r, mColor->g, mColor->b, mColor->a);
-			}
-		}
-	}
-
-	texture = std::make_shared<Texture>(grid->name, 0, 0, width, height);
-
-	graphicsSystem->drawToScreen();
-}
-
-void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
-	graphicsRef.renderTexture(texture, position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
+	*/
 }

@@ -1,5 +1,14 @@
 #include"Entity.h"
 
+Entity::Entity(const rapidjson::Value& root) {
+	EntityPtr entity(this);
+	for (auto it = root["children"].Begin(); it != root["children"].End(); it++) {
+		auto child = std::make_shared<Entity>(*it);
+		child->parent = entity;
+		children.push_back(child);
+	}
+}
+
 void Entity::update() {
 	if (mStateQueue.size() <= 0) {
 		return;
@@ -32,4 +41,29 @@ void Entity::pushState(StatePtr state) {
 
 void Entity::addComponent(ComponentPtr component) {
 	mComponents.emplace(component->componentId, component);
+}
+
+Components& Entity::getComponents() {
+	return mComponents;
+}
+
+void  Entity::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("children");
+	serializer.writer.StartArray();
+	for (auto child : children) {
+		child->serialize(serializer);
+	}
+	serializer.writer.EndArray();
+
+	serializer.writer.String("components");
+	serializer.writer.StartObject();
+	for (auto component : mComponents) {
+		serializer.writer.String(std::to_string(static_cast<std::underlying_type<ComponentType>::type>(component.first)).c_str());
+		component.second->serialize(serializer);
+	}
+	serializer.writer.EndObject();
+
+	serializer.writer.EndObject();
 }

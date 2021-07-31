@@ -7,6 +7,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::DATA, DataSystemPtr(GCC_NEW DataSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
+	systems.emplace(SystemType::MAP, MapSystemPtr(GCC_NEW MapSystem(ptr)));
 	systems.emplace(SystemType::PARTICLE, ParticleSystemPtr(GCC_NEW ParticleSystem(ptr)));
 	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
@@ -22,7 +23,7 @@ void SystemManager::update(Uint32 delta) {
 
 	auto end = std::chrono::high_resolution_clock::now();
 	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "	Script System Update: " << res.count() << std::endl;
+	DEBUG_LOG("	Script System Update: " + res.count());
 
 	start = std::chrono::high_resolution_clock::now();
 	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(this->systems.at(SystemType::PHYSICS));
@@ -30,7 +31,7 @@ void SystemManager::update(Uint32 delta) {
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "	Physics System Setup: " << res.count() << std::endl;
+	DEBUG_LOG("	Physics System Setup: " + res.count());
 
 	start = std::chrono::high_resolution_clock::now();
 	AnimationSystemPtr animationSystem = static_pointer_cast<AnimationSystem>(this->systems.at(SystemType::ANIMATION));
@@ -38,7 +39,7 @@ void SystemManager::update(Uint32 delta) {
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "	Animation System Setup: " << res.count() << std::endl;
+	DEBUG_LOG("	Animation System Setup: " + res.count());
 
 	start = std::chrono::high_resolution_clock::now();
 	ParticleSystemPtr particleSystem = static_pointer_cast<ParticleSystem>(this->systems.at(SystemType::PARTICLE));
@@ -46,7 +47,7 @@ void SystemManager::update(Uint32 delta) {
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "	Particle System Setup: " << res.count() << std::endl;
+	DEBUG_LOG("	Particle System Setup: " + res.count());
 
 	start = std::chrono::high_resolution_clock::now();
 	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(this->systems.at(SystemType::ENTITY));
@@ -54,7 +55,21 @@ void SystemManager::update(Uint32 delta) {
 
 	end = std::chrono::high_resolution_clock::now();
 	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	std::cout << "	Entity System Setup: " << res.count() << std::endl;
+	DEBUG_LOG("	Entity System Setup: " + res.count());
+
+	start = std::chrono::high_resolution_clock::now();
+	MapSystemPtr mapSystem = static_pointer_cast<MapSystem>(this->systems.at(SystemType::MAP));
+	mapSystem->update(delta);
+
+	end = std::chrono::high_resolution_clock::now();
+	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	DEBUG_LOG("	Map System Setup: " + res.count());
+}
+
+void SystemManager::clear() {
+	for (auto system : this->systems) {
+		system.second->clear();
+	}
 }
 
 void AnimationSystem::update(Uint32 delta) {
@@ -83,7 +98,8 @@ AnimationSetPtr AnimationSystem::loadAnimationSet(const string& path) {
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	if (assetSystem->contains(path)) {
-		throw "Animation already loaded: " + path;
+		AssetPtr animationSetAsset = assetSystem->getAsset(path);
+		return animationSetAsset->getAsset<AnimationSet>();
 	}
 
 	std::ifstream file;
@@ -188,6 +204,34 @@ void DataSystem::clear() {
 	this->data.clear();
 }
 
+void GraphicsSystem::initialize() {
+	EventDelegate zOrderChangeDelegate([this](const EventData& eventData) {
+		sortDrawableList();
+		});
+	EventListenerDelegate zOrderChanged(zOrderChangeDelegate);
+	EventManager::getInstance().addDelegate(zOrderChanged, EventType::ENTITY_ZORDER_SET);
+
+	EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+		EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
+
+		deregisterDrawable(data.getEntityId());
+		});
+
+	EventDelegate loadAsset([this](const EventData& eventData) {
+		LoadAssetEventData loadAssetEvent = dynamic_cast<const LoadAssetEventData&>(eventData);
+		if (loadAssetEvent.path.find(".png") != std::string::npos) {
+			this->addTexture(loadAssetEvent.path, loadAssetEvent.assetTag);
+		}
+		});
+	EventListenerDelegate loadAssetDelegate(loadAsset);
+	EventManager::getInstance().addDelegate(loadAssetDelegate, EventType::LOAD_ASSET);
+
+	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+
+	this->sortDrawableList();
+}
+
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
 	if (mDrawables.find(id) == mDrawables.end()) {
 		mDrawables.emplace(id, vector<DrawablePtr>());
@@ -209,9 +253,13 @@ void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
 }
 
 void GraphicsSystem::sortDrawableList() {
+	if (sortedThisFrame) {
+		return;
+	}
 	mDrawableList.sort([](const DrawablePtr& first, const DrawablePtr& second){
 		return first->getDrawDepth() < second->getDrawDepth();
 	});
+	sortedThisFrame = true;
 }
 
 void  GraphicsSystem::draw() {
@@ -238,16 +286,16 @@ void  GraphicsSystem::draw() {
 		drawnCount++;
 
 		EntityPtr entity(entitySystem->getEntityById(body->id));
-		if (entity->parent != (unsigned long) ULLONG_MAX) {
-			EntityPtr parent(entitySystem->getEntityById(entity->parent));
+		if (entity->parent != nullptr) {
+			EntityPtr parent = entity->parent;
 			while (parent != nullptr) {
 				BodyPtr body(physicsSystem->getBody(parent->id));
 				position += Vector2f(body->getPosition());
-				if (parent->parent == (unsigned long) ULLONG_MAX) {
+				if (parent->parent == nullptr) {
 					parent = nullptr;
 				}
 				else {
-					parent = entitySystem->getEntityById(parent->parent);
+					parent = parent->parent;
 				}
 			}
 		}
@@ -267,8 +315,9 @@ void  GraphicsSystem::draw() {
 		*/
 	}
 
-	std::cout << "	Drawn:" << std::to_string(drawnCount) << std::endl;
-	std::cout << "	Total To Draw:" << std::to_string(totalCount) << std::endl;
+
+	// reset this flag before the next frame.
+	sortedThisFrame = false;
 
 	mGraphics->onAfterDraw();
 }
@@ -301,10 +350,13 @@ void GraphicsSystem::drawTexture(const string& assetTag, float x, float y, float
 	}
 
 	AssetPtr asset = assetSystem->getAsset(assetTag);
-	SDL_Texture* texture = &*makeShared(asset->getAsset<SDL_Texture>());
-	mGraphics->renderTexture(texture, x, y, w, h, tx, ty, tw, th, angle, r, g, b, a);
+	shared_ptr<SDL_Texture> texture = asset->getAsset<SDL_Texture>();
+	mGraphics->renderTexture(texture.get(), x, y, w, h, tx, ty, tw, th, angle, r, g, b, a);
 }
 
+void GraphicsSystem::drawTexture(TexturePtr texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+	mGraphics->renderTexture(texture, x, y, w, h, angle, r, g, b, a);
+}
 
 void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
 	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
@@ -319,7 +371,7 @@ void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
 void GraphicsSystem::drawToTexture(const string& assetTag) {
 	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	AssetPtr textureAsset = assetSystem->getAsset(assetTag);
-	shared_ptr<SDL_Texture> texture = makeShared(textureAsset->getAsset<SDL_Texture>());
+	shared_ptr<SDL_Texture> texture = textureAsset->getAsset<SDL_Texture>();
 
 	mGraphics->drawToTexture(&*texture);
 }
@@ -400,6 +452,45 @@ void LuaScriptSystem::update(Uint32 delta) {
 
 void LuaScriptSystem::clear() {
 	mLuaScripts.clear();
+}
+
+void MapSystem::setMap(MapPtr map) {
+	this->map = map;
+}
+
+MapPtr MapSystem::getMap() {
+	return this->map;
+}
+
+void MapSystem::registerGridHandler(unsigned long entityId, GridHandlerPtr gridHandler) {
+	if (this->grids.find(entityId) != this->grids.end()) {
+		throw "Grid with id already registered. " + std::to_string(entityId);
+	}
+
+	this->grids[entityId] = gridHandler;
+}
+
+void MapSystem::deregisterGridHandler(unsigned long entityId) {
+	if (this->grids.find(entityId) == this->grids.end()) {
+		return;
+	}
+
+	this->grids.erase(this->grids.find(entityId));
+}
+
+void MapSystem::update(Uint32 delta) {
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	GraphicsPtr graphics = graphicsSystem->getGraphics();
+	for (auto gridHandler : this->grids) {
+		graphicsSystem->drawToTexture(gridHandler.second->getGrid()->name);
+		gridHandler.second->update(*graphics.get());
+	}
+
+	graphicsSystem->drawToScreen();
+}
+
+void MapSystem::clear() {
+	this->grids.clear();
 }
 
 void ParticleSystem::registerParticleEmitter(unsigned long id, const ParticleEmitterPtr& emitter) {
@@ -598,7 +689,7 @@ void DefaultSoundController::play(int loop) {
 	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	AssetPtr asset(assetSystem->getAsset(mSound->assetTag));
 	if (SoundType::SOUND == mSound->soundType) {
-		shared_ptr<Mix_Chunk> mix = makeShared(asset->getAsset<Mix_Chunk>());
+		shared_ptr<Mix_Chunk> mix = asset->getAsset<Mix_Chunk>();
 		Mix_PlayChannel(-1, mix.get(), loop);
 	}
 	else if (SoundType::MUSIC == mSound->soundType) {

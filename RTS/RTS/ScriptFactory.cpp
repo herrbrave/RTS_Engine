@@ -8,7 +8,7 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath, unsigned long en
 	return script;
 }
 
-void LuaScriptFactory::initialize(LuaScriptPtr& script, unsigned long entityId) {
+void LuaScriptFactory::initialize(LuaScriptPtr script, unsigned long entityId) {
 
 	script->state["entityId"] = (int) entityId;
 
@@ -23,7 +23,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script, unsigned long entityId) 
 	int ASSET = script->state["registrar"]["ASSET"];
 	int CAMERA = script->state["registrar"]["CAMERA"];
 	int MOUSE_MOVE = script->state["registrar"]["MOUSE_MOVE"];
-
+	int MAP = script->state["registrar"]["MAP"];
 
 	script->state["IntList"].SetClass<LuaFriendlyIntVector>(
 		"size", &LuaFriendlyIntVector::size,
@@ -75,11 +75,18 @@ void LuaScriptFactory::initialize(LuaScriptPtr& script, unsigned long entityId) 
 	if (MOUSE_MOVE) {
 		this->registerMouseMove(script);
 	}
+	if (MAP) {
+		this->registerMap(script);
+	}
 
 	auto output = script->invoke("setup");
 }
 
-void LuaScriptFactory::registerGeneral(LuaScriptPtr& script) {
+void LuaScriptFactory::clean() {
+	//this->toDelete.clear();
+}
+
+void LuaScriptFactory::registerGeneral(LuaScriptPtr script) {
 	script->state["sendMessage"] = [this](int entityId, string message, string value) -> string {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		EntityPtr entity = makeShared<Entity>(entitySystem->getEntityById(entityId));
@@ -116,7 +123,7 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr& script) {
 	};
 }
 
-void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
+void LuaScriptFactory::registerFactory(LuaScriptPtr script) {
 	script->state["createDefault"] = [this](int x, int y, int w, int h, int r, int g, int b, int a) -> int {
 		EntityPtr entity = mEntityFactory->createDefault(x, y, w, h, r, g, b, a);
 		return (int)entity->id;
@@ -147,7 +154,7 @@ void LuaScriptFactory::registerFactory(LuaScriptPtr& script) {
 	};
 }
 
-void LuaScriptFactory::registerEntity(LuaScriptPtr& script) {
+void LuaScriptFactory::registerEntity(LuaScriptPtr script) {
 	script->state["destroyEntity"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		entitySystem->deregisterEntity(entityId);
@@ -156,16 +163,15 @@ void LuaScriptFactory::registerEntity(LuaScriptPtr& script) {
 
 	script->state["setChild"] = [this](int parent, int child) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr childEntity = makeShared<Entity>(entitySystem->getEntityById(child));
 
 		EntityPtr parentEntity = makeShared<Entity>(entitySystem->getEntityById(parent));
-		parentEntity->children.push_back(child);
-
-		EntityPtr childEntity = makeShared<Entity>(entitySystem->getEntityById(child));
-		childEntity->parent = parent;
+		parentEntity->children.push_back(childEntity);
+		childEntity->parent = parentEntity;
 	};
 }
 
-void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
+void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 
 	script->state["Vector2f"].SetClass<LuaFriendlyVector2f, double, double>(
 		"getX", &LuaFriendlyVector2f::getX,
@@ -228,6 +234,8 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		const Vector2f& position = physicsComponent->getPosition();
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(position);
 
+		toDelete.push_back(VoidPtr(vec));
+
 		return *vec;
 	};
 
@@ -247,7 +255,11 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
+		auto vec = *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
+
+		toDelete.push_back(VoidPtr(&vec));
+
+		return vec;
 	};
 
 	script->state["checkCollisionsArea"] = [this](int x0, int y0, int x1, int y1) -> LuaFriendlyIntVector& {
@@ -264,8 +276,14 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		int posX = upperLeftX + (width / 2);
 		int posY = upperLeftY + (height / 2);
 
+		AABBColliderShapePtr colliderShape = std::make_shared<AABBColliderShape>(std::make_shared<Vector2f>(posX, posY), width, height);
+		ColliderPtr collider = std::make_shared<Collider>(colliderShape.get());
 		BodyPtr body(GCC_NEW Body(0, posX, posY, width, height));
-		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(posX, posY), width, height))));
+		body->setCollider(ColliderPtr(collider));
+
+		toDelete.push_back(colliderShape);
+		toDelete.push_back(collider);
+		toDelete.push_back(body);
 
 		vector<WeakBodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
@@ -275,6 +293,8 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 			BodyPtr b = makeShared(bodyPtr);
 			ids->push(b->id);
 		}
+
+		toDelete.push_back(VoidPtr(ids));
 
 		return *ids;
 	};
@@ -287,6 +307,8 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 		if (!body->isCollidable()) {
 			return *ids;
 		}
+
+		toDelete.push_back(VoidPtr(ids));
 
 		vector<WeakBodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
@@ -383,7 +405,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr& script) {
 	});
 }
 
-void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
+void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 	script->state["setTexture"] = [this](string tag, int entityId, double tx, double ty, double w, double h) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
@@ -538,14 +560,19 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr& script) {
 	};
 }
 
-void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
+void LuaScriptFactory::registerAnimation(LuaScriptPtr script) {
 	script->state["attachAnimationSet"] = [this](int entityId, string path) {
 		applyAnimation(mSystemManager, entityId, path);
 	};
 
 	script->state["attachAsepriteAnimationSet"] = [this](int entityId, string path) {
-		AnimationSetPtr animationSet = loadAsepriteAnimation(path);
-		applyAnimation(mSystemManager, entityId, animationSet);
+		AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
+		AssetPtr asset = assetSystem->getAsset(path);
+		if (asset == nullptr) {
+			AnimationSetPtr animationSet = loadAsepriteAnimation(path);
+			asset = std::make_shared<Asset>(VoidPtr(animationSet), path, path);
+		}
+		applyAnimation(mSystemManager, entityId, asset->getAsset<AnimationSet>());
 	};
 
 	script->state["setAnimation"] = [this](int entityId, string animationName) {
@@ -594,7 +621,7 @@ void LuaScriptFactory::registerAnimation(LuaScriptPtr& script) {
 	};
 }
 
-void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityId) {
+void LuaScriptFactory::registerInput(LuaScriptPtr script, unsigned long entityId) {
 
 	script->state["SDLK_SPACE"] = (int)SDLK_SPACE;
 	script->state["SDLK_UP"] = (int)SDLK_UP;
@@ -682,7 +709,7 @@ void LuaScriptFactory::registerInput(LuaScriptPtr& script, unsigned long entityI
 	}));
 }
 
-void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
+void LuaScriptFactory::registerMouseMove(LuaScriptPtr script) {
 	script->state["enableMouseMove"] = [this, script](int entityId) {
 		applyInput(mSystemManager, entityId, Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
 			int x = (int) std::roundf(evt->mouseEvent->position->x);
@@ -694,14 +721,14 @@ void LuaScriptFactory::registerMouseMove(LuaScriptPtr& script) {
 }
 
 
-void LuaScriptFactory::registerScript(LuaScriptPtr& script) {
+void LuaScriptFactory::registerScript(LuaScriptPtr script) {
 
 	script->state["setScript"] = [this](int entityId, string path) {
 		applyScript(mSystemManager, entityId, path);
 	};
 }
 
-void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
+void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 
 	script->state["setText"] = [this](int entityId, string text, string font, int r, int g, int b) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
@@ -744,7 +771,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 		EntityPtr progressEntity{ nullptr };
 		auto it = entity->children.begin();
 		while (it != entity->children.end()) {
-			EntityPtr temp = makeShared<Entity>(entitySystem->getEntityById(*it));
+			EntityPtr temp = *it;
 			if (temp->getComponents().find(ComponentType::PROGRESS_COMPONENT) != temp->getComponents().end()) {
 				progressEntity = temp;
 				break;
@@ -784,13 +811,13 @@ void LuaScriptFactory::registerUi(LuaScriptPtr& script) {
 			}
 
 			progressEntity = mWidgetFactory->createProgressBar(x, y, w, h, maxProgress, progress);
-			entity->children.push_back(progressEntity->id);
-			progressEntity->parent = entity->id;
+			entity->children.push_back(progressEntity);
+			progressEntity->parent = entity;
 		}
 	};
 }
 
-void LuaScriptFactory::registerAsset(LuaScriptPtr& script) {
+void LuaScriptFactory::registerAsset(LuaScriptPtr script) {
 	script->state["loadTexture"] = [this](string path, string tag) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
@@ -804,7 +831,7 @@ void LuaScriptFactory::registerAsset(LuaScriptPtr& script) {
 }
 
 
-void LuaScriptFactory::registerCamera(LuaScriptPtr& script) {
+void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 	script->state["moveCameraBy"] = [this](int dx, int dy) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
@@ -823,6 +850,21 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr& script) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
 		CameraPtr camera = makeShared(graphicsSystem->getCamera());
-		return *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(*camera->position)));
+
+		auto vec = *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(*camera->position)));
+
+		toDelete.push_back(VoidPtr(&vec));
+
+		return vec;
+	};
+}
+
+void LuaScriptFactory::registerMap(LuaScriptPtr script) {
+	script->state["setTileColor"] = [this](int x, int y, int r, int g, int b, int a) {
+		MapSystemPtr mapSystem = mSystemManager->getSystemByType<MapSystem>(SystemType::MAP);
+
+		MapPtr map = mapSystem->getMap();
+		Vector2f point(x, y);
+		CellPtr cell = map->cellAtPoint(point);
 	};
 }

@@ -109,10 +109,12 @@
     <ClInclude Include="SoundControllerFactory.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="TMXMap.h" />
     <ClInclude Include="Ui.h" />
     <ClInclude Include="RTS.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="vector2f.h" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
@@ -136,7 +138,9 @@
     <ClCompile Include="SoundControllerFactory.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TMXMap.cpp" />
     <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

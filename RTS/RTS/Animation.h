@@ -76,7 +76,7 @@ public:
 	std::string spritesheet;
 	std::string name;
 	std::string defaultAnimationName;
-	int fps;
+	int fps = 12;
 
 	AnimationSet() {}
 
@@ -188,7 +188,7 @@ public:
 
 		AnimationPtr currentAnimation = animationSet->animations[currentAnimtionName];
 
-		if (++this->currentFrame >= currentAnimation->frames.size()) {
+		if ((size_t) ++this->currentFrame >= currentAnimation->frames.size()) {
 			this->currentFrame = 0;
 			if (this->state != AnimationState::LOOPING) {
 				stop();

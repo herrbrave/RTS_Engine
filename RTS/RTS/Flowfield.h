@@ -4,6 +4,7 @@
 #include<queue>
 #include<SDL_ttf.h>
 
+#include"Entity.h"
 #include"Map.h"
 #include"SDL_Helpers.h"
 #include"Vector2f.h"
@@ -23,6 +24,7 @@ public:
 	}
 
 	void recalculate() {
+		/*
 		shared_ptr<TileComponent> tileComponent = mTargetTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 		if (tileComponent == nullptr) {
 			throw GCC_NEW std::exception("Failed to get tile component from weak pointer.");
@@ -117,6 +119,7 @@ public:
 				mVectorMap[currentTile->id]->normalize();
 			}
 		}
+		*/
 	}
 
 	void guideEntity(EntityPtr entity) {
@@ -128,14 +131,20 @@ public:
 	}
 
 	bool tileExistsAtPoint(const Vector2f& point) {
+		/*
 		int xIndex = std::round(point.x / float(mMap->getTileWidth()));
 		int yIndex = std::round(point.y / float(mMap->getTileHeight()));
 
 		return mMap->tileExistsAtPoint(xIndex, yIndex);
+		*/
+		return true;
 	}
 
 	EntityPtr tileAtPoint(const Vector2f& point) {
+		/*
 		return mMap->tileAtPoint(point);
+		*/
+		return nullptr;
 	}
 
 	const Vector2f& getVectorForTile(unsigned const long tileId) const {
