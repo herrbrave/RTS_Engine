@@ -13,13 +13,11 @@ registrar = {
 	UI = 0,
 }
 
-
-
 function setup()
 	print("setup skeleton mage", entityId)
 	setTag(entityId, "skeleton mage")
 	attachAsepriteAnimationSet(entityId, "Assets/HackNSlasher/Characters/Humanoid/SkeletonMage/SkeletonMage.json")
-	setSpeed(entityId, 64);
+	setSpeed(entityId, 64)
 	setZOrder(entityId, 3)
 	setSize(entityId, 64, 64)
 

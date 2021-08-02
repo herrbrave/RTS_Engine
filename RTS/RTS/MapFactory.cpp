@@ -91,7 +91,41 @@ TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
 }
 
 void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
+	MapConfigPtr mapConfig = map->getMapConfig();
+	auto data = tmxLayer->objects;
+	for (TMXObjectPtr object : data) {
+		TilePtr tile = std::make_shared<Tile>();
+		ObjectPtr obj = std::make_shared<Object>();
+		obj->tile = tile;
 
+		int width = object->width * mapConfig->scale;
+		int height = object->height * mapConfig->scale;
+		int id = object->gid;
+
+		tile->collision = true;
+		tile->collisionWidth = width;
+		tile->collisionHeight = height;
+
+		// Tiled stored location from the top left corner.
+		int x = (int)round(object->x) * mapConfig->scale;
+		int y = (int)(round(object->y) - height) * mapConfig->scale;
+
+		obj->position = std::make_shared<Vector2f>((float) x, (float) y);
+
+		string script = "";
+		if (!object->properties.empty()) {
+			auto properties = object->properties;
+			for (TMXPropertyPtr prop : properties) {
+				if (string("script").compare(prop->name) == 0) {
+					auto ptr = prop->getValue<char*>();
+					auto shPtr = makeShared(ptr);
+					auto c = (char*)shPtr.get();
+					script = string(c);
+				}
+			}
+		}
+		tile->script = script;
+	}
 }
 
 void loadTileLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {

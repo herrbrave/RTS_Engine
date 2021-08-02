@@ -15,6 +15,10 @@ class Tile;
 typedef shared_ptr<Tile> TilePtr;
 typedef weak_ptr<Tile> WeakTilePtr;
 
+class Object;
+typedef shared_ptr<Object> ObjectPtr;
+typedef weak_ptr<Object> WeakObjectPtr;
+
 class Tileset;
 typedef shared_ptr<Tileset> TilesetPtr;
 typedef weak_ptr<Tileset> WeakTilesetPtr;
@@ -78,6 +82,18 @@ public:
 	Tile(const Tile& tile);
 
 	Tile(const rapidjson::Value& root);
+
+	void serialize(Serializer& serializer) const override;
+};
+
+class Object : public Serializable {
+public:
+	TilePtr tile;
+	Vector2fPtr position;
+
+	Object() {}
+
+	Object(const rapidjson::Value& root);
 
 	void serialize(Serializer& serializer) const override;
 };
@@ -196,11 +212,12 @@ private:
 
 class Map : public Serializable {
 public:
-	std::vector<GridPtr> grids;
+	vector<GridPtr> grids;
+	vector<ObjectPtr> objects;
 
 	Map(MapConfigPtr config);
 
-	Map(const rapidjson::Value& root) { }
+	Map(const rapidjson::Value& root);
 
 	GridPtr gridAt(int x, int y);
 
@@ -210,45 +227,31 @@ public:
 
 	void findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, int endY);
 
-	int getMapWidth() {
-		return mMapConfig->mapWidth;
-	}
+	int getMapWidth();
 
-	int getMapHeight() {
-		return mMapConfig->mapHeight;
-	}
+	int getMapHeight();
 
-	int getGridWidth() {
-		return std::ceil((float)getMapWidth() / (float)GRID_WIDTH);
-	}
+	int getGridWidth();
 
-	int getGridHeight() {
-		return std::ceil((float)getMapHeight() / (float)GRID_HEIGHT);
-	}
+	int getGridHeight();
 
-	int getTileWidth() {
-		return mMapConfig->tileset->tileWidth * mMapConfig->scale;
-	}
+	int getTileWidth();
 
-	int getTileHeight() {
-		return mMapConfig->tileset->tileHeight * mMapConfig->scale;
-	}
+	int getTileHeight();
 
-	MapConfigPtr getMapConfig() {
-		return this->mMapConfig;
-	}
+	MapConfigPtr getMapConfig();
 
-	void serialize(Serializer& serializer) const override {}
+	void serialize(Serializer& serializer) const override;
 
 private:
-	MapConfigPtr mMapConfig{ nullptr };
+	MapConfigPtr mapConfig{ nullptr };
 
 	inline int getIndex(int x, int y) {
-		if (x < 0 || x >= mMapConfig->mapWidth || y < 0 || y >= mMapConfig->mapHeight) {
+		if (x < 0 || x >= mapConfig->mapWidth || y < 0 || y >= mapConfig->mapHeight) {
 			return -1;
 		}
 
-		return (y * mMapConfig->mapWidth) + x;
+		return (y * mapConfig->mapWidth) + x;
 	}
 };
 #endif // !__MAP_H__

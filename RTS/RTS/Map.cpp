@@ -89,6 +89,23 @@ void Tile::serialize(Serializer& serializer) const {
 	serializer.writer.EndObject();
 }
 
+Object::Object(const rapidjson::Value& root) {
+	tile = std::make_shared<Tile>(root["tile"]);
+	position = std::make_shared<Vector2f>(root["position"]);
+}
+
+void Object::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("tile");
+	tile->serialize(serializer);
+
+	serializer.writer.String("position");
+	position->serialize(serializer);
+
+	serializer.writer.EndObject();
+}
+
 Tileset::Tileset(const rapidjson::Value& root) {
 	tileWidth = root["tileWidth"].GetInt();
 	tileHeight = root["tileHeight"].GetInt();
@@ -341,7 +358,41 @@ void GridComponent::serialize(Serializer& serializer) const {
 }
 
 Map::Map(MapConfigPtr config) {
-	mMapConfig = std::move(config);
+	mapConfig = std::move(config);
+}
+
+Map::Map(const rapidjson::Value& root) { 
+	for (auto it = root["grids"].Begin(); it != root["grids"].End(); it++) {
+		grids.push_back(std::make_shared<Grid>(*it));
+	}
+	for (auto it = root["objects"].Begin(); it != root["objects"].End(); it++) {
+		objects.push_back(std::make_shared<Tile>(*it));
+	}
+
+	mapConfig = std::make_shared<MapConfig>(root["mapConfig"]);
+}
+
+void Map::serialize(Serializer& serializer) const {
+	serializer.writer.StartObject();
+
+	serializer.writer.String("grids");
+	serializer.writer.StartArray();
+	for (auto grid : grids) {
+		grid->serialize(serializer);
+	}
+	serializer.writer.EndArray();
+
+	serializer.writer.String("objects");
+	serializer.writer.StartArray();
+	for (auto object : objects) {
+		object->serialize(serializer);
+	}
+	serializer.writer.EndArray();
+
+	serializer.writer.String("grids");
+	mapConfig->serialize(serializer);
+
+	serializer.writer.EndObject();
 }
 
 CellPtr Map::getCellAt(int x, int y) {
@@ -352,20 +403,48 @@ CellPtr Map::getCellAt(int x, int y) {
 }
 
 CellPtr Map::cellAtPoint(const Vector2f& point) {
-	int xIndex = std::round(point.x / float(mMapConfig->tileset->tileWidth));
-	int yIndex = std::round(point.y / float(mMapConfig->tileset->tileHeight));
+	int xIndex = std::round(point.x / float(mapConfig->tileset->tileWidth));
+	int yIndex = std::round(point.y / float(mapConfig->tileset->tileHeight));
 	GridPtr grid = this->gridAt(xIndex, yIndex);
 
 	return grid->at(xIndex, yIndex);
 }
 
 GridPtr Map::gridAt(int x, int y) {
-	int gridWidth = std::ceil((float)mMapConfig->mapWidth / (float)GRID_WIDTH);
-	int gridHeight = std::ceil((float)mMapConfig->mapHeight / (float)GRID_HEIGHT);
+	int gridWidth = std::ceil((float)mapConfig->mapWidth / (float)GRID_WIDTH);
+	int gridHeight = std::ceil((float)mapConfig->mapHeight / (float)GRID_HEIGHT);
 	x = x / GRID_WIDTH;
 	y = y / GRID_HEIGHT;
 
 	return this->grids.at(y * gridWidth + (x % gridWidth));
+}
+
+int Map::getMapWidth() {
+	return mapConfig->mapWidth;
+}
+
+int Map::getMapHeight() {
+	return mapConfig->mapHeight;
+}
+
+int Map::getGridWidth() {
+	return std::ceil((float)getMapWidth() / (float)GRID_WIDTH);
+}
+
+int Map::getGridHeight() {
+	return std::ceil((float)getMapHeight() / (float)GRID_HEIGHT);
+}
+
+int Map::getTileWidth() {
+	return mapConfig->tileset->tileWidth * mapConfig->scale;
+}
+
+int Map::getTileHeight() {
+	return mapConfig->tileset->tileHeight * mapConfig->scale;
+}
+
+MapConfigPtr Map::getMapConfig() {
+	return this->mapConfig;
 }
 
 void Map::findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, int endY) {
@@ -377,7 +456,7 @@ void Map::findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, i
 	/*
 
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	auto endTile = entitySystem->getEntityById(mMapConfig->tiles[endIndex]);
+	auto endTile = entitySystem->getEntityById(mapConfig->tiles[endIndex]);
 
 	// tiles to select.
 	auto comparitor = [endTile](Node left, Node right) {
@@ -395,7 +474,7 @@ void Map::findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, i
 	};
 
 	int startIndex = getIndex(startX, startY);
-	auto startTile = entitySystem->getEntityById(mMapConfig->tiles[startIndex]);
+	auto startTile = entitySystem->getEntityById(mapConfig->tiles[startIndex]);
 	std::unordered_set<EntityPtr> openSetLookup;
 	std::priority_queue < Node, std::vector<Node>, decltype(comparitor)> openSet(comparitor);
 	openSet.emplace(Node{ startTile, 0 });
@@ -436,7 +515,7 @@ void Map::findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, i
 					continue;
 				}
 
-				auto neighborTile = entitySystem->getEntityById(mMapConfig->tiles[index]);
+				auto neighborTile = entitySystem->getEntityById(mapConfig->tiles[index]);
 				TileComponentPtr component = neighborTile->getComponentByType<TileComponent>(ComponentType::TILE_COMPONENT);
 				if (!component->canOccupy || closedSet.find(neighborTile) != closedSet.end() || openSetLookup.find(neighborTile) != openSetLookup.end()) {
 					continue;
