@@ -90,8 +90,6 @@ void TextureDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 
 void TextureDrawable::setSize(float width, float height) {
 	Drawable::setSize(width, height);
-	mTexture->w = width;
-	mTexture->h = height;
 }
 
 void TextDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {

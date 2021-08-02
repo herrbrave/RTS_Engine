@@ -10,7 +10,7 @@ LuaScriptPtr LuaScriptFactory::create(const string& scriptPath, unsigned long en
 
 void LuaScriptFactory::initialize(LuaScriptPtr script, unsigned long entityId) {
 
-	script->state["entityId"] = (int) entityId;
+	script->state["entityId"] = (int)entityId;
 
 	int DRAWABLE = script->state["registrar"]["DRAWABLE"];
 	int ENTITY = script->state["registrar"]["ENTITY"];
@@ -289,7 +289,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
 		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
-		for (auto &bodyPtr : bodies) {
+		for (auto& bodyPtr : bodies) {
 			BodyPtr b = makeShared(bodyPtr);
 			ids->push(b->id);
 		}
@@ -313,7 +313,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		vector<WeakBodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
-		for (auto &bodyPtr : bodies) {
+		for (auto& bodyPtr : bodies) {
 			BodyPtr b = makeShared(bodyPtr);
 			ids->push(b->id);
 		}
@@ -395,14 +395,14 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		else if (id == (int)data.getColliderEntityId()) {
 			script->invoke("onCollision", static_cast<int>((int)data.getCollidedEntityId()));
 		}
-	});
+		});
 
 	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_COLLISION_EVENT);
 
 	script->deleters.push_back([destroyEntityListener]() {
 		EventManager::getInstance().removeDelegate(destroyEntityListener, EventType::ENTITY_COLLISION_EVENT);
-	});
+		});
 }
 
 void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
@@ -505,11 +505,11 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
-			return (double) drawableComponent->getAngle();
+			return (double)drawableComponent->getAngle();
 		}
 		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
-			return (double) animationComponent->getAngle();
+			return (double)animationComponent->getAngle();
 		}
 
 		return 0.0;
@@ -539,7 +539,7 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 
 		particleCloud->particleLifeMillis = particleLifeMillis;
 		particleCloud->spreadDist = spreadDist;
-		particleCloud->gravity = std::make_shared<Vector2f>((float) gravX, (float) gravY);
+		particleCloud->gravity = std::make_shared<Vector2f>((float)gravX, (float)gravY);
 		particleCloud->fade = 0.95f;
 
 		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 0, 0, 16, 16));
@@ -654,14 +654,14 @@ void LuaScriptFactory::registerInput(LuaScriptPtr script, unsigned long entityId
 			script->invoke("onMouseDown", (double)data.x, (double)data.y, static_cast<int>(data.button));
 		}
 		return false;
-	});
+		});
 
 	EventListenerDelegate mouseEventListener(mouseEventDelegate);
 	EventManager::getInstance().addDelegate(mouseEventListener, EventType::MOUSE_EVENT);
 
 	script->deleters.push_back([mouseEventListener]() {
 		EventManager::getInstance().removeDelegate(mouseEventListener, EventType::MOUSE_EVENT);
-	});
+		});
 
 	EventDelegate keyEventDelegate([script](const EventData& eventData) {
 		KeyEventData data = dynamic_cast<const KeyEventData&>(eventData);
@@ -673,14 +673,14 @@ void LuaScriptFactory::registerInput(LuaScriptPtr script, unsigned long entityId
 			script->invoke("onKeyDown", (int)data.key, data.ctrl, data.shft);
 		}
 		return false;
-	});
+		});
 
 	EventListenerDelegate keyEventListener(keyEventDelegate);
 	EventManager::getInstance().addDelegate(keyEventListener, EventType::KEY_EVENT);
 
 	script->deleters.push_back([keyEventListener]() {
 		EventManager::getInstance().removeDelegate(keyEventListener, EventType::KEY_EVENT);
-	});
+		});
 
 	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	auto entity = entitySystem->getEntityById(entityId);
@@ -691,32 +691,32 @@ void LuaScriptFactory::registerInput(LuaScriptPtr script, unsigned long entityId
 	applyInput(mSystemManager, entityId, Input::ON_MOUSE_ENTER, function<bool(EventPtr)>([script](EventPtr evt) {
 		script->invoke("onMouseEnterEntity");
 		return false;
-	}));
+		}));
 
 	applyInput(mSystemManager, entityId, Input::ON_MOUSE_EXIT, function<bool(EventPtr)>([script](EventPtr evt) {
 		script->invoke("onMouseExitEntity");
 		return false;
-	}));
+		}));
 
 	applyInput(mSystemManager, entityId, Input::ON_CLICK, function<bool(EventPtr)>([script](EventPtr evt) {
 		script->invoke("onClickEntity", static_cast<int>(evt->mouseEvent->button));
 		return false;
-	}));
+		}));
 
 	applyInput(mSystemManager, entityId, Input::ON_DRAG, function<bool(EventPtr)>([script](EventPtr evt) {
 		script->invoke("onDragEntity", static_cast<int>(evt->mouseEvent->button));
 		return false;
-	}));
+		}));
 }
 
 void LuaScriptFactory::registerMouseMove(LuaScriptPtr script) {
 	script->state["enableMouseMove"] = [this, script](int entityId) {
 		applyInput(mSystemManager, entityId, Input::ON_MOUSE_MOVE, function<bool(EventPtr)>([script](EventPtr evt) {
-			int x = (int) std::roundf(evt->mouseEvent->position->x);
-			int y = (int) std::roundf(evt->mouseEvent->position->y);
+			int x = (int)std::roundf(evt->mouseEvent->position->x);
+			int y = (int)std::roundf(evt->mouseEvent->position->y);
 			script->invoke("onMouseMove", x, y, static_cast<int>(evt->mouseEvent->button));
 			return false;
-		}));
+			}));
 	};
 }
 

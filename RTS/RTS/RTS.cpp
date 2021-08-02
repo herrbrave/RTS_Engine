@@ -27,7 +27,7 @@ void RTS::setup() {
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
 	mMapFactory = std::make_shared<MapFactory>(mEntityFactory, mLuaScriptFactory, mSystemManager);
-	
+
 	mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
 
 	//mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);

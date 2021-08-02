@@ -189,7 +189,14 @@ void DataSystem::close(const string& path, bool saveFirst) {
 }
 
 const string& DataSystem::getData(const string& dataStore, const string& key) {
-	return this->data.at(dataStore)->getData(key);
+	if (this->data.find(dataStore) == this->data.end()) {
+		throw "Datastore not found " + dataStore;
+	}
+	auto ds = this->data.at(dataStore);
+	if (ds->data.find(key) == ds->data.end()) {
+		return "";
+	}
+	return ds->getData(key);
 }
 
 void DataSystem::putData(const string& dataStore, const string& key, const string& val) {
