@@ -28,10 +28,10 @@ void RTS::setup() {
 
 	mMapFactory = std::make_shared<MapFactory>(mEntityFactory, mLuaScriptFactory, mSystemManager);
 
-	mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
+	//mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
 
-	//mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 255, 0, 0, 255);
-	//applyScript(mSystemManager, mEntity->id, "Games/test/sweep_test.lua");
+	mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 0, 0, 0, 255);
+	applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	graphicsSystem->initialize();

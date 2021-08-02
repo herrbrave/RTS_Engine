@@ -198,6 +198,8 @@ public:
 	void save(const string& path);
 	void close(const string& path, bool saveFirst = true);
 
+	const bool hasData(const string& dataStore, const string& key);
+
 	const string& getData(const string& dataStore, const string& key);
 
 	void putData(const string& dataStore, const string& key, const string& val);

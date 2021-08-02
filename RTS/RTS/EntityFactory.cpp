@@ -33,6 +33,10 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+
+		TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(makeShared(drawableComponent->getDrawable()));
+		TexturePtr texture(GCC_NEW Texture(texturePath, tx, ty, w, h));
+		drawable->setTexture(texture);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
@@ -44,10 +48,6 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const
 
 		entity->addComponent(ComponentPtr(drawableComponent));
 	}
-
-	TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(makeShared(drawableComponent->getDrawable()));
-	TexturePtr texture(GCC_NEW Texture(texturePath, tx, ty, w, h));
-	drawable->setTexture(texture);
 }
 
 void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture) {

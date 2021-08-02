@@ -16,6 +16,7 @@ function setup()
 
 	print("setup inventory_item", x, y)
 	inventory_data = "Games/test/data_test.csv"
+	inventory_item = ""
 end
 
 -- Standard Mouse/Key events
@@ -71,6 +72,7 @@ function onMessage(message, value)
 	if "set_coords" then
 		x, y = value:match("([^,]+),([^,]+)")
 		inventory_item_slot_name = "inventory " .. x .. "x".. y
+		print(inventory_item_slot_name)
 	end
 
 	return "Ok"
@@ -78,8 +80,9 @@ end
 
 function update(delta)
 
-	inventory_item = getData(inventory_data, inventory_item_slot_name)
-	print("inventory_item", inventory_item)
+	if hasData(inventory_data, inventory_item_slot_name) then
+		inventory_item = getData(inventory_data, inventory_item_slot_name)
+	end
 	if string.len(inventory_item) > 0 then
 		updateIcon(inventory_item)
 	end

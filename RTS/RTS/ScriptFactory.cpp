@@ -102,6 +102,11 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr script) {
 		dataSystem->load(path);
 	};
 
+	script->state["hasData"] = [this](string path, string key) -> bool {
+		DataSystemPtr dataSystem = mSystemManager->getSystemByType<DataSystem>(SystemType::DATA);
+		return dataSystem->hasData(path, key);
+	};
+
 	script->state["getData"] = [this](string path, string key) -> string {
 		DataSystemPtr dataSystem = mSystemManager->getSystemByType<DataSystem>(SystemType::DATA);
 		return dataSystem->getData(path, key);
@@ -406,20 +411,11 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 }
 
 void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
-	script->state["setTexture"] = [this](string tag, int entityId, double tx, double ty, double w, double h) {
+	script->state["setTexture"] = [this](string tag, int entityId, double width, double height, double tx, double ty, double w, double h) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-
-		EntityPtr entity = entitySystem->getEntityById(entityId);
-
-		DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
-		DrawablePtr drawable = makeShared<Drawable>(drawableComponent->getDrawable());
-		TextureDrawablePtr textureDrawable = dynamic_pointer_cast<TextureDrawable>(drawable);
 		graphicsSystem->addTexture(tag, tag);
-		TexturePtr texture(GCC_NEW Texture(tag, tx, ty, w, h));
 
-		textureDrawable->setTexture(texture);
+		applyDrawable(mSystemManager, entityId, tag, width, height, tx, ty, w, h);
 	};
 
 	script->state["drawSquare"] = [this](int x0, int y0, int x1, int y1, int r, int g, int b, int a) {

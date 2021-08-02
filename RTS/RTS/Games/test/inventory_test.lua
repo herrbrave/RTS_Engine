@@ -13,15 +13,17 @@ registrar = {
 }
 
 function setup()
-	background = createDefault(512, 384, 512, 512, 128, 128, 128, 255)
+	background = createDefault(512, 384, 512, 512, 128, 128, 128, 128)
 	--setScript(obj1, "Games/test/message_test_1.lua")
 	inventory = {}
 	for i=0,63 do
 		x = i % 8
 		y = math.floor(i / 8)
 		slots = {}
-		slots[0] = createTextured("Assets/HackNSlasher/Menu/Menu.png", x * 64 - 224, y * 64 - 224, 64, 64, 37, 53, 22, 22, false)
+		--slots[0] = createDefault((x * 64) - 224, (y * 64) - 224, 60, 60, 255, 255, 255, 255)
+		slots[0] = createTextured("Assets/HackNSlasher/Menu/Menu.png", (x * 64) - 224, (y * 64) - 224, 60, 60, 37, 53, 22, 22, false)
 		slots[1] = createTextured("Assets/HackNSlasher/Menu/Menu.png", 0, 0, 55, 55, 33, 27, 1, 1, false)
+		print("Making Cell:", x, y, (x * 64) - 224, (y * 64) - 224)
 		inventory[i] = slots
 		setChild(background, slots[0])
 		setChild(slots[0], slots[1])

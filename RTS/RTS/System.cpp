@@ -188,6 +188,15 @@ void DataSystem::close(const string& path, bool saveFirst) {
 	this->data.erase(data.find(path));
 }
 
+const bool DataSystem::hasData(const string& dataStore, const string& key) {
+	if (this->data.find(dataStore) == this->data.end()) {
+		throw "Datastore not found " + dataStore;
+	}
+	auto ds = this->data.at(dataStore);
+
+	return ds->data.find(key) != ds->data.end();
+}
+
 const string& DataSystem::getData(const string& dataStore, const string& key) {
 	if (this->data.find(dataStore) == this->data.end()) {
 		throw "Datastore not found " + dataStore;
@@ -286,10 +295,6 @@ void  GraphicsSystem::draw() {
 
 		BodyPtr body(physicsSystem->getBody(mReverseLookup.at(drawable)));
 		Vector2f& position = Vector2f(body->getPosition());
-
-		if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
-			continue;
-		}
 		drawnCount++;
 
 		EntityPtr entity(entitySystem->getEntityById(body->id));
@@ -309,6 +314,10 @@ void  GraphicsSystem::draw() {
 
 		if (!drawable->isUi) {
 			translateToCamera(position, mCamera);
+		}
+
+		if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
+			continue;
 		}
 		
 		drawable->draw(*mGraphics, position);
