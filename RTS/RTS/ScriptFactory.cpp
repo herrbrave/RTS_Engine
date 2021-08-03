@@ -558,17 +558,27 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 
 void LuaScriptFactory::registerAnimation(LuaScriptPtr script) {
 	script->state["attachAnimationSet"] = [this](int entityId, string path) {
-		applyAnimation(mSystemManager, entityId, path);
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+
+		applyAnimation(mSystemManager, entityId, path, physicsComponent->getWidth(), physicsComponent->getHeight());
 	};
 
 	script->state["attachAsepriteAnimationSet"] = [this](int entityId, string path) {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+
 		AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 		AssetPtr asset = assetSystem->getAsset(path);
 		if (asset == nullptr) {
 			AnimationSetPtr animationSet = loadAsepriteAnimation(path);
 			asset = std::make_shared<Asset>(VoidPtr(animationSet), path, path);
 		}
-		applyAnimation(mSystemManager, entityId, asset->getAsset<AnimationSet>());
+		applyAnimation(mSystemManager, entityId, asset->getAsset<AnimationSet>(), physicsComponent->getWidth(), physicsComponent->getHeight());
 	};
 
 	script->state["setAnimation"] = [this](int entityId, string animationName) {

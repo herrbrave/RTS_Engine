@@ -25,8 +25,38 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 
 			GridPtr grid = map->gridAt(x * GRID_WIDTH, y * GRID_HEIGHT);
 			applyGrid(systemManager, entity->id, grid, map);
+
+			GridComponentPtr gridComponent = entity->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+			gridComponent->gridDrawable->setDrawDepth(1);
+
 			world->grids[x].push_back(entity);
 		}
+	}
+
+	for (auto obj : map->objects) {
+		EntityPtr entity = entityFactory->createPhysicsEntity(obj->position->x, obj->position->y, obj->tile->collisionWidth, obj->tile->collisionHeight);
+		if (obj->tile->animated) {
+			AnimationSetPtr animation = std::make_shared<AnimationSet>();
+			animation->spritesheet = obj->tile->animation->frames.at(0)->assetTag;
+			animation->animations["default"] = obj->tile->animation;
+			animation->defaultAnimationName = "default";
+			animation->name = obj->name;
+			applyAnimation(systemManager, entity->id, animation, obj->tile->collisionWidth, obj->tile->collisionHeight);
+
+			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
+			animationComponent->setZOrder(10);
+			animationComponent->loop();
+		}
+		else if (obj->tile->texture != nullptr) {
+			applyDrawable(systemManager, entity->id, obj->tile->texture, obj->tile->collisionWidth, obj->tile->collisionHeight);
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+			drawableComponent->setZOrder(10);
+		}
+		
+		if (!obj->tile->script.empty()) {;
+			applyScript(systemManager, entity->id, obj->tile->script);
+		}
+		world->entities.push_back(entity);
 	}
 
 	if (!mapConfig->script.empty()) {

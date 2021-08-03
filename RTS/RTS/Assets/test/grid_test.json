@@ -25,9 +25,44 @@
          "width":25,
          "x":0,
          "y":0
+        }, 
+        {
+         "draworder":"topdown",
+         "id":3,
+         "name":"Objects",
+         "objects":[
+                {
+                 "gid":273,
+                 "height":8,
+                 "id":3,
+                 "name":"AnimatedTorch",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":77.25,
+                 "y":135.5
+                }, 
+                {
+                 "gid":218,
+                 "height":8,
+                 "id":4,
+                 "name":"PigPen",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":8,
+                 "x":61.625,
+                 "y":126.75
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "x":0,
+         "y":0
         }],
- "nextlayerid":3,
- "nextobjectid":1,
+ "nextlayerid":4,
+ "nextobjectid":5,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -55,6 +90,56 @@
          "spacing":0,
          "tilecount":272,
          "tileheight":8,
+         "tilewidth":8
+        }, 
+        {
+         "columns":8,
+         "firstgid":273,
+         "image":"Assets\/orksvhumans\/Sprites\/TorchA.png",
+         "imageheight":8,
+         "imagewidth":64,
+         "margin":0,
+         "name":"TorchA",
+         "spacing":0,
+         "tilecount":8,
+         "tileheight":8,
+         "tiles":[
+                {
+                 "animation":[
+                        {
+                         "duration":120,
+                         "tileid":0
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":1
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":2
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":3
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":4
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":5
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":6
+                        }, 
+                        {
+                         "duration":120,
+                         "tileid":7
+                        }],
+                 "id":0
+                }],
          "tilewidth":8
         }],
  "tilewidth":8,

@@ -148,5 +148,5 @@ void parseTMXProperties(const rapidjson::Value& root, TMXProperties& props);
 void parseTMXLayers(const rapidjson::Value& root, TMXLayers& layers);
 void parseTMXTilesets(const rapidjson::Value& root, TMXTilesets& tilesets);
 void parseTMXObjects(const rapidjson::Value& root, TMXObjects& objects);
-void parseTMXTiles(const rapidjson::Value& root, TMXTiles& tiles);
-void parseTMXFrames(const rapidjson::Value& root, TMXFrames& frames);
+void parseTMXTiles(const rapidjson::Value& root, TMXTiles& tiles, int firstgid);
+void parseTMXFrames(const rapidjson::Value& root, TMXFrames& frames, int firstgid);

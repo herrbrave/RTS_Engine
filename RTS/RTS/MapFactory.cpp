@@ -54,7 +54,7 @@ TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
 		for (TMXTilePtr tmxTile : tmxTileset->tiles) {
 			TilePtr tile = tileset->tiles[id + tmxTile->id];
 
-			if (!tmxTileset->image.empty()) {
+			if (tmxTileset->image.empty()) {
 				tile->texture->assetTag = tmxTile->image;
 				map->getMapConfig()->images.push_back(tmxTile->image);
 			}
@@ -94,23 +94,20 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 	MapConfigPtr mapConfig = map->getMapConfig();
 	auto data = tmxLayer->objects;
 	for (TMXObjectPtr object : data) {
-		TilePtr tile = std::make_shared<Tile>();
 		ObjectPtr obj = std::make_shared<Object>();
-		obj->tile = tile;
+
+		obj->name = object->name;
+
+		unsigned int tileVal(object->gid);
+
+		bool flippedHorizontal = tileVal & TMX_FLIPPED_HORIZONTAL_FLAG;
+		bool flippedVertical = tileVal & TMX_FLIPPED_VERTICAL_FLAG;
+		bool flippedDiagonal = tileVal & TMX_FLIPPED_DIAGONAL_FLAG;
+
+		tileVal = tmxClearFlags(tileVal);
 
 		int width = object->width * mapConfig->scale;
 		int height = object->height * mapConfig->scale;
-		int id = object->gid;
-
-		tile->collision = true;
-		tile->collisionWidth = width;
-		tile->collisionHeight = height;
-
-		// Tiled stored location from the top left corner.
-		int x = (int)round(object->x) * mapConfig->scale;
-		int y = (int)(round(object->y) - height) * mapConfig->scale;
-
-		obj->position = std::make_shared<Vector2f>((float) x, (float) y);
 
 		string script = "";
 		if (!object->properties.empty()) {
@@ -124,7 +121,46 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 				}
 			}
 		}
+
+		TilePtr tile;
+		if (tileVal > 0) {
+			tile = std::make_shared<Tile>(*map->getMapConfig()->tileset->tiles.at(tileVal).get());
+			obj->tile = tile;
+
+			float rotation = 0.0f;
+			if (flippedDiagonal && flippedHorizontal) {
+				rotation = M_PI / 2.0f;
+			}
+			else if (flippedDiagonal && flippedVertical) {
+				rotation = -(M_PI / 2.0f);
+			}
+			else if (flippedDiagonal) {
+				flippedVertical = true;
+				rotation = M_PI / 2.0f;
+			}
+
+			obj->tile->texture->angleRad = rotation;
+			obj->tile->texture->flippedDiagonal = flippedDiagonal;
+			obj->tile->texture->flippedHorizontal = flippedHorizontal;
+			obj->tile->texture->flippedVertical = flippedVertical;
+		}
+		else {
+			tile = std::make_shared<Tile>();
+		}
+
 		tile->script = script;
+
+		tile->collision = true;
+		tile->collisionWidth = width;
+		tile->collisionHeight = height;
+
+		// Tiled stored location from the top left corner.
+		int x = (int)round(object->x) * mapConfig->scale;
+		int y = (int)(round(object->y) - (object->height / 2)) * mapConfig->scale;
+
+		obj->position = std::make_shared<Vector2f>((float) x, (float) y);
+
+		map->objects.push_back(obj);
 	}
 }
 

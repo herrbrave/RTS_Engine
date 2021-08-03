@@ -50,19 +50,21 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const
 	}
 }
 
-void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture) {
+void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, TexturePtr texture, float width, float height) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	DrawableComponentPtr drawableComponent;
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+		drawableComponent->setSize(width, height);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
 		graphicsSystem->registerDrawable(entity->id, textureDrawable);
 		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+		drawableComponent->setSize(width, height);
 
 		entity->addComponent(ComponentPtr(drawableComponent));
 	}
@@ -139,7 +141,7 @@ void applyInput(SystemManagerPtr systemManager, unsigned long entityId, Input in
 	inputComponent->setInputCallback(input, callback);
 }
 
-void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, const string& path) {
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, const string& path, int width, int height) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -150,22 +152,27 @@ void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, cons
 		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
 		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
+		animationComponent->aninmationDrawable->setSize(width, height);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		AnimationSetPtr animationSet = animationSystem->loadAnimationSet(path);
+
+		graphicsSystem->addTexture(animationSet->spritesheet, animationSet->spritesheet);
+
 		AnimationHandlerPtr animationHandler(GCC_NEW AnimationHandler(animationSet, animationSet->fps));
 		AnimationDrawablePtr aninmationDrawable = std::make_shared<AnimationDrawable>(animationHandler);
 		graphicsSystem->registerDrawable(entity->id, aninmationDrawable);
 		animationSystem->registerAnimation(entity->id, animationHandler);
 		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, aninmationDrawable));
+		animationComponent->aninmationDrawable->setSize(width, height);
 
 		entity->addComponent(animationComponent);
 	}
 }
 
-void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet) {
+void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet, int width, int height) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -175,6 +182,7 @@ void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, Anim
 
 		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
 		animationComponent->aninmationDrawable->animationHandler->setAnimationSet(animationSet);
+		animationComponent->aninmationDrawable->setSize(width, height);
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
@@ -184,6 +192,7 @@ void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, Anim
 		animationSystem->registerAnimation(entity->id, animationHandler);
 		graphicsSystem->registerDrawable(entity->id, aninmationDrawable);
 		animationComponent = AnimationComponentPtr(GCC_NEW AnimationComponent(entity->id, aninmationDrawable));
+		animationComponent->aninmationDrawable->setSize(width, height);
 
 		entity->addComponent(animationComponent);
 	}
@@ -246,7 +255,7 @@ EntityPtr EntityFactory::createAnimatedEntity(const string& path, float x, float
 	entitySystem->addEntity(entity);
 
 	applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);
-	applyAnimation((SystemManagerPtr)this->mSystemManager, entity->id, path);
+	applyAnimation((SystemManagerPtr)this->mSystemManager, entity->id, path, width, height);
 
 	return entity;
 }

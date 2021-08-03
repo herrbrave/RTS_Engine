@@ -316,19 +316,11 @@ void  GraphicsSystem::draw() {
 			translateToCamera(position, mCamera);
 		}
 
-		if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
-			continue;
-		}
+		//if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
+		//	continue;
+		//}
 		
 		drawable->draw(*mGraphics, position);
-		/*
-		if (__DEBUG__) {
-			if (body->collider != nullptr) {
-				Vector2f pos = *body->collider->colliderShape->position;
-				mGraphics->drawBox(pos.x, pos.y, body->width, body->height, 0, 255, 0, 255);
-			}
-		}
-		*/
 	}
 
 

@@ -115,6 +115,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="vector2f.h" />
     <ClInclude Include="World.h" />
+    <ClInclude Include="WorldFactory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Animation.cpp" />
@@ -141,6 +142,7 @@
     <ClCompile Include="TMXMap.cpp" />
     <ClCompile Include="Ui.cpp" />
     <ClCompile Include="World.cpp" />
+    <ClCompile Include="WorldFactory.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

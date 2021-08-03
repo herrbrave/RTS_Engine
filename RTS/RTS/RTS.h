@@ -20,6 +20,7 @@
 #include"SoundControllerFactory.h"
 #include"System.h"
 #include"Ui.h"
+#include"WorldFactory.h"
 
 class RTS : public Game {
 private:
@@ -29,6 +30,8 @@ private:
 	EntityPtr mEntity{ nullptr };
 	MapFactoryPtr mMapFactory{ nullptr };
 	MapPtr mMap{ nullptr };
+	WorldFactoryPtr worldFactory{ nullptr };
+	WorldPtr world{ nullptr };
 
 	WidgetFactoryPtr mWidgetFactory{ nullptr };
 

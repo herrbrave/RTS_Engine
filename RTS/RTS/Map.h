@@ -69,8 +69,8 @@ public:
 
 class Tile : public Serializable {
 public:
-	TexturePtr texture;
-	AnimationPtr animation;
+	TexturePtr texture{ nullptr };
+	AnimationPtr animation{ nullptr };
 	bool collision;
 	int collisionWidth;
 	int collisionHeight;
@@ -88,8 +88,9 @@ public:
 
 class Object : public Serializable {
 public:
-	TilePtr tile;
+	TilePtr tile{nullptr};
 	Vector2fPtr position;
+	string name;
 
 	Object() {}
 
@@ -203,6 +204,10 @@ public:
 	void popTextureAtPoint(const Vector2f& point);
 
 	void popTexture(int x, int y);
+
+	Uint8 getZOrder();
+
+	void setZOrder(Uint8 zOrder);
 
 	void serialize(Serializer& serializer) const override;
 

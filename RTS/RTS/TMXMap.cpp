@@ -138,7 +138,7 @@ void parseTMXTilesets(const rapidjson::Value& tilesets, TMXTilesets& tilesetList
 			parseTMXProperties(tileset["properties"], newTileset->properties);
 		}
 		if (tileset.FindMember("tiles") != tileset.MemberEnd()) {
-			parseTMXTiles(tileset["tiles"], newTileset->tiles);
+			parseTMXTiles(tileset["tiles"], newTileset->tiles, newTileset->firstgid);
 		}
 
 		tilesetList.push_back(newTileset);
@@ -176,7 +176,7 @@ void parseTMXObjects(const rapidjson::Value& objects, TMXObjects& objectList) {
 	}
 }
 
-void parseTMXTiles(const rapidjson::Value& tiles, TMXTiles& tileList) {
+void parseTMXTiles(const rapidjson::Value& tiles, TMXTiles& tileList, int firstgid) {
 	for (int index = 0; index < tiles.Size(); index++) {
 		const rapidjson::Value& tile = tiles[index];
 		TMXTilePtr newTile(GCC_NEW TMXTile());
@@ -195,20 +195,20 @@ void parseTMXTiles(const rapidjson::Value& tiles, TMXTiles& tileList) {
 			parseTMXLayers(tile["objectgroup"]["objects"], newTile->objectgroup);
 		}
 		if (tile.FindMember("animation") != tile.MemberEnd()) {
-			parseTMXFrames(tile["animation"], newTile->animation);
+			parseTMXFrames(tile["animation"], newTile->animation, firstgid);
 		}
 
 		tileList.push_back(newTile);
 	}
 }
 
-void parseTMXFrames(const rapidjson::Value& frames, TMXFrames& frameList) {
+void parseTMXFrames(const rapidjson::Value& frames, TMXFrames& frameList, int firstGid) {
 	for (int index = 0; index < frames.Size(); index++) {
 		const rapidjson::Value& frame = frames[index];
 		TMXFramePtr newFrame(GCC_NEW TMXFrame());
 
 		newFrame->duration = frame["duration"].GetInt();
-		newFrame->tileid = frame["tileid"].GetInt();
+		newFrame->tileid = frame["tileid"].GetInt() + firstGid;
 
 		frameList.push_back(newFrame);
 	}

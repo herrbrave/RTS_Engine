@@ -231,15 +231,11 @@ GridDrawable::GridDrawable(const rapidjson::Value& root) : Drawable(root) {
 }
 
 void GridDrawable::onSerialize(Serializer& serializer) const {
-	serializer.writer.StartObject();
-
 	serializer.writer.String("texture");
 	texture->serialize(serializer);
 
 	serializer.writer.String("grid");
 	grid->serialize(serializer);
-
-	serializer.writer.EndObject();
 }
 
 GridPtr GridDrawable::getGrid() {
@@ -348,6 +344,17 @@ void GridComponent::popTexture(int x, int y) {
 	cell->tiles.pop_back();
 }
 
+Uint8 GridComponent::getZOrder() {
+	return gridDrawable->getDrawDepth();
+}
+
+void GridComponent::setZOrder(Uint8 zOrder) {
+	gridDrawable->setDrawDepth(zOrder);
+
+	EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
+}
+
 void GridComponent::serialize(Serializer& serializer) const {
 	serializer.writer.StartObject();
 
@@ -366,7 +373,7 @@ Map::Map(const rapidjson::Value& root) {
 		grids.push_back(std::make_shared<Grid>(*it));
 	}
 	for (auto it = root["objects"].Begin(); it != root["objects"].End(); it++) {
-		objects.push_back(std::make_shared<Tile>(*it));
+		objects.push_back(std::make_shared<Object>(*it));
 	}
 
 	mapConfig = std::make_shared<MapConfig>(root["mapConfig"]);
