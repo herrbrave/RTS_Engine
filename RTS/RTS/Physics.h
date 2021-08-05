@@ -392,7 +392,7 @@ public:
 	bool isCollidable();
 
 	void setTarget(TargetPtr target);
-	WeakTargetPtr getTarget();
+	TargetPtr getTarget();
 	bool hasTarget();
 
 	float getWidth();
@@ -468,7 +468,7 @@ public:
 	Quadtree(float x, float y, float width, float height);
 	void addBody(BodyPtr body);
 	void removeBody(BodyPtr body);
-	void getCollidingBodies(BodyPtr body, vector<WeakBodyPtr>& bodies);
+	void getCollidingBodies(BodyPtr body, vector<BodyPtr>& bodies);
 	void getNeigboringBodies(BodyPtr body, vector<BodyPtr>& bodies);
 	void clear();
 
@@ -545,15 +545,15 @@ public:
 	const string& getTag();
 	void setTag(const string& tag);
 
-	WeakBodyPtr getBody() {
-		return WeakBodyPtr(mBody);
+	BodyPtr getBody() {
+		return mBody;
 	}
 
 	void setTarget(TargetPtr target) {
 		mBody->setTarget(target);
 	}
 
-	WeakTargetPtr getTarget() {
+	TargetPtr getTarget() {
 		return mBody->getTarget();
 	}
 

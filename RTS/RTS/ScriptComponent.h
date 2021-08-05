@@ -16,7 +16,7 @@ public:
 	}
 
 	LuaScriptComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::LUA_SCRIPT_COMPONENT) {
-		this->script = LuaScriptPtr(GCC_NEW LuaScript(root["script"].GetString()));
+		this->script = std::make_shared<LuaScript>(root["script"].GetString());
 
 		this->script->state["entityId"] = (int)entityId;
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, this->script);

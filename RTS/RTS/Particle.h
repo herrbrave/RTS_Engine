@@ -26,6 +26,10 @@ class ParticleCloudDrawable;
 typedef shared_ptr<ParticleCloudDrawable> ParticleCloudDrawablePtr;
 typedef weak_ptr<ParticleCloudDrawable> WeakParticleCloudDrawablePtr;
 
+class ParticleCloudComponent;
+typedef shared_ptr<ParticleCloudComponent> ParticleCloudComponentPtr;
+typedef weak_ptr<ParticleCloudComponent> WeakParticleCloudComponentPtr;
+
 class Particle {
 public:
 	Vector2fPtr velocity;

@@ -7,7 +7,7 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 	systems.emplace(SystemType::DATA, DataSystemPtr(GCC_NEW DataSystem(ptr)));
 	systems.emplace(SystemType::ENTITY, EntitySystemPtr(GCC_NEW EntitySystem(ptr)));
 	systems.emplace(SystemType::GRAPHICS, GraphicsSystemPtr(GCC_NEW GraphicsSystem(graphicsConfig, ptr)));
-	systems.emplace(SystemType::MAP, MapSystemPtr(GCC_NEW MapSystem(ptr)));
+	systems.emplace(SystemType::WORLD, WorldSystemPtr(GCC_NEW WorldSystem(ptr)));
 	systems.emplace(SystemType::PARTICLE, ParticleSystemPtr(GCC_NEW ParticleSystem(ptr)));
 	systems.emplace(SystemType::PHYSICS, PhysicsSystemPtr(GCC_NEW PhysicsSystem(ptr)));
 	systems.emplace(SystemType::INPUT, InputSystemPtr(GCC_NEW InputSystem(ptr)));
@@ -17,53 +17,20 @@ SystemManager::SystemManager(GraphicsConfig* graphicsConfig) {
 
 void SystemManager::update(Uint32 delta) {
 
-	auto start = std::chrono::high_resolution_clock::now();
 	LuaScriptSystemPtr luaScriptSystem = static_pointer_cast<LuaScriptSystem>(this->systems.at(SystemType::LUA_SCRIPT));
 	luaScriptSystem->update(delta);
 
-	auto end = std::chrono::high_resolution_clock::now();
-	auto res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Script System Update: " + res.count());
-
-	start = std::chrono::high_resolution_clock::now();
 	PhysicsSystemPtr physicsSystem = static_pointer_cast<PhysicsSystem>(this->systems.at(SystemType::PHYSICS));
 	physicsSystem->update(delta);
 
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Physics System Setup: " + res.count());
-
-	start = std::chrono::high_resolution_clock::now();
 	AnimationSystemPtr animationSystem = static_pointer_cast<AnimationSystem>(this->systems.at(SystemType::ANIMATION));
 	animationSystem->update(delta);
 
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Animation System Setup: " + res.count());
-
-	start = std::chrono::high_resolution_clock::now();
 	ParticleSystemPtr particleSystem = static_pointer_cast<ParticleSystem>(this->systems.at(SystemType::PARTICLE));
 	particleSystem->update(delta);
 
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Particle System Setup: " + res.count());
-
-	start = std::chrono::high_resolution_clock::now();
 	EntitySystemPtr entitySystem = static_pointer_cast<EntitySystem>(this->systems.at(SystemType::ENTITY));
 	entitySystem->update(delta);
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Entity System Setup: " + res.count());
-
-	start = std::chrono::high_resolution_clock::now();
-	MapSystemPtr mapSystem = static_pointer_cast<MapSystem>(this->systems.at(SystemType::MAP));
-	mapSystem->update(delta);
-
-	end = std::chrono::high_resolution_clock::now();
-	res = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	DEBUG_LOG("	Map System Setup: " + res.count());
 }
 
 void SystemManager::clear() {
@@ -73,17 +40,19 @@ void SystemManager::clear() {
 }
 
 void AnimationSystem::update(Uint32 delta) {
-	for (auto animation : mAnimations) {
-		animation.second->update(delta);
+	for (auto animationList : mAnimations) {
+		for (auto animation : animationList.second) {
+			animation->update(delta);
+		}
 	}
 }
 
 void AnimationSystem::registerAnimation(unsigned long id, AnimationHandlerPtr animationHandler) {
-	if (mAnimations.find(id) != mAnimations.end()) {
-		return;
+	if (mAnimations.find(id) == mAnimations.end()) {
+		mAnimations[id] = vector<AnimationHandlerPtr>();
 	}
 
-	mAnimations.emplace(id, animationHandler);
+	mAnimations[id].push_back(animationHandler);
 }
 
 void AnimationSystem::deregisterAnimation(unsigned long id) {
@@ -377,11 +346,8 @@ void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
 }
 
 void GraphicsSystem::drawToTexture(const string& assetTag) {
-	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
-	AssetPtr textureAsset = assetSystem->getAsset(assetTag);
-	shared_ptr<SDL_Texture> texture = textureAsset->getAsset<SDL_Texture>();
 
-	mGraphics->drawToTexture(&*texture);
+	mGraphics->drawToTexture(assetTag);
 }
 
 void GraphicsSystem::drawToScreen() {
@@ -439,6 +405,10 @@ void EntitySystem::clear() {
 	mEntityMap.clear();
 }
 
+LuaScripts LuaScriptSystem::getLuaScripts() {
+	return this->mLuaScripts;
+}
+
 void LuaScriptSystem::registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript) {
 	mLuaScripts.emplace(id, luaScript);
 }
@@ -452,7 +422,6 @@ void LuaScriptSystem::deregisterLuaScript(unsigned long id) {
 }
 
 void LuaScriptSystem::update(Uint32 delta) {
-
 	for (auto entry : mLuaScripts) {
 		entry.second->invoke("update", (int)delta);
 	}
@@ -460,45 +429,6 @@ void LuaScriptSystem::update(Uint32 delta) {
 
 void LuaScriptSystem::clear() {
 	mLuaScripts.clear();
-}
-
-void MapSystem::setMap(MapPtr map) {
-	this->map = map;
-}
-
-MapPtr MapSystem::getMap() {
-	return this->map;
-}
-
-void MapSystem::registerGridHandler(unsigned long entityId, GridHandlerPtr gridHandler) {
-	if (this->grids.find(entityId) != this->grids.end()) {
-		throw "Grid with id already registered. " + std::to_string(entityId);
-	}
-
-	this->grids[entityId] = gridHandler;
-}
-
-void MapSystem::deregisterGridHandler(unsigned long entityId) {
-	if (this->grids.find(entityId) == this->grids.end()) {
-		return;
-	}
-
-	this->grids.erase(this->grids.find(entityId));
-}
-
-void MapSystem::update(Uint32 delta) {
-	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	GraphicsPtr graphics = graphicsSystem->getGraphics();
-	for (auto gridHandler : this->grids) {
-		graphicsSystem->drawToTexture(gridHandler.second->getGrid()->name);
-		gridHandler.second->update(*graphics.get());
-	}
-
-	graphicsSystem->drawToScreen();
-}
-
-void MapSystem::clear() {
-	this->grids.clear();
 }
 
 void ParticleSystem::registerParticleEmitter(unsigned long id, const ParticleEmitterPtr& emitter) {
@@ -524,7 +454,10 @@ void ParticleSystem::clear() {
 }
 
 void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
-	mBodies.emplace(id, body);
+	mBodies[id] = body;
+	if (body->isCollidable()) {
+		quadTree->addBody(body);
+	}
 }
 
 void PhysicsSystem::deregisterBody(const unsigned long id) {
@@ -551,6 +484,16 @@ WeakBodyPtr PhysicsSystem::getBody(const unsigned long id) {
 	return WeakBodyPtr(mBodies.at(id));
 }
 
+void PhysicsSystem::moveAndCollide(const unsigned int id, const Vector2f& delta) {
+	BodyPtr body = this->mBodies.at(id);
+	this->handleCollision(delta, body, false);
+}
+
+Vector2fPtr PhysicsSystem::moveAndSlide(const unsigned int id, const Vector2f& delta) {
+	BodyPtr body = this->mBodies.at(id);
+	return std::make_shared<Vector2f>(this->handleCollision(delta, body, true));
+}
+
 void PhysicsSystem::update(Uint32 delta) {
 	float step(float(delta) / float(1000));
 
@@ -565,21 +508,73 @@ void PhysicsSystem::update(Uint32 delta) {
 			// update the bodies location in the tree.
 			quadTree->removeBody(element.second);
 			quadTree->addBody(element.second);
-
-			// Some behaviours stop the body before overlapping with other bodies. Move the body forward one pixel to catch any potential collisions.
-			/*
-			vector<WeakBodyPtr> collidingBodies;
-			quadTree->getCollidingBodies(element.second, collidingBodies);
-
-			for (WeakBodyPtr weakBody : collidingBodies) {
-				BodyPtr collidedBody = makeShared(weakBody);
-
-				EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, collidedBody->id, SDL_GetTicks());
-				EventManager::getInstance().pushEvent(eventData);
-			}
-			*/
 		}
 	}
+
+	LuaScriptSystemPtr scriptSystem = mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
+	for (auto entry : scriptSystem->getLuaScripts()) {
+		if (entry.second->state["onPhysics"].exists()) {
+			entry.second->invoke("onPhysics", delta);
+		}
+	}
+}
+Sweep PhysicsSystem::sweep(const Vector2f& position, const Vector2f& delta, BodyPtr body) {
+	// Handle overlap
+	vector<BodyPtr> bodies;
+
+	// project body to potential new position
+	Vector2f oldPos(body->position);
+	body->collider->colliderShape->position->set(position + delta);
+	this->quadTree->getCollidingBodies(body, bodies);
+	// remove position update so we can sweep the body for collisions.
+	body->collider->colliderShape->position->set(oldPos);
+
+	Vector2f newPosition(position + delta);
+
+	Sweep sweep;
+	sweep.time = 1.0f;
+	sweep.position->set(newPosition);
+	for (auto bod : bodies) {
+		auto bodPtr = bod;
+		Sweep currentSweep;
+		bodPtr->collider->colliderShape->sweep(body->collider->colliderShape, delta, &currentSweep);
+		if (currentSweep.time < sweep.time) {
+			sweep = currentSweep;
+		}
+
+		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, bodPtr->id, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(eventData);
+	}
+
+	return sweep;
+}
+
+Vector2f PhysicsSystem::handleCollision(const Vector2f& delta, BodyPtr body, bool slide) {
+	if (delta.x == 0.0f && delta.y == 0.0f) {
+		return Vector2f(0.0f, 0.0f);
+	}
+
+	Vector2f position(body->getPosition());
+	Sweep sweep = this->sweep(position, delta, body);
+
+	Vector2f velocity(delta);
+	Vector2f finalPos = *sweep.position;
+	if (sweep.time < 1.0f && slide) {
+		Vector2f normal(sweep.manifold->normal);
+		Vector2f slideDelta = velocity.slide(normal);
+		slideDelta.normalize();
+		slideDelta *= (1.0f - sweep.time);
+		body->position->set(finalPos);
+		sweep = this->sweep(finalPos, slideDelta, body);
+		slideDelta *= sweep.time;
+		finalPos += slideDelta;
+	}
+
+	body->position->set(finalPos);
+	quadTree->removeBody(body);
+	quadTree->addBody(body);
+
+	return Vector2f(sweep.manifold->normal);
 }
 
 void PhysicsSystem::clear() {
@@ -751,4 +746,96 @@ void SoundSystem::loadSound(const std::string& path, const std::string& assetTag
 
 SoundControllerPtr SoundSystem::createController(const std::string& assetTag, SoundType soundType) {
 	return SoundControllerPtr(GCC_NEW DefaultSoundController(SoundPtr(GCC_NEW Sound(assetTag, soundType)), mSystemManager));
+}
+
+
+WorldSystem::WorldSystem(SystemManagerPtr systemManager) : System(SystemType::WORLD, systemManager) {}
+
+void WorldSystem::loadWorld(string& path) {
+	std::fstream file;
+	file.open(path, std::ios::in);
+	if (!file.is_open()) {
+		ERR("Unable to open file: " + path);
+	}
+	std::string line;
+	std::string builder;
+	while (std::getline(file, line)) {
+		builder.append(line);
+	}
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(builder.c_str());
+
+	WorldPtr world = std::make_shared<World>((const rapidjson::Value&) doc);
+	this->addWorld(world);
+}
+
+void WorldSystem::addWorld(WorldPtr world) {
+	this->world = world;
+
+	for (int y = 0; y < world->map->getMapHeight(); y++) {
+		for (int x = 0; x < world->map->getMapWidth(); x++) {
+			this->registerEntityAndComponents(world->getGridAt(x, y));
+		}
+	}
+
+	for (EntityPtr entity : world->entities) {
+		this->registerEntityAndComponents(entity);
+	}
+
+	this->registerEntityAndComponents(world->script);
+
+}
+
+WorldPtr WorldSystem::getWorld() {
+	return this->world;
+}
+
+void WorldSystem::registerEntityAndComponents(EntityPtr entity) {
+
+	for (auto component : entity->getComponents()) {
+		switch (component.first) {
+			case ComponentType::DRAWABLE_COMPONENT: {
+				GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+				DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+				graphicsSystem->registerDrawable(entity->id, drawableComponent->getDrawable());
+				break;
+			}
+			case ComponentType::PHYSICS_COMPONENT: {
+				PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+				PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+				physicsSystem->registerBody(entity->id, physicsComponent->getBody());
+				break;
+			}
+			case ComponentType::ANIMATION_COMPONENT: {
+				GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+				AnimationSystemPtr animationSystem = mSystemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
+				AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
+				graphicsSystem->registerDrawable(entity->id, animationComponent->getAnimationDrawable());
+				animationSystem->registerAnimation(entity->id, animationComponent->getAnimationDrawable()->animationHandler);
+				break;
+			}
+			case ComponentType::LUA_SCRIPT_COMPONENT: {
+				LuaScriptSystemPtr scriptSystem = mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
+				LuaScriptComponentPtr scriptComponent = entity->getComponentByType<LuaScriptComponent>(ComponentType::LUA_SCRIPT_COMPONENT);
+				scriptSystem->registerLuaScript(entity->id, scriptComponent->script);
+				break;
+			}
+			case ComponentType::PARTICLE_COMPONENT: {
+				GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+				ParticleSystemPtr particleSystem = mSystemManager->getSystemByType<ParticleSystem>(SystemType::PARTICLE);
+				ParticleCloudComponentPtr particleComponent = entity->getComponentByType<ParticleCloudComponent>(ComponentType::PARTICLE_COMPONENT);
+				graphicsSystem->registerDrawable(entity->id, particleComponent->particleCloudDrawable);
+				particleSystem->registerParticleEmitter(entity->id, particleComponent->particleCloudDrawable);
+				break;
+			}
+			case ComponentType::GRID_COMPONENT: {
+				GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+				GridComponentPtr gridComponent = entity->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+				graphicsSystem->registerDrawable(entity->id, gridComponent->getGridDrawable());
+				break;
+			}
+		}
+	}
 }

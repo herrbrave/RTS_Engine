@@ -330,7 +330,7 @@ public:
 	virtual AssetPtr createTexture(const std::string& path, const std::string& assetTag) = 0;
 	virtual AssetPtr createTexture(int width, int height, const std::string& assetTag) = 0;
 	virtual AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) = 0;
-	virtual void drawToTexture(SDL_Texture* texture) = 0;
+	virtual void drawToTexture(const string& assetTag) = 0;
 	virtual void drawToScreen() = 0;
 protected:
 	AssetVendorPtr mAssetVendor{ nullptr };
@@ -352,10 +352,10 @@ public:
 	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
 	AssetPtr createTexture(int width, int height, const std::string& assetTag) override;
 	AssetPtr createFontAsset(const std::string& path, const std::string& assetTag, int fontsize) override;
-	void drawToTexture(SDL_Texture* texture) override;
+	void drawToTexture(const string& assetTag) override;
 	void drawToScreen() override;
 private:
-
+	std::unordered_map<string, std::shared_ptr<SDL_Texture>> textures;
 	std::unique_ptr<SDL_Window, SDL_DELETERS> mWindow{ nullptr };
 	std::unique_ptr<SDL_Renderer, SDL_DELETERS> mRenderer{ nullptr };
 };
@@ -363,17 +363,17 @@ private:
 class DrawableComponent : public Component {
 public:
 	DrawableComponent(unsigned long entityId, DrawablePtr drawable) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
-		mDrawable = drawable;
+		this->drawable = drawable;
 	}
 
 	DrawableComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::DRAWABLE_COMPONENT) {
-		const rapidjson::Value& drawable = root["mDrawable"];
-		std::string drawableType = drawable["drawableType"].GetString();
+		const rapidjson::Value& draw = root["drawable"];
+		std::string drawableType = draw["drawableType"].GetString();
 		if (drawableType == "BlockDrawable") {
-			mDrawable = DrawablePtr(GCC_NEW BlockDrawable(drawable));
+			drawable = std::make_shared<BlockDrawable>(draw);
 		}
 		else if (drawableType == "TextureDrawable") {
-			mDrawable = DrawablePtr(GCC_NEW TextureDrawable(drawable));
+			drawable = std::make_shared<TextureDrawable>(draw);
 		}
 		else {
 			assert(false);
@@ -387,11 +387,11 @@ public:
 	void setSize(float width, float height);
 	void setAngle(float angle);
 	float getAngle();
-	WeakDrawablePtr getDrawable() {
-		return mDrawable;
+	DrawablePtr getDrawable() {
+		return drawable;
 	}
 	void setDrawable(DrawablePtr drawable) {
-		this->mDrawable = drawable;
+		this->drawable = drawable;
 	}
 
 	void serialize(Serializer& serializer) const override {
@@ -399,13 +399,13 @@ public:
 
 		serializer.writer.String("componentId");
 		serializer.writer.Uint((Uint8) componentId);
-		serializer.writer.String("mDrawable");
-		mDrawable->serialize(serializer);
+		serializer.writer.String("drawable");
+		drawable->serialize(serializer);
 
 		serializer.writer.EndObject();
 	}
 protected:
-	DrawablePtr mDrawable;
+	DrawablePtr drawable;
 };
 
 #endif // !__GRAPHICS_H__

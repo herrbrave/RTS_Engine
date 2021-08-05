@@ -35,7 +35,7 @@ public:
 
 	EntityPtr createFromSerialization(const string& path);
 
-	EntityPtr createPhysicsEntity(float x, float y, float width, float height);
+	EntityPtr createPhysicsEntity(float x, float y, float width, float height, bool isCollidable = false);
 
 	EntityPtr createScriptEntity(const string& path);
 

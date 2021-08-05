@@ -34,7 +34,7 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 	}
 
 	for (auto obj : map->objects) {
-		EntityPtr entity = entityFactory->createPhysicsEntity(obj->position->x, obj->position->y, obj->tile->collisionWidth, obj->tile->collisionHeight);
+		EntityPtr entity = entityFactory->createPhysicsEntity(obj->position->x, obj->position->y, obj->tile->collisionWidth, obj->tile->collisionHeight, true);
 		if (obj->tile->animated) {
 			AnimationSetPtr animation = std::make_shared<AnimationSet>();
 			animation->spritesheet = obj->tile->animation->frames.at(0)->assetTag;
@@ -65,13 +65,13 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 		world->script = scriptObject;
 	}
 
-	MapSystemPtr mapSystem = systemManager->getSystemByType<MapSystem>(SystemType::MAP);
-	mapSystem->setMap(map);
-
 	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	for (string image : mapConfig->images) {
 		graphicsSystem->addTexture(image, image);
 	}
+
+	PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+	physicsSystem->setWorldSize(map->getTileHeight() * map->getMapWidth(), map->getTileHeight() * map->getMapHeight());
 
 	return world;
 }

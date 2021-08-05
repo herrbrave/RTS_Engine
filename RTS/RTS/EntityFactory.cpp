@@ -34,7 +34,7 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, const
 	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
 
-		TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(makeShared(drawableComponent->getDrawable()));
+		TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(drawableComponent->getDrawable());
 		TexturePtr texture(GCC_NEW Texture(texturePath, tx, ty, w, h));
 		drawable->setTexture(texture);
 	}
@@ -61,15 +61,15 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, Textu
 	}
 	else {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-		DrawablePtr textureDrawable(GCC_NEW TextureDrawable(texture));
+		DrawablePtr textureDrawable = std::make_shared<TextureDrawable>(texture);
 		graphicsSystem->registerDrawable(entity->id, textureDrawable);
-		drawableComponent = DrawableComponentPtr(GCC_NEW DrawableComponent(entity->id, textureDrawable));
+		drawableComponent = std::make_shared<DrawableComponent>(entity->id, textureDrawable);
 		drawableComponent->setSize(width, height);
 
 		entity->addComponent(ComponentPtr(drawableComponent));
 	}
 
-	TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(makeShared(drawableComponent->getDrawable()));
+	TextureDrawablePtr drawable = dynamic_pointer_cast<TextureDrawable>(drawableComponent->getDrawable());
 	drawable->setTexture(texture);
 }
 
@@ -287,13 +287,13 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 		if (componentId == ComponentType::DRAWABLE_COMPONENT) {
 			DrawableComponentPtr comp(GCC_NEW DrawableComponent(entity->id, component));
 			entity->addComponent(ComponentPtr(comp));
-			graphicsSystem->registerDrawable(entity->id, makeShared(comp->getDrawable()));
+			graphicsSystem->registerDrawable(entity->id, comp->getDrawable());
 		}
 		else if (componentId == ComponentType::PHYSICS_COMPONENT) {
 			PhysicsComponentPtr comp(GCC_NEW PhysicsComponent(entity->id, component));
 			entity->addComponent(ComponentPtr(comp));
 
-			BodyPtr body = makeShared(comp->getBody());
+			BodyPtr body = comp->getBody();
 			physicsSystem->registerBody(entity->id, body);
 			comp->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(body->getPosition().x, body->getPosition().y), body->getWidth(), body->getHeight()))));
 		}
@@ -344,12 +344,16 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 	return entity;
 }
 
-EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, float height) {
+EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, float height, bool isCollidable) {
 	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
-
-	applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+	if (isCollidable) {
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+	}
+	else {
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);
+	}
 
 	return entity;
 }

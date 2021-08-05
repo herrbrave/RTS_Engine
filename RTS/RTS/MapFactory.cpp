@@ -3,7 +3,6 @@
 void applyGrid(SystemManagerPtr systemManager, unsigned long entityId, GridPtr grid, MapPtr map) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	MapSystemPtr mapSystem = systemManager->getSystemByType<MapSystem>(SystemType::MAP);
 
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -13,7 +12,6 @@ void applyGrid(SystemManagerPtr systemManager, unsigned long entityId, GridPtr g
 	graphicsSystem->addTexture(grid->name, GRID_WIDTH * grid->tileW, GRID_HEIGHT * grid->tileH);
 
 	graphicsSystem->registerDrawable(entity->id, gridDrawable);
-	mapSystem->registerGridHandler(entity->id, static_pointer_cast<GridHandler>(gridDrawable));
 }
 
 TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
@@ -204,6 +202,9 @@ void loadTileLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 
 			GridPtr grid = map->gridAt(x, y);
 			CellPtr cell = grid->at(x, y);
+			if (tile->animated) {
+				cell->animated = true;
+			}
 			cell->tiles.push_back(tile);
 		}
 
@@ -311,8 +312,6 @@ MapPtr MapFactory::createTMXMap(const string& path) {
 		applyScript(mSystemManager, scriptObject->id, mapConfig->script);
 	}
 
-	MapSystemPtr mapSystem = mSystemManager->getSystemByType<MapSystem>(SystemType::MAP);
-	mapSystem->setMap(map);
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	for (string image : mapConfig->images) {

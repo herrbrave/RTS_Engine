@@ -82,6 +82,18 @@ public:
 		return this->x * other.x + this->y * other.y;
 	}
 
+	Vector2f slide(const Vector2f& normal) {
+		return *this - normal * this->dot(normal);
+	}
+
+	Vector2f reflect(const Vector2f& normal) {
+		return normal * 2.0f * this->dot(normal) - *this;
+	}
+
+	Vector2f bounce(const Vector2f& normal) {
+		return this->reflect(normal) * -1.0f;
+	}
+
 	float magnitude() {
 		return std::sqrt((x * x) + (y * y));
 	}

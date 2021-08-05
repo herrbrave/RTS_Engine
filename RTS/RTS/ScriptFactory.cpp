@@ -192,6 +192,21 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		"add", &LuaFriendlyVector2f::add,
 		"subtract", &LuaFriendlyVector2f::subtract);
 
+	script->state["moveAndCollide"] = [this](int entityId, double x, double y) {
+		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+		Vector2f delta(x, y);
+		physicsSystem->moveAndCollide(entityId, delta);
+	};
+
+	script->state["moveAndSlide"] = [this](int entityId, double x, double y) -> LuaFriendlyVector2f& {
+		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+		Vector2f delta(x, y);
+		Vector2fPtr newVel = physicsSystem->moveAndSlide(entityId, delta);
+		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(newVel);
+
+		return *vec;
+	};
+
 	script->state["setVelocity"] = [this](int entityId, double x, double y) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
@@ -290,12 +305,12 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		toDelete.push_back(collider);
 		toDelete.push_back(body);
 
-		vector<WeakBodyPtr> bodies;
+		vector<BodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
 		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
 		for (auto& bodyPtr : bodies) {
-			BodyPtr b = makeShared(bodyPtr);
+			BodyPtr b = bodyPtr;
 			ids->push(b->id);
 		}
 
@@ -315,11 +330,11 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 
 		toDelete.push_back(VoidPtr(ids));
 
-		vector<WeakBodyPtr> bodies;
+		vector<BodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
 		for (auto& bodyPtr : bodies) {
-			BodyPtr b = makeShared(bodyPtr);
+			BodyPtr b = bodyPtr;
 			ids->push(b->id);
 		}
 
@@ -332,7 +347,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-		BodyPtr body = makeShared(physicsComponent->getBody());
+		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height))));
 	};
@@ -343,7 +358,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-		BodyPtr body = makeShared(physicsComponent->getBody());
+		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius))));
 	};
@@ -354,7 +369,7 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-		BodyPtr body = makeShared(physicsComponent->getBody());
+		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle))));
 	};
@@ -486,7 +501,7 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 
 		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) != entity->getComponents().end()) {
 			PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-			BodyPtr body = makeShared(physicsComponent->getBody());
+			BodyPtr body = physicsComponent->getBody();
 			if (body->isCollidable() && body->collider->colliderShape->colliderType() == ColliderType::OBB) {
 				OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(body->collider->colliderShape);
 				obb->setAngle(angle);
@@ -796,7 +811,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 			if (string("top").compare(location) == 0) {}
 			if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
 				DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
-				DrawablePtr drawable = makeShared(drawableComponent->getDrawable());
+				DrawablePtr drawable = drawableComponent->getDrawable();
 				w = drawable->width;
 				if (string("top").compare(location) == 0) {
 					y -= (drawable->height / 2) + 4;
@@ -866,11 +881,5 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 }
 
 void LuaScriptFactory::registerMap(LuaScriptPtr script) {
-	script->state["setTileColor"] = [this](int x, int y, int r, int g, int b, int a) {
-		MapSystemPtr mapSystem = mSystemManager->getSystemByType<MapSystem>(SystemType::MAP);
 
-		MapPtr map = mapSystem->getMap();
-		Vector2f point(x, y);
-		CellPtr cell = map->cellAtPoint(point);
-	};
 }

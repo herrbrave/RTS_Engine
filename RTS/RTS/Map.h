@@ -117,12 +117,13 @@ public:
 	vector<TilePtr> tiles;
 	int x = 0;
 	int y = 0;
-	Uint8 r = 255;
-	Uint8 g = 255;
-	Uint8 b = 255;
-	Uint8 a = 255;
+	Uint8 r;
+	Uint8 g;
+	Uint8 b;
+	Uint8 a;
+	bool animated;
 
-	Cell() : x(0), y(0), r(255), g(255), b(255), a(255) {}
+	Cell() : x(0), y(0), r(255), g(255), b(255), a(255), animated(false) {}
 
 	Cell(const rapidjson::Value& root);
 
@@ -188,6 +189,8 @@ public:
 	GridComponent(unsigned long entityId, GridDrawablePtr gridDrawable, TilesetPtr tileset) : Component(entityId, ComponentType::GRID_COMPONENT), gridDrawable(gridDrawable) {}
 
 	GridComponent(const rapidjson::Value& root);
+
+	GridDrawablePtr getGridDrawable();
 
 	void setColorAtPoint(const Vector2f& point, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 

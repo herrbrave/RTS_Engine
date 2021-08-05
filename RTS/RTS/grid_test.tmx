@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="25" height="25" tilewidth="8" tileheight="8" infinite="0" nextlayerid="4" nextobjectid="5">
+<map version="1.5" tiledversion="1.7.0" orientation="orthogonal" renderorder="right-down" width="25" height="25" tilewidth="8" tileheight="8" infinite="0" nextlayerid="4" nextobjectid="6">
+ <editorsettings>
+  <export target="Assets/test/grid_test.json" format="json"/>
+ </editorsettings>
  <properties>
   <property name="scale" type="float" value="8"/>
   <property name="script" value="Games/test/camera_test.lua"/>
@@ -19,6 +22,19 @@
     <frame tileid="5" duration="120"/>
     <frame tileid="6" duration="120"/>
     <frame tileid="7" duration="120"/>
+   </animation>
+  </tile>
+ </tileset>
+ <tileset firstgid="281" name="Soldier" tilewidth="10" tileheight="10" tilecount="44" columns="44">
+  <image source="Assets/orksvhumans/Sprites/Soldier.png" width="440" height="10"/>
+  <tile id="0">
+   <animation>
+    <frame tileid="0" duration="150"/>
+    <frame tileid="1" duration="150"/>
+    <frame tileid="2" duration="150"/>
+    <frame tileid="3" duration="150"/>
+    <frame tileid="4" duration="150"/>
+    <frame tileid="5" duration="150"/>
    </animation>
   </tile>
  </tileset>
@@ -83,5 +99,10 @@
  <objectgroup id="3" name="Objects">
   <object id="3" name="AnimatedTorch" gid="273" x="77.25" y="135.5" width="8" height="8"/>
   <object id="4" name="PigPen" gid="218" x="61.625" y="126.75" width="8" height="8"/>
+  <object id="5" name="Soldier" gid="281" x="14" y="84" width="10" height="10">
+   <properties>
+    <property name="script" value="Games/test/physics_callback_test.lua"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

@@ -1,4 +1,12 @@
 { "compressionlevel":-1,
+ "editorsettings":
+    {
+     "export":
+        {
+         "format":"json",
+         "target":"grid_test.json"
+        }
+    },
  "height":25,
  "infinite":false,
  "layers":[
@@ -54,6 +62,24 @@
                  "width":8,
                  "x":61.625,
                  "y":126.75
+                }, 
+                {
+                 "gid":281,
+                 "height":10,
+                 "id":5,
+                 "name":"Soldier",
+                 "properties":[
+                        {
+                         "name":"script",
+                         "type":"string",
+                         "value":"Games\/test\/physics_callback_test.lua"
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":10,
+                 "x":14,
+                 "y":84
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -62,7 +88,7 @@
          "y":0
         }],
  "nextlayerid":4,
- "nextobjectid":5,
+ "nextobjectid":6,
  "orientation":"orthogonal",
  "properties":[
         {
@@ -141,6 +167,48 @@
                  "id":0
                 }],
          "tilewidth":8
+        }, 
+        {
+         "columns":44,
+         "firstgid":281,
+         "image":"Assets\/orksvhumans\/Sprites\/Soldier.png",
+         "imageheight":10,
+         "imagewidth":440,
+         "margin":0,
+         "name":"Soldier",
+         "spacing":0,
+         "tilecount":44,
+         "tileheight":10,
+         "tiles":[
+                {
+                 "animation":[
+                        {
+                         "duration":150,
+                         "tileid":0
+                        }, 
+                        {
+                         "duration":150,
+                         "tileid":1
+                        }, 
+                        {
+                         "duration":150,
+                         "tileid":2
+                        }, 
+                        {
+                         "duration":150,
+                         "tileid":3
+                        }, 
+                        {
+                         "duration":150,
+                         "tileid":4
+                        }, 
+                        {
+                         "duration":150,
+                         "tileid":5
+                        }],
+                 "id":0
+                }],
+         "tilewidth":10
         }],
  "tilewidth":8,
  "type":"map",

@@ -316,6 +316,10 @@ public:
 		return this->aninmationDrawable->animationHandler->state;
 	}
 
+	AnimationDrawablePtr getAnimationDrawable() {
+		return this->aninmationDrawable;
+	}
+
 	void serialize(Serializer& serializer) const override {
 
 		serializer.writer.StartObject();

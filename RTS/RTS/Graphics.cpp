@@ -288,6 +288,7 @@ AssetPtr SDLGraphics::createTexture(const string& path, const string& assetTag) 
 	if (texture == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load texture at: " + *path.c_str());
 	}
+	this->textures[assetTag] = shared_ptr<SDL_Texture>(texture);
 
 	AssetPtr asset(GCC_NEW Asset(VoidPtr(texture, SDL_DELETERS()), path, assetTag));
 	return asset;
@@ -298,13 +299,14 @@ AssetPtr SDLGraphics::createTexture(int width, int height, const string& assetTa
 	if (texture == nullptr) {
 		SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to create texture");
 	}
+	this->textures[assetTag] = shared_ptr<SDL_Texture>(texture);
 
 	AssetPtr asset(GCC_NEW Asset(VoidPtr(texture, SDL_DELETERS()), "virtual", assetTag));
 	return asset;
 }
 
-void SDLGraphics::drawToTexture(SDL_Texture* texture) {
-	SDL_SetRenderTarget(&*mRenderer, texture);
+void SDLGraphics::drawToTexture(const string& assetTag) {
+	SDL_SetRenderTarget(&*mRenderer, this->textures.at(assetTag).get());
 }
 
 void SDLGraphics::drawToScreen() {
@@ -320,27 +322,27 @@ AssetPtr SDLGraphics::createFontAsset(const string& path, const string& assetTag
 }
 
 void DrawableComponent::setColor(Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	mDrawable->setColor(r, g, b, a);
+	drawable->setColor(r, g, b, a);
 }
 
 void DrawableComponent::setSize(float width, float height) {
-	mDrawable->setSize(width, height);
+	drawable->setSize(width, height);
 }
 
 void DrawableComponent::setAngle(float angle) {
-	mDrawable->setAngle(angle);
+	drawable->setAngle(angle);
 }
 
 float DrawableComponent::getAngle() {
-	return mDrawable->getAngle();
+	return drawable->getAngle();
 }
 
 Uint8 DrawableComponent::getZOrder() {
-	return mDrawable->getDrawDepth();
+	return drawable->getDrawDepth();
 }
 
 void DrawableComponent::setZOrder(Uint8 zOrder) {
-	mDrawable->setDrawDepth(zOrder);
+	drawable->setDrawDepth(zOrder);
 
 	EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
 	EventManager::getInstance().pushEvent(eventData);

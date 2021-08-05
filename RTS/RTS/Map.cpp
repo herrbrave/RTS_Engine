@@ -149,6 +149,7 @@ Cell::Cell(const rapidjson::Value& root) {
 	g = root["g"].GetInt();
 	b = root["b"].GetInt();
 	a = root["a"].GetInt();
+	animated = root["animated"].GetBool();
 }
 
 void Cell::serialize(Serializer& serializer) const {
@@ -173,6 +174,8 @@ void Cell::serialize(Serializer& serializer) const {
 	serializer.writer.Int(b);
 	serializer.writer.String("a");
 	serializer.writer.Int(a);
+	serializer.writer.String("animated");
+	serializer.writer.Bool(animated);
 
 	serializer.writer.EndObject();
 }
@@ -247,14 +250,16 @@ void GridDrawable::forceRedraw() {
 }
 
 void GridDrawable::update(Graphics& graphicsRef) {
-	if (!redraw) {
-		return;
-	}
-
 	int index = 0;
+	graphicsRef.drawToTexture(this->grid->name);
 	for (int y = 0; y < grid->rows; y++) {
 		for (int x = 0; x < grid->columns; x++) {
 			auto cell = this->grid->cells.at(index++);
+			// TODO: Optimize this
+			if (!redraw && !cell->animated) {
+				continue;
+			}
+
 			for (auto tile : cell->tiles) {
 				graphicsRef.renderTexture(
 					tile->texture,
@@ -270,16 +275,23 @@ void GridDrawable::update(Graphics& graphicsRef) {
 			}
 		}
 	}
+	graphicsRef.drawToScreen();
 
 	redraw = false;
 }
 
 void GridDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	this->update(graphicsRef);
+
 	graphicsRef.renderTexture(texture, position.x, position.y, width, height, angle, mColor->r, mColor->g, mColor->b, mColor->a);
 }
 
 GridComponent::GridComponent(const rapidjson::Value& root) : Component(0, ComponentType::GRID_COMPONENT) {
 	gridDrawable = std::make_shared<GridDrawable>(root["gridDrawable"]);
+}
+
+GridDrawablePtr GridComponent::getGridDrawable() {
+	return this->gridDrawable;
 }
 
 void GridComponent::setColorAtPoint(const Vector2f& point, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {

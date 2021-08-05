@@ -17,8 +17,10 @@
 #include"Map.h"
 #include"Physics.h"
 #include"Script.h"
+#include"ScriptComponent.h"
 #include"SimpleDataStore.h"
 #include"Sound.h"
+#include"World.h"
 
 enum class SystemType : Uint8 {
 	ANIMATION = 0,
@@ -31,7 +33,7 @@ enum class SystemType : Uint8 {
 	LUA_SCRIPT = 7,
 	PARTICLE = 8,
 	DATA = 9,
-	MAP = 10,
+	WORLD = 10,
 };
 
 /* Early class definitions. */
@@ -71,10 +73,6 @@ class LuaScriptSystem;
 typedef shared_ptr<LuaScriptSystem> LuaScriptSystemPtr;
 typedef weak_ptr<LuaScriptSystem> WeakLuaScriptSystemPtr;
 
-class MapSystem;
-typedef shared_ptr<MapSystem> MapSystemPtr;
-typedef weak_ptr<MapSystem> WeakMapSystemPtr;
-
 class ParticleSystem;
 typedef shared_ptr<ParticleSystem> ParticleSystemPtr;
 typedef weak_ptr<ParticleSystem> WeakParticleSystemPtr;
@@ -86,6 +84,10 @@ typedef weak_ptr<PhysicsSystem> WeakPhysicsSystemPtr;
 class SoundSystem;
 typedef shared_ptr<SoundSystem> SoundSystemPtr;
 typedef weak_ptr<SoundSystem> WeakSoundSystemPtr;
+
+class WorldSystem;
+typedef shared_ptr<WorldSystem> WorldSystemPtr;
+typedef weak_ptr<WorldSystem> WeakWorldSystemPtr;
 
 
 class SystemManager {
@@ -149,7 +151,7 @@ public:
 	void clear() override;
 
 private:
-	unordered_map<unsigned long, AnimationHandlerPtr> mAnimations;
+	unordered_map<unsigned long, vector<AnimationHandlerPtr>> mAnimations;
 };
 
 class AssetSystem : public System {
@@ -330,6 +332,8 @@ public:
 		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 	}
 
+	LuaScripts getLuaScripts();
+
 	void registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript);
 
 	void deregisterLuaScript(unsigned long id);
@@ -339,38 +343,7 @@ public:
 	void clear() override;
 
 private:
-
 	LuaScripts mLuaScripts;
-};
-
-class MapSystem : public System {
-public:
-	MapSystem(SystemManagerPtr systemManager) : System(SystemType::MAP, systemManager) {
-
-		EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
-			EntityDestroyedEventData data = dynamic_cast<const EntityDestroyedEventData&>(eventData);
-				deregisterGridHandler(data.getEntityId());
-			});
-
-		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
-		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
-	}
-
-	void setMap(MapPtr map);
-
-	MapPtr getMap();
-
-	void registerGridHandler(unsigned long entityId, GridHandlerPtr gridHandler);
-
-	void deregisterGridHandler(unsigned long entityId);
-
-	void update(Uint32 delta);
-
-	void clear() override;
-
-private:
-	MapPtr map;
-	unordered_map<unsigned long, GridHandlerPtr> grids;
 };
 
 class ParticleSystem : public System {
@@ -445,6 +418,10 @@ public:
 
 	void setWorldSize(int width, int height);
 
+	void moveAndCollide(const unsigned int id, const Vector2f& delta);
+
+	Vector2fPtr moveAndSlide(const unsigned int id, const Vector2f& delta);
+
 	void update(Uint32 delta);
 
 	void clear() override;
@@ -452,6 +429,9 @@ public:
 private:
 	unordered_map<unsigned long, BodyPtr> mBodies;
 	vector<PhysicsBehaviorPtr> mBehaviors;
+
+	Vector2f handleCollision(const Vector2f& delta, BodyPtr body, bool slide);
+	Sweep sweep(const Vector2f& position, const Vector2f& delta, BodyPtr body);
 };
 
 class DefaultMouseMovementHandler : public MouseMovementHandler {
@@ -525,6 +505,23 @@ public:
 	SoundControllerPtr createController(const string& assetTag, SoundType soundType);
 
 	void clear() override {/* no op */}
+};
+
+class WorldSystem : public System {
+public:
+	WorldSystem(SystemManagerPtr systemManager);
+
+	void loadWorld(string& path);
+
+	void addWorld(WorldPtr world);
+
+	WorldPtr getWorld();
+
+	void clear() override {/* no op */ }
+
+private:
+	void registerEntityAndComponents(EntityPtr entity);
+	WorldPtr world{ nullptr };
 };
 
 #endif // !__SYSTEM_H__

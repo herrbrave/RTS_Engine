@@ -85,8 +85,8 @@ void Body::setTarget(TargetPtr target) {
 	this->target = target;
 }
 
-WeakTargetPtr Body::getTarget() {
-	return WeakTargetPtr(this->target);
+TargetPtr Body::getTarget() {
+	return TargetPtr(this->target);
 }
 
 bool Body::hasTarget() {
@@ -726,7 +726,7 @@ void Quadtree::removeHelper(BodyPtr body, QuadtreeNodePtr node) {
 	}
 }
 
-void Quadtree::getCollidingBodies(BodyPtr body, std::vector<WeakBodyPtr>& bodies) {
+void Quadtree::getCollidingBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 	std::vector<QuadtreeNodePtr> nodes;
 	std::stack<QuadtreeNodePtr> stack;
 	stack.push(mRootNode);
@@ -887,7 +887,7 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 
 	Vector2f position(body->getPosition());
 	if (body->hasTarget()) {
-		TargetPtr target = makeShared(body->getTarget());
+		TargetPtr target = body->getTarget();
 		
 		Vector2f targetPosition(target->getTargetPosition());
 
@@ -913,7 +913,7 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 	this->handleCollision(delta, newPosition, body, quadtree);
 
 	if (body->hasTarget()) {
-		TargetPtr target = makeShared(body->getTarget());
+		TargetPtr target = body->getTarget();
 
 		Vector2f targetPosition = target->getTargetPosition();
 
@@ -932,7 +932,7 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 	Vector2f position(body->getPosition());
 
 	// Handle overlap
-	vector<WeakBodyPtr> bodies;
+	vector<BodyPtr> bodies;
 
 	// project body to potential new position
 	*body->position += delta;
@@ -944,12 +944,11 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 	*body->collider->colliderShape->position -= delta;
 	Vector2f newPosition(position + delta);
 
-	auto fireball = body->getTag() == "kobold fireball";
 	Sweep sweep;
 	sweep.time = 1.0f;
 	sweep.position->set(newPosition);
 	for (auto bod : bodies) {
-		auto bodPtr = makeShared<Body>(bod);
+		auto bodPtr = bod;
 		Sweep currentSweep;
 		bodPtr->collider->colliderShape->sweep(body->collider->colliderShape, delta, &currentSweep);
 		if (currentSweep.time < sweep.time) {
@@ -1001,7 +1000,7 @@ bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr qua
 	Vector2f position(body->getPosition());
 
 	if (body->hasTarget()) {
-		TargetPtr target = makeShared(body->getTarget());
+		TargetPtr target = body->getTarget();
 		Vector2f targetPosition(target->getTargetPosition());
 
 		Vector2f velocityAtTarget = targetPosition - position;
@@ -1039,7 +1038,7 @@ bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr qua
 	body->setVelocity(velocity);
 
 	if (body->hasTarget()) {
-		TargetPtr target = makeShared(body->getTarget());
+		TargetPtr target = body->getTarget();
 
 		Vector2f targetPosition = target->getTargetPosition();
 
@@ -1058,7 +1057,7 @@ Vector2f SteeringBehavior::applySteeringToVelocity(BodyPtr& body, float step) {
 	Vector2f velocity = body->getVelocity();
 	velocity *= body->getSpeed();
 
-	TargetPtr target = makeShared(body->getTarget());
+	TargetPtr target = body->getTarget();
 	Vector2f targetPosition = target->getTargetPosition();
 
 	Vector2f position = body->getPosition();
