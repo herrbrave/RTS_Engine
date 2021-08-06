@@ -26,7 +26,7 @@ using std::wstring;
 #include<random>
 #include<ctime>
 
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 #if __DEBUG__
 #define GCC_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__) 

@@ -426,8 +426,8 @@ public:
 
 	void clear() override;
 
-private:
 	unordered_map<unsigned long, BodyPtr> mBodies;
+private:
 	vector<PhysicsBehaviorPtr> mBehaviors;
 
 	Vector2f handleCollision(const Vector2f& delta, BodyPtr body, bool slide);

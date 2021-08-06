@@ -316,7 +316,7 @@ public:
 	Graphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : mAssetVendor(assetVendor), mGraphicsConfig(graphicsConfig) { }
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
-	virtual void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) = 0;
 	virtual void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
@@ -343,7 +343,7 @@ public:
 	void onBeforeDraw() override;
 	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float t, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float t, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;

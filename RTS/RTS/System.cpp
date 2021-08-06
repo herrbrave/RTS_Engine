@@ -295,6 +295,16 @@ void  GraphicsSystem::draw() {
 
 	// reset this flag before the next frame.
 	sortedThisFrame = false;
+	if (__DEBUG__) {
+		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+		for (auto bod : physicsSystem->mBodies) {
+			SDL_Rect dest{ bod.second->position->x - mCamera->position->x - bod.second->width / 2, bod.second->position->y - mCamera->position->y - bod.second->height / 2, bod.second->width, bod.second->height };
+			mGraphics->drawLine(dest.x, dest.y, dest.x + dest.w, dest.y, 0, 255, 0, 255);
+			mGraphics->drawLine(dest.x + dest.w, dest.y, dest.x + dest.w, dest.y + dest.h, 0, 255, 0, 255);
+			mGraphics->drawLine(dest.x + dest.w, dest.y + dest.h, dest.x, dest.y + dest.h, 0, 255, 0, 255);
+			mGraphics->drawLine(dest.x, dest.y + dest.h, dest.x, dest.y, 0, 255, 0, 255);
+		}
+	}
 
 	mGraphics->onAfterDraw();
 }
@@ -328,7 +338,7 @@ void GraphicsSystem::drawTexture(const string& assetTag, float x, float y, float
 
 	AssetPtr asset = assetSystem->getAsset(assetTag);
 	shared_ptr<SDL_Texture> texture = asset->getAsset<SDL_Texture>();
-	mGraphics->renderTexture(texture.get(), x, y, w, h, tx, ty, tw, th, angle, r, g, b, a);
+	mGraphics->renderTexture(texture.get(), x, y, w, h, tx, ty, tw, th, angle, r, g, b, a, SDL_FLIP_NONE);
 }
 
 void GraphicsSystem::drawTexture(TexturePtr texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {

@@ -23,7 +23,7 @@ function setup()
 	keys[SDLK_a] = false
 	keys[SDLK_s] = false
 	keys[SDLK_d] = false
-	speed = 125.0
+	speed = 300.0
 	vel = Vector2f.new(0, 0)
 end
 

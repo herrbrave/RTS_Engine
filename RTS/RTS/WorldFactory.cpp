@@ -1,4 +1,4 @@
-#include"WorldFactory.h"
+ #include"WorldFactory.h"
 
 WorldFactory::WorldFactory(SystemManagerPtr systemManager, EntityFactoryPtr entityFactory) : systemManager(systemManager), entityFactory(entityFactory) {
 
@@ -19,12 +19,46 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 		world->grids.push_back(vector<EntityPtr>());
 	}
 
+	int gridWidthPx = map->getTileWidth() * GRID_WIDTH;
+	int gridHeightPx = map->getTileHeight() * GRID_HEIGHT;
+
+	int xoffset = (gridWidthPx / 2) - (map->getTileWidth() / 2);
+	int yoffset = (gridHeightPx / 2) - (map->getTileHeight() / 2);
+
 	for (int y = 0; y < gridHeight; y++) {
 		for (int x = 0; x < gridWidth; x++) {
 			EntityPtr entity = entityFactory->createPhysicsEntity(x * width + (width / 2), y * height + (height / 2), width, height);
 
 			GridPtr grid = map->gridAt(x * GRID_WIDTH, y * GRID_HEIGHT);
 			applyGrid(systemManager, entity->id, grid, map);
+
+			int sx = x * gridWidthPx + gridWidthPx / 2;
+			int sy = y * gridHeightPx + gridHeightPx / 2;
+
+			for (int y0 = 0; y0 < grid->rows; y0++) {
+				for (int x0 = 0; x0 < grid->columns; x0++) {
+					CellPtr cell = grid->cells.at(y0 * grid->columns + x0);
+					bool collision = false;
+					string script("");
+					for (auto tile : cell->tiles) {
+						if (tile->collision) {
+							collision = true;
+						}
+						if (!tile->script.empty()) {
+							script = tile->script;
+						}
+					}
+					if (collision) {
+						int lx = x0 * map->getTileWidth();
+						int ly = y0 * map->getTileHeight();
+						EntityPtr t = entityFactory->createPhysicsEntity(sx + lx - xoffset, sy + ly - yoffset, map->getTileWidth(), map->getTileHeight(), true);
+						if (!script.empty()) {
+							applyScript(systemManager, t->id, script);
+						}
+						world->entities.push_back(t);
+					}
+				}
+			}
 
 			GridComponentPtr gridComponent = entity->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
 			gridComponent->gridDrawable->setDrawDepth(1);

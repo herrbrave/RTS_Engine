@@ -189,10 +189,14 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
 	shared_ptr<SDL_Texture> sdlTexture = asset->getAsset<SDL_Texture>();
 	
-	this->renderTexture(sdlTexture.get(), x, y, w, h, texture->x, texture->y, texture->w, texture->h, angle, r, g, b, a);
+	SDL_RendererFlip flip = SDL_FLIP_NONE;
+	if (texture->flippedHorizontal) flip = SDL_FLIP_HORIZONTAL;
+	if (texture->flippedVertical) flip = SDL_FLIP_VERTICAL;
+	angle += (texture->angleRad * 180.0f / M_PI);
+	this->renderTexture(sdlTexture.get(), x, y, w, h, texture->x, texture->y, texture->w, texture->h, angle, r, g, b, a, flip);
 }
 
-void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) {
 	if (a < 255) {
 		SDL_SetTextureAlphaMod(sdlTexture, a);
 	}
@@ -218,7 +222,7 @@ void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float
 	dest.w *= mGraphicsConfig->mZoom;
 	dest.h *= mGraphicsConfig->mZoom;
 
-	SDL_RenderCopyEx(mRenderer.get(), sdlTexture, &src, &dest, angle, nullptr, SDL_RendererFlip::SDL_FLIP_NONE);
+	SDL_RenderCopyEx(mRenderer.get(), sdlTexture, &src, &dest, angle, nullptr, flip);
 
 	if (a < 255) {
 		SDL_SetTextureAlphaMod(sdlTexture, 255);
