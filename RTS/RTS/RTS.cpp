@@ -30,10 +30,10 @@ void RTS::setup() {
 
 	worldFactory = std::make_shared<WorldFactory>(mSystemManager, mEntityFactory);
 
-	world = worldFactory->createWorldFromTMXMap("Assets/test/grid_test.json");
-	Serializer serializer;
-	world->serialize(serializer);
-	serializer.writeTo("world.json");
+	// world = worldFactory->createWorldFromTMXMap("Assets/test/grid_test.json");
+	//Serializer serializer;
+	//world->serialize(serializer);
+	//serializer.writeTo("world.json");
 
 	//mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
 
@@ -41,6 +41,25 @@ void RTS::setup() {
 	//applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+
+	graphicsSystem->addTexture("test_panel", 512, 512);
+	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
+	ItemPanelDrawablePtr panel = std::make_shared<ItemPanelDrawable>("test_panel", 512.0f, 512.0f);
+	EntityPtr p = mEntityFactory->createPhysicsEntity(512, 348, 512, 512, false);
+
+	DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(p->id, panel);
+	p->addComponent(drawableComponent);
+	graphicsSystem->registerDrawable(p->id, panel);
+
+	for (int y = 0; y < 5; y++) {
+		for (int x = 0; x < 5; x++) {
+			ItemPtr item = std::make_shared<Item>();
+			item->texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", x * 16, y * 16, 16, 16);
+			item->name = std::to_string(x) + ", " + std::to_string(y);
+			panel->addItem(item);
+		}
+	}
+
 	graphicsSystem->initialize();
 }
 

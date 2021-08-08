@@ -314,6 +314,48 @@ void PanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	}
 }
 
+
+ItemPanelDrawable::ItemPanelDrawable(string name, float width, float height) : Drawable(width, height), name(name), drawableWidth(width), drawableHeight(height) {
+	this->drawawbleArea = std::make_shared<Texture>(name, 0, 0, width, height);
+}
+
+void ItemPanelDrawable::update(Graphics& graphicsRef) {
+	if (!forceRedraw) {
+		return;
+	}
+
+	graphicsRef.drawToTexture(name);
+	for (ItemPtr item : this->items) {
+		graphicsRef.renderTexture(item->texture, item->position->x, item->position->y, item->width, item->height, 0, 255, 255, 255, 255);
+	}
+	graphicsRef.drawToScreen();
+
+	forceRedraw = false;
+}
+
+void ItemPanelDrawable::addItem(ItemPtr item) {
+	float itemSize = drawableWidth / columns - ((columns + 1) * margin);
+
+	int row = items.size() / columns;
+	item->width = itemSize;
+	item->height = itemSize;
+
+	float column = items.size() % columns;
+	float x = column * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
+	float y = row * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
+	item->position.reset(GCC_NEW Vector2f(x, y));
+
+	items.push_back(item);
+
+	forceRedraw = true;
+}
+
+void ItemPanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	this->update(graphicsRef);
+
+	graphicsRef.renderTexture(this->drawawbleArea, position.x, position.y, drawableWidth, drawableHeight, 0.0f, 255, 255, 255, 255);
+}
+
 WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager) : EntityFactory(systemManager) {
 	mButtonConfig = createButtonConfig(buttonConfigPath, systemManager);
 	mPanelConfig = createPanelConfig(panelConfigPath, systemManager);

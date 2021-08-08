@@ -65,11 +65,17 @@ class ProgressComponent;
 typedef shared_ptr<ProgressComponent> ProgressComponentPtr;
 typedef weak_ptr<ProgressComponent> WeakProgressComponentPtr;
 
+class Item;
+typedef shared_ptr<Item> ItemPtr;
+typedef weak_ptr<Item> WeakItemPtr;
+
+class ItemPanelDrawable;
+typedef shared_ptr<ItemPanelDrawable> ItemPanelDrawablePtr;
+typedef weak_ptr<ItemPanelDrawable> WeakItemPanelDrawablePtr;
+
 class WidgetFactory;
 typedef shared_ptr<WidgetFactory> WidgetFactoryPtr;
 typedef weak_ptr<WidgetFactory> WeakWidgetFactoryPtr;
-
-
 
 class ProgressBarDrawable : public Drawable {
 public:
@@ -273,6 +279,46 @@ protected:
 private:
 	PanelConfigPtr mPanelConfig{ nullptr };
 	vector<SectionDrawablePtr> mSections;
+};
+
+class Item {
+public:
+	TexturePtr texture;
+	Vector2fPtr position;
+	float width;
+	float height;
+	string name;
+	int x;
+	int y;
+};
+
+class ItemPanelDrawable : public Drawable {
+public:
+	TexturePtr drawawbleArea;
+	vector<ItemPtr> items;
+	int columns = 5;
+	float margin = 4.0f;
+	string name;
+
+	ItemPanelDrawable(string name, float width, float height);
+	
+	void update(Graphics& graphicsRef);
+
+	void addItem(ItemPtr item);
+
+	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+
+	DrawableType getType() override {
+		return DrawableType::PANEL;
+	}
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
+
+private:
+	float drawableWidth;
+	float drawableHeight;
+	bool forceRedraw = true;
 };
 
 void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, std::function<void()> callback);
