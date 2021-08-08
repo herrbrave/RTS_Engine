@@ -47,16 +47,16 @@ void RTS::setup() {
 	ItemPanelDrawablePtr panel = std::make_shared<ItemPanelDrawable>("test_panel", 512.0f, 512.0f);
 	EntityPtr p = mEntityFactory->createPhysicsEntity(512, 348, 512, 512, false);
 
-	DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(p->id, panel);
+	ItemPanelComponentPtr drawableComponent = std::make_shared<ItemPanelComponent>(p->id, panel);
 	p->addComponent(drawableComponent);
 	graphicsSystem->registerDrawable(p->id, panel);
 
 	for (int y = 0; y < 5; y++) {
 		for (int x = 0; x < 5; x++) {
 			ItemPtr item = std::make_shared<Item>();
-			item->texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", x * 16, y * 16, 16, 16);
+			item->texture.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", x * 16, y * 16, 16, 16));
 			item->name = std::to_string(x) + ", " + std::to_string(y);
-			panel->addItem(item);
+			drawableComponent->addItem(item);
 		}
 	}
 

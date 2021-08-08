@@ -73,6 +73,10 @@ class ItemPanelDrawable;
 typedef shared_ptr<ItemPanelDrawable> ItemPanelDrawablePtr;
 typedef weak_ptr<ItemPanelDrawable> WeakItemPanelDrawablePtr;
 
+class ItemPanelComponent;
+typedef shared_ptr<ItemPanelComponent> ItemPanelComponentPtr;
+typedef weak_ptr<ItemPanelComponent> WeakItemPanelComponentPtr;
+
 class WidgetFactory;
 typedef shared_ptr<WidgetFactory> WidgetFactoryPtr;
 typedef weak_ptr<WidgetFactory> WeakWidgetFactoryPtr;
@@ -283,7 +287,7 @@ private:
 
 class Item {
 public:
-	TexturePtr texture;
+	vector<TexturePtr> texture;
 	Vector2fPtr position;
 	float width;
 	float height;
@@ -296,7 +300,7 @@ class ItemPanelDrawable : public Drawable {
 public:
 	TexturePtr drawawbleArea;
 	vector<ItemPtr> items;
-	int columns = 5;
+	unsigned int columns = 5;
 	float margin = 4.0f;
 	string name;
 
@@ -312,6 +316,8 @@ public:
 		return DrawableType::PANEL;
 	}
 
+	void reconfigure();
+
 protected:
 	void onSerialize(Serializer& serializer) const override {}
 
@@ -319,6 +325,30 @@ private:
 	float drawableWidth;
 	float drawableHeight;
 	bool forceRedraw = true;
+};
+
+class ItemPanelComponent : public Component {
+public:
+	ItemPanelDrawablePtr panelDrawable;
+
+	ItemPanelComponent(unsigned long entityId, ItemPanelDrawablePtr panelDrawable);
+
+	void setColumns(unsigned int columns);
+
+	void pushTexture(TexturePtr texture, int x, int y);
+
+	void popTexture(int x, int y);
+
+	void addItem(ItemPtr item);
+
+	void popItem();
+
+	void removeItem(int x, int y);
+
+	void serialize(Serializer& serializer) const override {/* no op */ }
+
+private: 
+	int getIndex(int x, int y);
 };
 
 void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, std::function<void()> callback);

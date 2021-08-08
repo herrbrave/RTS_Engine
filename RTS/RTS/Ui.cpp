@@ -326,7 +326,9 @@ void ItemPanelDrawable::update(Graphics& graphicsRef) {
 
 	graphicsRef.drawToTexture(name);
 	for (ItemPtr item : this->items) {
-		graphicsRef.renderTexture(item->texture, item->position->x, item->position->y, item->width, item->height, 0, 255, 255, 255, 255);
+		for (TexturePtr texture : item->texture) {
+			graphicsRef.renderTexture(texture, item->position->x, item->position->y, item->width, item->height, 0, 255, 255, 255, 255);
+		}
 	}
 	graphicsRef.drawToScreen();
 
@@ -334,18 +336,32 @@ void ItemPanelDrawable::update(Graphics& graphicsRef) {
 }
 
 void ItemPanelDrawable::addItem(ItemPtr item) {
-	float itemSize = drawableWidth / columns - ((columns + 1) * margin);
-
-	int row = items.size() / columns;
-	item->width = itemSize;
-	item->height = itemSize;
-
-	float column = items.size() % columns;
-	float x = column * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
-	float y = row * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
-	item->position.reset(GCC_NEW Vector2f(x, y));
 
 	items.push_back(item);
+	reconfigure();
+	forceRedraw = true;
+}
+
+void ItemPanelDrawable::reconfigure() {
+	float itemSize = drawableWidth / columns - ((columns + 1) * margin);
+
+	for (int index = 0; index < items.size(); index++) {
+		ItemPtr item = this->items.at(index);
+
+		int row = index / columns;
+		item->width = itemSize;
+		item->height = itemSize;
+
+		float column = index % columns;
+		float x = column * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
+		float y = row * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
+		if (item->position == nullptr) {
+			item->position.reset(GCC_NEW Vector2f(x, y));
+		}
+		else {
+			item->position->set(x, y);
+		}
+	}
 
 	forceRedraw = true;
 }
@@ -354,6 +370,43 @@ void ItemPanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	this->update(graphicsRef);
 
 	graphicsRef.renderTexture(this->drawawbleArea, position.x, position.y, drawableWidth, drawableHeight, 0.0f, 255, 255, 255, 255);
+}
+
+ItemPanelComponent::ItemPanelComponent(unsigned long entityId, ItemPanelDrawablePtr panelDrawable) : Component(entityId, ComponentType::ITEM_PANEL_COMPONENT), panelDrawable(panelDrawable)  {
+
+}
+
+void ItemPanelComponent::setColumns(unsigned int columns) {
+	this->panelDrawable->columns = columns;
+	this->panelDrawable->reconfigure();
+}
+
+void ItemPanelComponent::pushTexture(TexturePtr texture, int x, int y) {
+	this->panelDrawable->items.at(this->getIndex(x, y))->texture.push_back(texture);
+	this->panelDrawable->reconfigure();
+}
+
+void ItemPanelComponent::popTexture(int x, int y) {
+	this->panelDrawable->items.at(this->getIndex(x, y))->texture.pop_back();
+	this->panelDrawable->reconfigure();
+}
+
+void ItemPanelComponent::addItem(ItemPtr item) {
+	this->panelDrawable->addItem(item);
+}
+
+void ItemPanelComponent::popItem() {
+	this->panelDrawable->items.pop_back();
+	this->panelDrawable->reconfigure();
+}
+
+void ItemPanelComponent::removeItem(int x, int y) {
+	this->panelDrawable->items.erase(this->panelDrawable->items.begin() + this->getIndex(x, y));
+	this->panelDrawable->reconfigure();
+}
+
+int ItemPanelComponent::getIndex(int x, int y) {
+	return (y / this->panelDrawable->columns) + x;
 }
 
 WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager) : EntityFactory(systemManager) {
