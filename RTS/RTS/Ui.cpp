@@ -354,7 +354,7 @@ void ItemPanelDrawable::reconfigure() {
 
 		float column = index % columns;
 		float x = column * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
-		float y = row * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
+		float y = row * itemSize + ((row + 1) * margin) + (itemSize / 2.0f);
 		if (item->position == nullptr) {
 			item->position.reset(GCC_NEW Vector2f(x, y));
 		}

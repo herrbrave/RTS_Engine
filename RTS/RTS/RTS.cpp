@@ -44,6 +44,7 @@ void RTS::setup() {
 
 	graphicsSystem->addTexture("test_panel", 512, 512);
 	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
+	graphicsSystem->addTexture("Assets/HackNSlasher/Menu/Menu.png", "Assets/HackNSlasher/Menu/Menu.png");
 	ItemPanelDrawablePtr panel = std::make_shared<ItemPanelDrawable>("test_panel", 512.0f, 512.0f);
 	EntityPtr p = mEntityFactory->createPhysicsEntity(512, 348, 512, 512, false);
 
@@ -54,6 +55,7 @@ void RTS::setup() {
 	for (int y = 0; y < 5; y++) {
 		for (int x = 0; x < 5; x++) {
 			ItemPtr item = std::make_shared<Item>();
+			item->texture.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Menu/Menu.png", 64, 84, 28, 28));
 			item->texture.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", x * 16, y * 16, 16, 16));
 			item->name = std::to_string(x) + ", " + std::to_string(y);
 			drawableComponent->addItem(item);
