@@ -118,17 +118,17 @@ protected:
 
 class LabelComponent : public Component {
 public:
-	LabelComponent(unsigned long entityId) : Component(entityId, ComponentType::LABEL_COMPONENT) {
+	LabelComponent(unsigned long entityId, TextDrawablePtr textDrawable) : Component(entityId, ComponentType::LABEL_COMPONENT), textDrawable(textDrawable) {
 	}
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
 
-	void setText(const std::string& text, SystemManagerPtr systemManager);
+	void setText(const std::string& text);
 
-	std::string& getText();
+	void setFont(const std::string& font);
 
 private:
-	std::string mText;
+	TextDrawablePtr textDrawable;
 };
 
 class ButtonConfig {
@@ -165,7 +165,7 @@ private:
 class ButtonDrawable : public TextDrawable, public TextureDrawable {
 public:
 	ButtonState state;
-	ButtonDrawable(float width, float height, const ButtonConfig& buttonConfig);
+	ButtonDrawable(float width, float height, ButtonConfigPtr buttonConfig);
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
@@ -181,65 +181,81 @@ protected:
 	void onSerialize(Serializer& serializer) const override {}
 
 private:
+	float iconWidth;
+	float iconHeight;
 	ButtonConfigPtr mButtonConfig{ nullptr };
 	unordered_map<ButtonState, std::vector<SectionDrawablePtr>> mSections;
 };
 
 class ButtonComponent : public InputComponent {
 public:
-	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener) 
-		: InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT) {
 
-		inputListener->eventCallbacks.emplace(
-			Input::ON_MOUSE_ENTER,
-			[drawable](EventPtr evt) {
-			drawable->state = ButtonState::OVER;
-			return true;
-		});
-		inputListener->eventCallbacks.emplace(
-			Input::ON_MOUSE_EXIT,
-			[drawable](EventPtr evt) {
-			drawable->state = ButtonState::UP;
-			return true;
-		});
-		inputListener->eventCallbacks.emplace(
-			Input::ON_MOUSE_DOWN,
-			[drawable](EventPtr evt) {
-			drawable->state = ButtonState::DOWN;
-			return true;
-		});
-		inputListener->eventCallbacks.emplace(
-			Input::ON_CLICK,
-			[drawable, this](EventPtr evt) {
-			drawable->state = ButtonState::OVER;
-			this->getCallback()();
-			return true;
-		});
+	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, LuaScriptPtr script)
+		: InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT), buttonDrawable(drawable) {
+		this->initialize(inputListener, drawable, script);
+	}
+
+	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, TextureDrawablePtr icon, LuaScriptPtr script) : InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT), buttonDrawable(drawable) {
+		this->icon = icon;
+		initialize(inputListener, drawable, script);
 	}
 
 	void onMouseEvent(const MouseEvent& mouseEvent, SystemManagerPtr systemManager);
 
 	void serialize(Serializer& serializer) const override {/* no op */}
 
-	void setText(const std::string& text, const std::string& font, SystemManagerPtr systemManager);
+	void setText(const std::string& text);
 
-	std::string& getText();
+	void setFont(const std::string& font);
 
-	void setIcon(TexturePtr texture, SystemManagerPtr systemManager);
-
-	void setCallback(function<void()>& callback);
+	void setIcon(TexturePtr texture);
 
 private:
-	std::string mText;
-	function<void()> mCallback;
+	LuaScriptPtr script;
+	ButtonDrawablePtr buttonDrawable;
+	TextureDrawablePtr icon;
 
-	function<void()>& getCallback() {
-		return mCallback;
+	void initialize(InputListenerPtr inputListener, ButtonDrawablePtr drawable, LuaScriptPtr luaScript) {
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_ENTER,
+			[drawable, luaScript](EventPtr evt) {
+				drawable->state = ButtonState::OVER;
+
+				luaScript->invoke("onMouseEnterEntity");
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_EXIT,
+			[drawable, luaScript](EventPtr evt) {
+				drawable->state = ButtonState::UP;
+
+				luaScript->invoke("onMouseExitEntity");
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_DOWN,
+			[drawable, luaScript](EventPtr evt) {
+				drawable->state = ButtonState::DOWN;
+
+				luaScript->invoke("onMouseDown", evt->mouseEvent->position->x, evt->mouseEvent->position->y, evt->mouseEvent->button);
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_CLICK,
+			[drawable, luaScript](EventPtr evt) {
+				drawable->state = ButtonState::OVER;
+
+				luaScript->invoke("onClickEntity", evt->mouseEvent->button);
+				luaScript->invoke("onMouseUp", evt->mouseEvent->position->x, evt->mouseEvent->position->y, evt->mouseEvent->button);
+
+				return true;
+			});
+		this->script = script;
 	}
 };
-
-void setButtonText(EntityPtr entity, const std::string& text, std::string& font, SystemManagerPtr systemManager);
-void setIcon(EntityPtr entity, const std::string& assetTag, float tx, float ty, float tw, float th, SystemManagerPtr systemManager);
 
 class ProgressComponent : public Component {
 public:
@@ -351,12 +367,10 @@ private:
 	int getIndex(int x, int y);
 };
 
-void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, std::function<void()> callback);
-void applyButtonWithText(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& text, const string& font, const string& script);
-void applyButtonWithIcon(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& path, std::function<void()> callback);
-void applyButtonWithIcon(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, float w, float h, const string& path, const string& script);
-void applyLabel(WeakSystemManagerPtr systemManager, unsigned long entityId, int x, int y, const string& text, const string& font);
-void applyProgress(WeakSystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location);
+void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, const string& script, ButtonConfigPtr buttonConfig);
+void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, TexturePtr icon, const string& script, ButtonConfigPtr buttonConfig);
+void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
+void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location);
 
 class WidgetFactory : public EntityFactory {
 public:
@@ -364,7 +378,8 @@ public:
 
 	EntityPtr createLabel(std::string text, std::string font, float x, float y);
 	EntityPtr createButton(std::function<void()> callback, float x, float y, float width, float height);
-	EntityPtr createButtonWithText(std::string text, std::string font, std::function<void()> callback, float x, float y, float width, float height);
+	EntityPtr createButtonWithText(const string& text, const string& font, const string& script, float x, float y, float width, float height);
+	EntityPtr createButtonWithIcon(TexturePtr icon, const string& script, float x, float y, float width, float height);
 	EntityPtr createPanel(float x, float y, float width, float height);
 	EntityPtr createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress);
 

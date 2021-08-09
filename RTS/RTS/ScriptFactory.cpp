@@ -775,14 +775,14 @@ void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 			drawable->setColor(r, g, b, 255);
 			graphicsSystem->registerDrawable(entity->id, drawable);
 
-			labelComponent.reset(GCC_NEW LabelComponent(entity->id));
+			labelComponent.reset(GCC_NEW LabelComponent(entity->id, drawable));
 			entity->addComponent(labelComponent);
 		}
 		else {
 			labelComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
 		}
 
-		labelComponent->setText(text, mSystemManager);
+		labelComponent->setText(text);
 	};
 
 	script->state["setProgress"] = [this](int entityId, string location, int progress, int maxProgress) {

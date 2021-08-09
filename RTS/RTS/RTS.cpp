@@ -41,7 +41,13 @@ void RTS::setup() {
 	//applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
+	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 0, 0, 16, 16);
 
+	mWidgetFactory->createButtonWithIcon(texture, "Games/test/default_button.lua", 400, 100, 100, 100);
+	mWidgetFactory->createButtonWithText("Click Me!", "Digital_tech", "Games/test/default_button.lua", 200, 100, 100, 55);
+
+	/*
 	graphicsSystem->addTexture("test_panel", 512, 512);
 	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
 	graphicsSystem->addTexture("Assets/HackNSlasher/Menu/Menu.png", "Assets/HackNSlasher/Menu/Menu.png");
@@ -61,6 +67,7 @@ void RTS::setup() {
 			drawableComponent->addItem(item);
 		}
 	}
+	*/
 
 	graphicsSystem->initialize();
 }

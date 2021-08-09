@@ -212,7 +212,7 @@ public:
 		mTexture.reset(new Texture(texture));
 	}
 
-	void setTexture(TexturePtr texture) {
+	virtual void setTexture(TexturePtr texture) {
 		mTexture = std::move(texture);
 	}
 
