@@ -1,111 +1,5 @@
 #include"Ui.h"
 
-void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, const string& script, ButtonConfigPtr buttonConfig) {
-	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity = entitySystem->getEntityById(entityId);
-
-	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-	ButtonComponentPtr buttonComponent;
-	if (entity->getComponents().find(ComponentType::BUTTON_COMPONENT) != entity->getComponents().end()) {
-		buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
-	}
-	else {
-		ButtonDrawablePtr buttonDrawable = std::make_shared<ButtonDrawable>(w, h, buttonConfig);
-		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(buttonDrawable));
-
-		InputListenerPtr inputListener = std::make_shared<InputListener>(entity->id);
-		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
-		inputSystem->registerEventListener(inputListener);
-
-		LuaScriptPtr luaScript = std::make_shared<LuaScript>(script);
-
-		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);
-		EventManager::getInstance().pushEvent(scriptLoaded);
-
-		buttonComponent = std::make_shared<ButtonComponent>(entity->id, buttonDrawable, inputListener, luaScript);
-
-		entity->addComponent(buttonComponent);
-	}
-
-	buttonComponent->setText(text);
-	buttonComponent->setFont(font);
-}
-
-void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, TexturePtr icon, const string& script, ButtonConfigPtr buttonConfig) {
-	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity = entitySystem->getEntityById(entityId);
-
-	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-	ButtonComponentPtr buttonComponent;
-	if (entity->getComponents().find(ComponentType::BUTTON_COMPONENT) != entity->getComponents().end()) {
-		buttonComponent = entity->getComponentByType<ButtonComponent>(ComponentType::BUTTON_COMPONENT);
-	}
-	else {
-		ButtonDrawablePtr buttonDrawable = std::make_shared<ButtonDrawable>(w, h, buttonConfig);
-		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(buttonDrawable));
-
-		InputListenerPtr inputListener = std::make_shared<InputListener>(entity->id);
-		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
-		inputSystem->registerEventListener(inputListener);
-
-		LuaScriptPtr luaScript = std::make_shared<LuaScript>(script);
-
-		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);
-		EventManager::getInstance().pushEvent(scriptLoaded);
-
-		buttonComponent = std::make_shared<ButtonComponent>(entity->id, buttonDrawable, inputListener, luaScript);
-
-		entity->addComponent(buttonComponent);
-	}
-
-	buttonComponent->setIcon(icon);
-}
-
-void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
-	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity = entitySystem->getEntityById(entityId);
-
-	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-	LabelComponentPtr labelComponent;
-	if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) != entity->getComponents().end()) {
-		labelComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
-	}
-	else {
-		TextDrawablePtr textDrawable = std::make_shared<TextDrawable>(text, font);
-		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textDrawable));
-		labelComponent = std::make_shared<LabelComponent>(entityId, textDrawable);
-
-		entity->addComponent(labelComponent);
-	}
-
-	labelComponent->setText(text);
-	labelComponent->setText(font);
-}
-
-void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location) {
-	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity = entitySystem->getEntityById(entityId);
-
-	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-	ProgressComponentPtr progressComponent;
-	if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) != entity->getComponents().end()) {
-		progressComponent = entity->getComponentByType<ProgressComponent>(ComponentType::LABEL_COMPONENT);
-	}
-	else {
-		ProgressBarDrawablePtr textureDrawable = std::make_shared<ProgressBarDrawable>(w, h, maxProgress, currentProgress);
-		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textureDrawable));
-		progressComponent = std::make_shared<ProgressComponent>(entityId, textureDrawable);
-
-		entity->addComponent(progressComponent);
-	}
-
-	progressComponent->setProgress(currentProgress, maxProgress);
-}
-
 void ProgressBarDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 
 	// padding is two pixels.
@@ -126,6 +20,10 @@ void ProgressBarDrawable::draw(Graphics& graphicsRef, const Vector2f& position) 
 
 	graphicsRef.drawSquare(position.x, position.y, this->width, this->height, 64, 64, 64, 255);
 	graphicsRef.drawSquare(innerX, position.y, innerWidth, this->height - (2 * padding), 255 * redScalar, 255 * greenScalar, 0, 255);
+
+	if (this->displayProgress) {
+		graphicsRef.renderText(std::to_string(this->currentProgress) + " / " + std::to_string(this->progressMax), "Digital_tech", position.x, position.y, 255, 255, 255, 255);
+	}
 }
 
 void LabelComponent::setText(const std::string& text) {
@@ -135,72 +33,6 @@ void LabelComponent::setText(const std::string& text) {
 void LabelComponent::setFont(const std::string& font) {
 	this->textDrawable->setFont(font);
 }
-
-ButtonConfigPtr createButtonConfig(const std::string& path, SystemManagerPtr systemManager) {
-	std::ifstream file;
-	file.open(path);
-	std::string builder;
-	std::string line;
-	while (std::getline(file, line)) {
-		builder.append(line);
-	}
-	file.close();
-
-	rapidjson::Document doc;
-	doc.Parse(builder.c_str());
-
-	const rapidjson::Value& parsedButton = doc["button"];
-	std::string image = parsedButton["image"].GetString();
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	graphicsSystem->addTexture(image, image);
-
-	ButtonConfig* buttonConfig = GCC_NEW ButtonConfig();
-	buttonConfig->sectionWidth = parsedButton["section_width"].GetInt();
-	buttonConfig->sectionHeight = parsedButton["section_height"].GetInt();
-
-	parseState(image, parsedButton["button_up"], buttonConfig->buttonUp);
-	parseState(image, parsedButton["button_over"], buttonConfig->buttonOver);
-	parseState(image, parsedButton["button_down"], buttonConfig->buttonDown);
-	
-	return ButtonConfigPtr(buttonConfig);
-}
-
-PanelConfigPtr createPanelConfig(const std::string& path, SystemManagerPtr systemManager) {
-	std::ifstream file;
-	file.open(path);
-	std::string builder;
-	std::string line;
-	while (std::getline(file, line)) {
-		builder.append(line);
-	}
-	file.close();
-
-	rapidjson::Document doc;
-	doc.Parse(builder.c_str());
-
-	const rapidjson::Value& parsedPanel = doc["panel"];
-	std::string image = parsedPanel["image"].GetString();
-	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
-	graphicsSystem->addTexture(image, image);
-
-	PanelConfig* panelConfig = GCC_NEW PanelConfig();
-	panelConfig->sectionWidth = parsedPanel["section_width"].GetInt();
-	panelConfig->sectionHeight = parsedPanel["section_height"].GetInt();
-
-	parseState(image, parsedPanel["sections"], panelConfig->panelSections);
-
-	return PanelConfigPtr(panelConfig);
-}
-
-void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, TexturePtr>& stateMap) {
-	for (auto it = button.MemberBegin(); it != button.MemberEnd(); it++) {
-		std::string name = it->name.GetString();
-		const rapidjson::Value& value = it->value;
-		TexturePtr texture(GCC_NEW Texture(tag, value["x"].GetDouble(), value["y"].GetDouble(), value["w"].GetDouble(), value["h"].GetDouble()));
-		stateMap.emplace(name, texture);
-	}
-}
-
 
 SectionDrawable::SectionDrawable(float width, float height, Vector2f* positionOffset, TexturePtr texture) : Drawable(width, height) {
 	mPosOffset = Vector2fPtr(positionOffset);
@@ -317,10 +149,10 @@ void ButtonComponent::setIcon(TexturePtr texture) {
 	buttonDrawable->setTexture(texture);
 }
 
-PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panelConfig) : Drawable(width, height) {
+PanelDrawable::PanelDrawable(float width, float height, PanelConfigPtr panelConfig) : Drawable(width, height) {
 	isUi = true;
-	float sectionWidth = panelConfig.sectionWidth;
-	float sectionHeight = panelConfig.sectionHeight;
+	float sectionWidth = panelConfig->sectionWidth;
+	float sectionHeight = panelConfig->sectionHeight;
 	float doubleWidth = (sectionWidth * 2);
 	float doubleHeight = (sectionHeight * 2);
 	float halfWidth = width / 2;
@@ -346,7 +178,7 @@ PanelDrawable::PanelDrawable(float width, float height, const PanelConfig& panel
 			Vector2f* posOffset(GCC_NEW Vector2f((halfWidth - (sectionWidth / 2)) * xDir, (halfHeight -(sectionHeight / 2)) * yDir));
 			std::string name = names[count];
 
-			SectionDrawablePtr sectionDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, panelConfig.panelSections.at(name)));
+			SectionDrawablePtr sectionDrawable(GCC_NEW SectionDrawable(size[count][0], size[count][1], posOffset, panelConfig->panelSections.at(name)));
 			mSections.push_back(sectionDrawable);
 			count++;
 		}
@@ -452,62 +284,4 @@ void ItemPanelComponent::removeItem(int x, int y) {
 
 int ItemPanelComponent::getIndex(int x, int y) {
 	return (y / this->panelDrawable->columns) + x;
-}
-
-WidgetFactory::WidgetFactory(std::string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager) : EntityFactory(systemManager) {
-	mButtonConfig = createButtonConfig(buttonConfigPath, systemManager);
-	mPanelConfig = createPanelConfig(panelConfigPath, systemManager);
-}
-
-
-EntityPtr WidgetFactory::createLabel(std::string text, std::string font, float x, float y) {
-	EntityPtr entity = this->createPhysicsEntity(x, y, 1, 1);
-	applyLabel(mSystemManager, entity->id, text, font, 255, 255, 255, 255);
-
-	return entity;
-}
-
-
-EntityPtr WidgetFactory::createButtonWithText(const string& text, const string& font, const string& script, float x, float y, float width, float height) {
-	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
-	applyButtonWithText(mSystemManager, entity->id, width, height, text, font, script, mButtonConfig);
-
-	return entity;
-}
-
-
-EntityPtr WidgetFactory::createButtonWithIcon(TexturePtr icon, const string& script, float x, float y, float width, float height) {
-	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
-	applyButtonWithIcon(mSystemManager, entity->id, width, height, icon, script, mButtonConfig);
-
-	return entity;
-}
-
-EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity(GCC_NEW Entity());
-	entitySystem->addEntity(entity);
-
-	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
-	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
-	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
-
-	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, *mPanelConfig.get()));
-	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
-
-	entity->addComponent(physicsComponent);
-	entity->addComponent(drawableComponent);
-
-	return entity;
-}
-
-
-EntityPtr WidgetFactory::createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress) {
-	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
-	applyProgress(mSystemManager, entity->id, width, height, progressMax, currentProgress, "");
-
-	return entity;
 }

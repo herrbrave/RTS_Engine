@@ -102,6 +102,18 @@ bool InputListener::onEvent(InputEventType eventType, EventPtr evt, MouseMovemen
 			}
 		}
 	}
+	else if (eventType == InputEventType::ON_TEXT_INPUT) {
+		if (eventCallbacks.find(Input::ON_TEXT_INPUT) == eventCallbacks.end()) {
+			return false;
+		}
+
+		auto textInpuCallback = eventCallbacks.at(Input::ON_TEXT_INPUT);
+		if (textInpuCallback != nullptr) {
+			if (textInpuCallback(evt)) {
+				return true;
+			}
+		}
+	}
 
 	return false;
 }

@@ -114,6 +114,7 @@
     <ClInclude Include="RTS.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="vector2f.h" />
+    <ClInclude Include="WidgetFactory.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="WorldFactory.h" />
   </ItemGroup>
@@ -141,6 +142,7 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TMXMap.cpp" />
     <ClCompile Include="Ui.cpp" />
+    <ClCompile Include="WidgetFactory.cpp" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldFactory.cpp" />
   </ItemGroup>

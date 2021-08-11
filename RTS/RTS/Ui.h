@@ -37,6 +37,10 @@ class PanelConfig;
 typedef shared_ptr<PanelConfig> PanelConfigPtr;
 typedef weak_ptr<PanelConfig> WeakPanelConfigPtr;
 
+class TextboxConfig;
+typedef shared_ptr<TextboxConfig> TextboxConfigPtr;
+typedef weak_ptr<TextboxConfig> WeakTextboxConfigPtr;
+
 class ProgressBarDrawable;
 typedef shared_ptr<ProgressBarDrawable> ProgressBarDrawablePtr;
 typedef weak_ptr<ProgressBarDrawable> WeakProgressBarDrawablePtr;
@@ -77,12 +81,50 @@ class ItemPanelComponent;
 typedef shared_ptr<ItemPanelComponent> ItemPanelComponentPtr;
 typedef weak_ptr<ItemPanelComponent> WeakItemPanelComponentPtr;
 
-class WidgetFactory;
-typedef shared_ptr<WidgetFactory> WidgetFactoryPtr;
-typedef weak_ptr<WidgetFactory> WeakWidgetFactoryPtr;
+class TextboxConfig;
+typedef shared_ptr<TextboxConfig> TextboxConfigPtr;
+typedef weak_ptr<TextboxConfig> WeakTextboxConfigPtr;
+
+class TextboxDrawable;
+typedef shared_ptr<TextboxDrawable> TextboxDrawablePtr;
+typedef weak_ptr<TextboxDrawable> WeakTextboxDrawablePtr;
+
+class TextboxComponent;
+typedef shared_ptr<TextboxComponent> TextboxComponentPtr;
+typedef weak_ptr<TextboxComponent> WeakTextboxComponentPtr;
+
+class ButtonConfig {
+public:
+	int sectionWidth;
+	int sectionHeight;
+	unordered_map<std::string, TexturePtr> buttonUp;
+	unordered_map<std::string, TexturePtr> buttonOver;
+	unordered_map<std::string, TexturePtr> buttonDown;
+};
+
+class PanelConfig {
+public:
+	int sectionWidth;
+	int sectionHeight;
+	unordered_map<std::string, TexturePtr> panelSections;
+};
+
+class TextboxConfig {
+public:
+	unordered_map<std::string, TexturePtr> textboxSections;
+	float sectionWidth;
+};
+
+class UIConfig {
+public:
+	ButtonConfigPtr buttonConfig;
+	PanelConfigPtr panelConfig;
+	TextboxConfigPtr textboxConfig;
+};
 
 class ProgressBarDrawable : public Drawable {
 public:
+	bool displayProgress = true;
 	unsigned int progressMax;
 	unsigned int currentProgress;
 	ProgressBarDrawable(float width, float height, unsigned int progressMax, unsigned int currentProgress) : Drawable(width, height) {
@@ -130,19 +172,6 @@ public:
 private:
 	TextDrawablePtr textDrawable;
 };
-
-class ButtonConfig {
-public:
-	int sectionWidth;
-	int sectionHeight;
-	unordered_map<std::string, TexturePtr> buttonUp;
-	unordered_map<std::string, TexturePtr> buttonOver;
-	unordered_map<std::string, TexturePtr> buttonDown;
-};
-
-ButtonConfigPtr createButtonConfig(const std::string& path, SystemManagerPtr systemManager);
-void parseState(const std::string& tag, const rapidjson::Value& button, std::unordered_map<std::string, TexturePtr>& stateMap);
-
 
 class SectionDrawable : Drawable {
 public:
@@ -259,33 +288,33 @@ private:
 
 class ProgressComponent : public Component {
 public:
-	ProgressComponent(unsigned long id, WeakProgressBarDrawablePtr progressBarDrawable) : Component(id, ComponentType::PROGRESS_COMPONENT) {
+	ProgressComponent(unsigned long id, ProgressBarDrawablePtr progressBarDrawable) : Component(id, ComponentType::PROGRESS_COMPONENT) {
 		progressBar = progressBarDrawable;
 	}
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
 
 	void setProgress(int progress, int maxProgress) {
-		ProgressBarDrawablePtr prog = makeShared(progressBar);
+		ProgressBarDrawablePtr prog = progressBar;
 		prog->setProgress(progress);
-		prog->setProgressMax(progress);
+		prog->setProgressMax(maxProgress);
+	}
+
+	void displayProgress() {
+		this->progressBar->displayProgress = true;
+	}
+
+	void hideProgress() {
+		this->progressBar->displayProgress = false;
 	}
 
 private:
-	WeakProgressBarDrawablePtr progressBar;
+	ProgressBarDrawablePtr progressBar;
 };
-
-class PanelConfig {
-public:
-	int sectionWidth;
-	int sectionHeight;
-	unordered_map<std::string, TexturePtr> panelSections;
-};
-PanelConfigPtr createPanelConfig(const std::string& path, SystemManagerPtr systemManager);
 
 class PanelDrawable : public Drawable {
 public:
-	PanelDrawable(float width, float height, const PanelConfig& panelConfig);
+	PanelDrawable(float width, float height, PanelConfigPtr panelConfig);
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
 
@@ -367,25 +396,178 @@ private:
 	int getIndex(int x, int y);
 };
 
-void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, const string& script, ButtonConfigPtr buttonConfig);
-void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, TexturePtr icon, const string& script, ButtonConfigPtr buttonConfig);
-void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location);
-
-class WidgetFactory : public EntityFactory {
+class TextboxDrawable : public TextDrawable {
 public:
-	WidgetFactory(string buttonConfigPath, std::string panelConfigPath, SystemManagerPtr systemManager);
+	TextboxDrawable(float width, float height, const string& text, const string& font, TextboxConfigPtr textboxConfig) : TextDrawable(text, font) {
+		Drawable::width = width;
+		Drawable::height = height;
+		this->left = textboxConfig->textboxSections["left"];
+		this->middle = textboxConfig->textboxSections["middle"];
+		this->right = textboxConfig->textboxSections["right"];
+		this->sectionWidth = textboxConfig->sectionWidth;
+		this->cursorIndex = text.length();
+	}
 
-	EntityPtr createLabel(std::string text, std::string font, float x, float y);
-	EntityPtr createButton(std::function<void()> callback, float x, float y, float width, float height);
-	EntityPtr createButtonWithText(const string& text, const string& font, const string& script, float x, float y, float width, float height);
-	EntityPtr createButtonWithIcon(TexturePtr icon, const string& script, float x, float y, float width, float height);
-	EntityPtr createPanel(float x, float y, float width, float height);
-	EntityPtr createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress);
+	void setText(const string& text) {
+		this->text = text;
+		this->cursorIndex = text.length();
+	}
+
+	const string& getText() {
+		return this->text;
+	}
+
+	void addText(const string& text) {
+		this->text.insert(this->cursorIndex, text);
+		this->cursorIndex += text.length();
+	}
+
+	void backspace() {
+		if (this->text.empty()) {
+			return;
+		}
+
+		this->text.erase(this->text.begin() + (this->cursorIndex - 1));
+		this->decCursor();
+	}
+
+	void deleteText() {
+		if (this->text.empty() || this->cursorIndex >= this->text.length()) {
+			return;
+		}
+
+		this->text.erase(this->text.begin() + (this->cursorIndex));
+	}
+
+	void decCursor() {
+		this->cursorIndex = std::max(0, this->cursorIndex - 1);
+	}
+
+	void incCursor() {
+		this->cursorIndex = std::min((int) this->text.length(), this->cursorIndex + 1);
+	}
+
+	void maxCursor() {
+		this->cursorIndex = this->text.length();
+	}
+
+	void minCursor() {
+		this->cursorIndex = 0;
+	}
+
+	void draw(Graphics& graphicsRef, const Vector2f& position) override {
+		int diff = (this->width / 2) - (this->sectionWidth / 2);
+		int textWidth = graphicsRef.getTextWidth(this->text, this->font);
+		int textHeight = graphicsRef.getTextHeight(this->text, this->font);
+
+		graphicsRef.renderTexture(left, position.x - diff, position.y, this->sectionWidth, this->height, 0.0f, 255, 255, 255, 255);
+		graphicsRef.renderTexture(middle, position.x, position.y, this->width - (2.0f * this->sectionWidth), this->height, 0.0f, 255, 255, 255, 255);
+		graphicsRef.renderTexture(right, position.x + diff, position.y, this->sectionWidth, this->height, 0.0f, 255, 255, 255, 255);
+
+		int textStart = (this->width / 2) - (this->sectionWidth + (textWidth / 2));
+		graphicsRef.renderText(text, font, position.x - textStart, position.y, 255, 255, 255, 255);
+
+		int cursor = graphicsRef.getTextWidth(this->text.substr(0, this->cursorIndex), font);
+		int cursorPos = (this->width / 2) - (this->sectionWidth + cursor);
+		graphicsRef.drawSquare(position.x - cursorPos, position.y, 3, textHeight, 255, 255, 255, 128);
+	}
+
+	DrawableType getType() override {
+		return DrawableType::TEXT;
+	}
+
+protected:
+	void onSerialize(Serializer& serializer) const override {}
 
 private:
-	ButtonConfigPtr mButtonConfig{ nullptr };
-	PanelConfigPtr mPanelConfig{ nullptr };
+	TexturePtr left;
+	TexturePtr middle;
+	TexturePtr right;
+	float sectionWidth;
+	int cursorIndex = 0;
+};
+
+class TextboxComponent : public InputComponent {
+public:
+	TextboxDrawablePtr textbox;
+
+	TextboxComponent(unsigned long entityId, TextboxDrawablePtr textbox, InputListenerPtr inputListener)
+		: InputComponent(entityId, inputListener, ComponentType::TEXT_BOX_COMPONENT), textbox(textbox) {
+
+		inputListener->eventCallbacks.emplace(
+			Input::ON_TEXT_INPUT,
+			[textbox](EventPtr evt) {
+
+				textbox->addText(evt->keyEvent->text);
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_KEY_DOWN,
+			[textbox](EventPtr evt) {
+
+				if (evt->keyEvent->key == SDLK_LEFT) {
+					textbox->decCursor();
+				}
+				else if (evt->keyEvent->key == SDLK_RIGHT) {
+					textbox->incCursor();
+				}
+				else if (evt->keyEvent->key == SDLK_END) {
+					textbox->maxCursor();
+				}
+				else if (evt->keyEvent->key == SDLK_HOME) {
+					textbox->minCursor();
+				}
+				else if (evt->keyEvent->key == SDLK_BACKSPACE) {
+					textbox->backspace();
+				}
+				else if (evt->keyEvent->key == SDLK_DELETE) {
+					textbox->deleteText();
+				}
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_ENTER,
+			[textbox](EventPtr evt) {
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_EXIT,
+			[textbox](EventPtr evt) {
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_MOUSE_DOWN,
+			[textbox](EventPtr evt) {
+
+				return true;
+			});
+		inputListener->eventCallbacks.emplace(
+			Input::ON_CLICK,
+			[textbox](EventPtr evt) {
+
+				return true;
+			});
+	}
+
+	void setText(const string& text) {
+		this->textbox->setText(text);
+	}
+
+	void addText(const string& text) {
+		this->textbox->addText(text);
+	}
+
+	const string& getText() {
+		return this->textbox->getText();
+	}
+
+	void setFont(const string& font) {
+		this->textbox->setFont(font);
+	}
 };
 
 #endif

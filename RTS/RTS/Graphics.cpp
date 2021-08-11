@@ -278,6 +278,28 @@ void SDLGraphics::renderText(const string& text, const string& font, float x, fl
 	}
 }
 
+int SDLGraphics::getTextWidth(const string& text, const string& font) {
+	AssetPtr asset(mAssetVendor->getAsset(font));
+	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
+
+	int width;
+	int height;
+	TTF_SizeUTF8(fontPtr.get(), text.c_str(), &width, &height);
+
+	return width;
+}
+
+int SDLGraphics::getTextHeight(const string& text, const string& font) {
+	AssetPtr asset(mAssetVendor->getAsset(font));
+	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
+
+	int width;
+	int height;
+	TTF_SizeUTF8(fontPtr.get(), text.c_str(), &width, &height);
+
+	return height;
+}
+
 void SDLGraphics::onBeforeDraw() {
 	SDL_SetRenderDrawColor(mRenderer.get(), 0x00, 0x00, 0x00, 0x00);
 	SDL_RenderClear(mRenderer.get());

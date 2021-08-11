@@ -41,6 +41,7 @@ enum class KeyAction {
 };
 
 struct KeyboardEvent {
+	string text;
 	Sint32 key;
 	bool ctrlDown;
 	bool shiftDown;
@@ -61,6 +62,7 @@ enum class InputEventType {
 	MOUSE_BUTTON_UP = 2,
 	KEY_DOWN = 3,
 	KEY_UP = 4,
+	ON_TEXT_INPUT = 5,
 
 	NONE = -1,
 	/* Add joystick stuff here later. */
@@ -74,6 +76,7 @@ enum class Input {
 	ON_DRAG = 5,
 	ON_KEY_DOWN = 6,
 	ON_KEY_UP = 7,
+	ON_TEXT_INPUT = 8,
 	ON_MOUSE_MOVE,
 };
 

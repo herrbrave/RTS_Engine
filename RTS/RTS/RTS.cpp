@@ -12,17 +12,16 @@ void RTS::setup() {
 	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
-	config->setFont("Digital_tech.otf");
 
 	mSystemManager = std::make_shared<SystemManager>(config);
 
 	mEntityFactory = std::make_shared<EntityFactory>(mSystemManager);
 
-	mWidgetFactory = std::make_shared<WidgetFactory>("Assets/BlueButton.json", "Assets/Panel.json", mSystemManager);
+	mWidgetFactory = std::make_shared<WidgetFactory>("Assets/ui/ui.json", mSystemManager);
 
 	mSoundControllerFactory = std::make_shared<SoundControllerFactory>(mSystemManager);
 
-	mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS)->addFont("Digital_tech.otf", "Digital_tech", 20);
+	mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS)->addFont("Assets/HackNSlasher/Font/adventure-pixels/adventure-pixels.ttf", "adventure-pixels", 14);
 
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
@@ -41,11 +40,10 @@ void RTS::setup() {
 	//applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
+	graphicsSystem->addTexture("Assets/ui/ui_sheet.png", "Assets/ui/ui_sheet.png");
 	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 0, 0, 16, 16);
 
-	mWidgetFactory->createButtonWithIcon(texture, "Games/test/default_button.lua", 400, 100, 100, 100);
-	mWidgetFactory->createButtonWithText("Click Me!", "Digital_tech", "Games/test/default_button.lua", 200, 100, 100, 55);
+	mWidgetFactory->createTextBox(512, 348, 700, 25, "", "adventure-pixels");
 
 	/*
 	graphicsSystem->addTexture("test_panel", 512, 512);

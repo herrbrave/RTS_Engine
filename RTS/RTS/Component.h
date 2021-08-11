@@ -23,6 +23,7 @@ enum class ComponentType : Uint8 {
 	PARTICLE_COMPONENT = 10,
 	GRID_COMPONENT = 11,
 	ITEM_PANEL_COMPONENT = 12,
+	TEXT_BOX_COMPONENT = 13,
 };
 
 class Component;

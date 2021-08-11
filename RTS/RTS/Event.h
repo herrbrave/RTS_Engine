@@ -229,6 +229,7 @@ public:
 
 class KeyEventData : public EventData {
 public:
+	string text;
 	Sint32 key;
 	KeyAction action;
 	bool ctrl;

@@ -19,7 +19,7 @@
 #include"ScriptFactory.h"
 #include"SoundControllerFactory.h"
 #include"System.h"
-#include"Ui.h"
+#include"WidgetFactory.h"
 #include"WorldFactory.h"
 
 class RTS : public Game {

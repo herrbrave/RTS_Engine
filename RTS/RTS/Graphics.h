@@ -322,6 +322,9 @@ public:
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
+
+	virtual int getTextWidth(const string& text, const string& font) = 0;
+	virtual int getTextHeight(const string& text, const string& font) = 0;
 	
 	void zoomBy(float value) {
 		this->mGraphicsConfig->mZoom += value;
@@ -348,6 +351,9 @@ public:
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
+
+	int getTextWidth(const string& text, const string& font) override;
+	int getTextHeight(const string& text, const string& font) override;
 
 	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
 	AssetPtr createTexture(int width, int height, const std::string& assetTag) override;
