@@ -93,7 +93,7 @@ void TextureDrawable::setSize(float width, float height) {
 }
 
 void TextDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
-	graphicsRef.renderText(this->text, this->font, position.x, position.y, this->mColor->r, this->mColor->g, this->mColor->b, this->mColor->a);
+	graphicsRef.renderText(this->text, this->font, this->fontSize, position.x, position.y, this->mColor->r, this->mColor->g, this->mColor->b, this->mColor->a);
 }
 
 SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : Graphics(graphicsConfig, assetVendor) {
@@ -237,9 +237,9 @@ void SDLGraphics::renderTexture(SDL_Texture* sdlTexture, float x, float y, float
 	}
 }
 
-void SDLGraphics::renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void SDLGraphics::renderText(const string& text, const string& font, int fontSize, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 
-	AssetPtr asset(mAssetVendor->getAsset(font));
+	AssetPtr asset(mAssetVendor->getAsset(font + "_" + std::to_string(fontSize)));
 	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
 
 	SDL_Color color{ r, g, b, a };
@@ -278,8 +278,8 @@ void SDLGraphics::renderText(const string& text, const string& font, float x, fl
 	}
 }
 
-int SDLGraphics::getTextWidth(const string& text, const string& font) {
-	AssetPtr asset(mAssetVendor->getAsset(font));
+int SDLGraphics::getTextWidth(const string& text, const string& font, int fontSize) {
+	AssetPtr asset(mAssetVendor->getAsset(font + "_" + std::to_string(fontSize)));
 	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
 
 	int width;
@@ -289,8 +289,8 @@ int SDLGraphics::getTextWidth(const string& text, const string& font) {
 	return width;
 }
 
-int SDLGraphics::getTextHeight(const string& text, const string& font) {
-	AssetPtr asset(mAssetVendor->getAsset(font));
+int SDLGraphics::getTextHeight(const string& text, const string& font, int fontSize) {
+	AssetPtr asset(mAssetVendor->getAsset(font + "_" + std::to_string(fontSize)));
 	shared_ptr<TTF_Font> fontPtr = asset->getAsset<TTF_Font>();
 
 	int width;

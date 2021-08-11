@@ -770,7 +770,7 @@ void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 		if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) == entity->getComponents().end()) {
 			GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
-			TextDrawablePtr drawable(GCC_NEW TextDrawable(text, font));
+			TextDrawablePtr drawable(GCC_NEW TextDrawable(text, font, 12));
 			drawable->setDrawDepth(100);
 			drawable->setColor(r, g, b, 255);
 			graphicsSystem->registerDrawable(entity->id, drawable);

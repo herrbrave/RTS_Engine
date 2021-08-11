@@ -1,6 +1,6 @@
 #include"WidgetFactory.h"
 
-void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, const string& script, ButtonConfigPtr buttonConfig) {
+void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, int fontSize, const string& script, ButtonConfigPtr buttonConfig) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -30,6 +30,7 @@ void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId,
 
 	buttonComponent->setText(text);
 	buttonComponent->setFont(font);
+	buttonComponent->setFontSize(fontSize);
 }
 
 void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, TexturePtr icon, const string& script, ButtonConfigPtr buttonConfig) {
@@ -63,7 +64,7 @@ void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId,
 	buttonComponent->setIcon(icon);
 }
 
-void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
+void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, int fontSize, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -74,7 +75,7 @@ void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const st
 		labelComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
 	}
 	else {
-		TextDrawablePtr textDrawable = std::make_shared<TextDrawable>(text, font);
+		TextDrawablePtr textDrawable = std::make_shared<TextDrawable>(text, font, fontSize);
 		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textDrawable));
 		labelComponent = std::make_shared<LabelComponent>(entityId, textDrawable);
 
@@ -83,6 +84,7 @@ void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const st
 
 	labelComponent->setText(text);
 	labelComponent->setFont(font);
+	labelComponent->setFontSize(fontSize);
 }
 
 void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location) {
@@ -105,7 +107,7 @@ void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float
 
 	progressComponent->setProgress(currentProgress, maxProgress);
 }
-void applyTextbox(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, TextboxConfigPtr textboxConfig) {
+void applyTextbox(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, const string& text, const string& font, int fontSize, TextboxConfigPtr textboxConfig) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -116,7 +118,7 @@ void applyTextbox(SystemManagerPtr systemManager, unsigned long entityId, float 
 		textboxComponent = entity->getComponentByType<TextboxComponent>(ComponentType::TEXT_BOX_COMPONENT);
 	}
 	else {
-		TextboxDrawablePtr textboxDrawable = std::make_shared<TextboxDrawable>(w, h, text, font, textboxConfig);
+		TextboxDrawablePtr textboxDrawable = std::make_shared<TextboxDrawable>(w, h, text, font, fontSize, textboxConfig);
 		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textboxDrawable));
 
 		InputListenerPtr inputListener = std::make_shared<InputListener>(entity->id);
@@ -130,6 +132,7 @@ void applyTextbox(SystemManagerPtr systemManager, unsigned long entityId, float 
 
 	textboxComponent->setText(text);
 	textboxComponent->setFont(font);
+	textboxComponent->setFontSize(fontSize);
 }
 
 ButtonConfigPtr createButtonConfig(const rapidjson::Value& value, SystemManagerPtr systemManager) {
@@ -200,6 +203,8 @@ UIConfigPtr parseUIConfig(const std::string& path, SystemManagerPtr systemManage
 	uiConfig->buttonConfig = createButtonConfig(doc["button"], systemManager);
 	uiConfig->panelConfig = createPanelConfig(doc["panel"], systemManager);
 	uiConfig->textboxConfig = createTextboxConfig(doc["textbox"], systemManager);
+	uiConfig->font = doc["font"].GetString();
+	uiConfig->fontTag = doc["fontTag"].GetString();
 
 	return uiConfig;
 }
@@ -207,20 +212,26 @@ UIConfigPtr parseUIConfig(const std::string& path, SystemManagerPtr systemManage
 
 WidgetFactory::WidgetFactory(const string& uiConfigPath, SystemManagerPtr systemManager) : EntityFactory(systemManager) {
 	uiConfig = parseUIConfig(uiConfigPath, systemManager);
+
+	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	for (int fontSize = MIN_FONT_SIZE; fontSize <= MAX_FONT_SIZE; fontSize++) {
+		string tag = uiConfig->fontTag + "_" + std::to_string(fontSize);
+		graphicsSystem->addFont(uiConfig->font, tag, fontSize);
+	}
 }
 
 
-EntityPtr WidgetFactory::createLabel(std::string text, std::string font, float x, float y) {
+EntityPtr WidgetFactory::createLabel(std::string text, int fontSize, float x, float y) {
 	EntityPtr entity = this->createPhysicsEntity(x, y, 1, 1);
-	applyLabel(mSystemManager, entity->id, text, font, 255, 255, 255, 255);
+	applyLabel(mSystemManager, entity->id, text, uiConfig->fontTag, fontSize, 255, 255, 255, 255);
 
 	return entity;
 }
 
 
-EntityPtr WidgetFactory::createButtonWithText(const string& text, const string& font, const string& script, float x, float y, float width, float height) {
+EntityPtr WidgetFactory::createButtonWithText(const string& text, int fontSize, const string& script, float x, float y, float width, float height) {
 	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
-	applyButtonWithText(mSystemManager, entity->id, width, height, text, font, script, uiConfig->buttonConfig);
+	applyButtonWithText(mSystemManager, entity->id, width, height, text, uiConfig->fontTag, fontSize, script, uiConfig->buttonConfig);
 
 	return entity;
 }
@@ -261,9 +272,9 @@ EntityPtr WidgetFactory::createProgressBar(float x, float y, float width, float 
 
 	return entity;
 }
-EntityPtr WidgetFactory::createTextBox(float x, float y, float width, float height, const string& text, const string& font) {
+EntityPtr WidgetFactory::createTextBox(float x, float y, float width, float height, const string& text, int fontSize) {
 	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
-	applyTextbox(mSystemManager, entity->id, width, height, text, font, this->uiConfig->textboxConfig);
+	applyTextbox(mSystemManager, entity->id, width, height, text, uiConfig->fontTag, fontSize, this->uiConfig->textboxConfig);
 
 	return entity;
 }

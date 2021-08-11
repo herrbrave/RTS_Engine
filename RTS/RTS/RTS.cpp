@@ -21,8 +21,6 @@ void RTS::setup() {
 
 	mSoundControllerFactory = std::make_shared<SoundControllerFactory>(mSystemManager);
 
-	mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS)->addFont("Assets/HackNSlasher/Font/adventure-pixels/adventure-pixels.ttf", "adventure-pixels", 14);
-
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
 	mMapFactory = std::make_shared<MapFactory>(mEntityFactory, mLuaScriptFactory, mSystemManager);
@@ -43,7 +41,7 @@ void RTS::setup() {
 	graphicsSystem->addTexture("Assets/ui/ui_sheet.png", "Assets/ui/ui_sheet.png");
 	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 0, 0, 16, 16);
 
-	mWidgetFactory->createTextBox(512, 348, 700, 25, "", "adventure-pixels");
+	mWidgetFactory->createTextBox(512, 348, 700, 25, "", 12);
 
 	/*
 	graphicsSystem->addTexture("test_panel", 512, 512);

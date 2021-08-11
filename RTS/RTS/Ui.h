@@ -120,6 +120,8 @@ public:
 	ButtonConfigPtr buttonConfig;
 	PanelConfigPtr panelConfig;
 	TextboxConfigPtr textboxConfig;
+	string font;
+	string fontTag;
 };
 
 class ProgressBarDrawable : public Drawable {
@@ -165,9 +167,17 @@ public:
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
 
-	void setText(const std::string& text);
+	void setText(const string& text);
 
-	void setFont(const std::string& font);
+	const string& getText();
+
+	void setFont(const string& font);
+
+	const string& getFont();
+
+	void setFontSize(int fontSize);
+
+	int getFontSize();
 
 private:
 	TextDrawablePtr textDrawable;
@@ -233,9 +243,17 @@ public:
 
 	void serialize(Serializer& serializer) const override {/* no op */}
 
-	void setText(const std::string& text);
+	void setText(const string& text);
 
-	void setFont(const std::string& font);
+	const string& getText();
+
+	void setFont(const string& font);
+
+	const string& getFont();
+
+	void setFontSize(int fontSize);
+
+	int getFontSize();
 
 	void setIcon(TexturePtr texture);
 
@@ -398,7 +416,7 @@ private:
 
 class TextboxDrawable : public TextDrawable {
 public:
-	TextboxDrawable(float width, float height, const string& text, const string& font, TextboxConfigPtr textboxConfig) : TextDrawable(text, font) {
+	TextboxDrawable(float width, float height, const string& text, const string& font, int fontSize, TextboxConfigPtr textboxConfig) : TextDrawable(text, font, fontSize) {
 		Drawable::width = width;
 		Drawable::height = height;
 		this->left = textboxConfig->textboxSections["left"];
@@ -457,17 +475,17 @@ public:
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override {
 		int diff = (this->width / 2) - (this->sectionWidth / 2);
-		int textWidth = graphicsRef.getTextWidth(this->text, this->font);
-		int textHeight = graphicsRef.getTextHeight(this->text, this->font);
+		int textWidth = graphicsRef.getTextWidth(this->text, this->font, fontSize);
+		int textHeight = graphicsRef.getTextHeight(this->text, this->font, fontSize);
 
 		graphicsRef.renderTexture(left, position.x - diff, position.y, this->sectionWidth, this->height, 0.0f, 255, 255, 255, 255);
 		graphicsRef.renderTexture(middle, position.x, position.y, this->width - (2.0f * this->sectionWidth), this->height, 0.0f, 255, 255, 255, 255);
 		graphicsRef.renderTexture(right, position.x + diff, position.y, this->sectionWidth, this->height, 0.0f, 255, 255, 255, 255);
 
 		int textStart = (this->width / 2) - (this->sectionWidth + (textWidth / 2));
-		graphicsRef.renderText(text, font, position.x - textStart, position.y, 255, 255, 255, 255);
+		graphicsRef.renderText(text, font, fontSize, position.x - textStart, position.y, 255, 255, 255, 255);
 
-		int cursor = graphicsRef.getTextWidth(this->text.substr(0, this->cursorIndex), font);
+		int cursor = graphicsRef.getTextWidth(this->text.substr(0, this->cursorIndex), font, fontSize);
 		int cursorPos = (this->width / 2) - (this->sectionWidth + cursor);
 		graphicsRef.drawSquare(position.x - cursorPos, position.y, 3, textHeight, 255, 255, 255, 128);
 	}
@@ -567,6 +585,15 @@ public:
 
 	void setFont(const string& font) {
 		this->textbox->setFont(font);
+	}
+
+
+	void setFontSize(int fontSize) {
+		this->textbox->setFontSize(fontSize);
+	}
+
+	int getFontSize() {
+		return this->textbox->getFontSize();
 	}
 };
 

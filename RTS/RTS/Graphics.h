@@ -239,17 +239,34 @@ protected:
 class TextDrawable : public virtual Drawable {
 public:
 	TextDrawable() : Drawable(0, 0) {}
-	TextDrawable(const string& text, const string& font) : Drawable(0, 0) {
+	TextDrawable(const string& text, const string& font, int fontSize) : Drawable(0, 0) {
 		this->text = std::move(text);
 		this->font = std::move(font);
+		this->fontSize = fontSize;
 	}
 
 	void setText(const string& text) {
 		this->text = std::move(text);
 	}
 
+	const string& getText() {
+		return this->text;
+	}
+
 	void setFont(const string& font) {
 		this->font = std::move(font);
+	}
+
+	const string& getFont() {
+		return this->font;
+	}
+
+	void setFontSize(int fontSize) {
+		this->fontSize = fontSize;
+	}
+
+	int getFontSize() {
+		return this->fontSize;
 	}
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
@@ -279,6 +296,7 @@ protected:
 
 	string text;
 	string font;
+	int fontSize;
 };
 
 
@@ -317,14 +335,14 @@ public:
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) = 0;
-	virtual void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
+	virtual void renderText(const string& text, const string& font, int fontSize, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void onAfterDraw() = 0;
 
-	virtual int getTextWidth(const string& text, const string& font) = 0;
-	virtual int getTextHeight(const string& text, const string& font) = 0;
+	virtual int getTextWidth(const string& text, const string& font, int fontSize) = 0;
+	virtual int getTextHeight(const string& text, const string& font, int fontSize) = 0;
 	
 	void zoomBy(float value) {
 		this->mGraphicsConfig->mZoom += value;
@@ -345,15 +363,15 @@ public:
 	SDLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
 	void onBeforeDraw() override;
 	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
-	void renderText(const string& text, const string& font, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
+	void renderText(const string& text, const string& font, int fontSize, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float t, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) override;
 	void drawLine(float x0, float y0, float x1, float y1, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void drawBox(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void onAfterDraw() override;
 
-	int getTextWidth(const string& text, const string& font) override;
-	int getTextHeight(const string& text, const string& font) override;
+	int getTextWidth(const string& text, const string& font, int fontSize) override;
+	int getTextHeight(const string& text, const string& font, int fontSize) override;
 
 	AssetPtr createTexture(const std::string& path, const std::string& assetTag) override;
 	AssetPtr createTexture(int width, int height, const std::string& assetTag) override;

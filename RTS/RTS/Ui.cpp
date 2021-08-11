@@ -22,7 +22,7 @@ void ProgressBarDrawable::draw(Graphics& graphicsRef, const Vector2f& position) 
 	graphicsRef.drawSquare(innerX, position.y, innerWidth, this->height - (2 * padding), 255 * redScalar, 255 * greenScalar, 0, 255);
 
 	if (this->displayProgress) {
-		graphicsRef.renderText(std::to_string(this->currentProgress) + " / " + std::to_string(this->progressMax), "Digital_tech", position.x, position.y, 255, 255, 255, 255);
+		graphicsRef.renderText(std::to_string(this->currentProgress) + " / " + std::to_string(this->progressMax), "adventure-pixels", 12, position.x, position.y, 255, 255, 255, 255);
 	}
 }
 
@@ -30,8 +30,24 @@ void LabelComponent::setText(const std::string& text) {
 	this->textDrawable->setText(text);
 }
 
+const string& LabelComponent::getText() {
+	return this->textDrawable->getText();
+}
+
 void LabelComponent::setFont(const std::string& font) {
 	this->textDrawable->setFont(font);
+}
+
+const string& LabelComponent::getFont() {
+	return this->textDrawable->getFont();
+}
+
+void LabelComponent::setFontSize(int fontSize) {
+	this->textDrawable->setFontSize(fontSize);
+}
+
+int LabelComponent::getFontSize() {
+	return this->textDrawable->getFontSize();
 }
 
 SectionDrawable::SectionDrawable(float width, float height, Vector2f* positionOffset, TexturePtr texture) : Drawable(width, height) {
@@ -143,6 +159,22 @@ void ButtonComponent::setText(const std::string& text) {
 
 void ButtonComponent::setFont(const std::string& font) {
 	buttonDrawable->setFont(font);
+}
+
+const string& ButtonComponent::getText() {
+	return this->buttonDrawable->getText();
+}
+
+const string& ButtonComponent::getFont() {
+	return this->buttonDrawable->getFont();
+}
+
+void ButtonComponent::setFontSize(int fontSize) {
+	this->buttonDrawable->setFontSize(fontSize);
+}
+
+int ButtonComponent::getFontSize() {
+	return this->buttonDrawable->getFontSize();
 }
 
 void ButtonComponent::setIcon(TexturePtr texture) {
