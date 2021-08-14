@@ -54,6 +54,10 @@ bool InputListener::onEvent(InputEventType eventType, EventPtr evt, MouseMovemen
 			if (eventCallbacks.find(Input::ON_MOUSE_DOWN) == eventCallbacks.end()) {
 				return false;
 			}
+
+			Vector2f relativePosition;
+			mouseMovementHandler->translateToRelative(id, evt->mouseEvent->position, relativePosition);
+			evt->mouseEvent->positionRelative = std::make_shared<Vector2f>(relativePosition);
 			
 			auto clickCallback = eventCallbacks.at(Input::ON_MOUSE_DOWN);
 			if (clickCallback != nullptr) {

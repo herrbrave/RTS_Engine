@@ -74,8 +74,6 @@ typedef shared_ptr<Item> ItemPtr;
 typedef weak_ptr<Item> WeakItemPtr;
 
 class ItemPanelDrawable;
-typedef shared_ptr<ItemPanelDrawable> ItemPanelDrawablePtr;
-typedef weak_ptr<ItemPanelDrawable> WeakItemPanelDrawablePtr;
 
 class ItemPanelComponent;
 typedef shared_ptr<ItemPanelComponent> ItemPanelComponentPtr;
@@ -361,6 +359,7 @@ public:
 
 class ItemPanelDrawable : public Drawable {
 public:
+
 	TexturePtr drawawbleArea;
 	vector<ItemPtr> items;
 	unsigned int columns = 5;
@@ -373,7 +372,11 @@ public:
 
 	void addItem(ItemPtr item);
 
+	void setItemHeight(float itemHeight);
+
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
+
+	int handleClick(const Vector2f& position);
 
 	DrawableType getType() override {
 		return DrawableType::PANEL;
@@ -387,16 +390,23 @@ protected:
 private:
 	float drawableWidth;
 	float drawableHeight;
+	float itemHeight = -1.0f;
 	bool forceRedraw = true;
 };
 
-class ItemPanelComponent : public Component {
-public:
-	ItemPanelDrawablePtr panelDrawable;
+typedef shared_ptr<ItemPanelDrawable> ItemPanelDrawablePtr;
+typedef weak_ptr<ItemPanelDrawable> WeakItemPanelDrawablePtr;
 
-	ItemPanelComponent(unsigned long entityId, ItemPanelDrawablePtr panelDrawable);
+class ItemPanelComponent : public InputComponent {
+public:
+	PanelDrawablePtr panelDrawable;
+	shared_ptr<ItemPanelDrawable> itemPanelDrawable;
+
+	ItemPanelComponent(unsigned long entityId, PanelDrawablePtr panelDrawable, shared_ptr<ItemPanelDrawable> itemPanelDrawable, InputListenerPtr inputListener);
 
 	void setColumns(unsigned int columns);
+
+	void setItemHeight(float itemHeight);
 
 	void pushTexture(TexturePtr texture, int x, int y);
 
@@ -410,8 +420,10 @@ public:
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
 
-private: 
+private:
 	int getIndex(int x, int y);
+
+	int selected = -1;
 };
 
 class TextboxDrawable : public TextDrawable {

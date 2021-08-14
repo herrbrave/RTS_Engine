@@ -708,6 +708,35 @@ bool DefaultMouseMovementHandler::checkForMouseOver(unsigned long id, const Vect
 	return body->checkPoint(pos);
 }
 
+bool DefaultMouseMovementHandler::translateToRelative(unsigned long id, const Vector2f& position, Vector2f& relative) {
+	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	auto ent = entitySystem->getEntityById(id);
+
+	Components& components = ent->getComponents();
+	if (components.find(ComponentType::PHYSICS_COMPONENT) == components.end()) {
+		return false;
+	}
+
+	PhysicsComponentPtr physicsComponent = ent->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+	Vector2f entPos(physicsComponent->getPosition());
+	
+	// if isn't a ui element lets translate to sceen space
+	if (components.find(ComponentType::BUTTON_COMPONENT) != components.end()
+		&& components.find(ComponentType::ITEM_PANEL_COMPONENT) != components.end()
+		&& components.find(ComponentType::LABEL_COMPONENT) != components.end()
+		&& components.find(ComponentType::TEXT_BOX_COMPONENT) != components.end()) {
+
+		CameraPtr cam = makeShared(graphicsSystem->getCamera());
+
+		entPos -= cam->position;
+	}
+
+	relative = entPos - position;
+
+	return true;
+}
+
 void DefaultSoundController::play(int loop) {
 	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
 	AssetPtr asset(assetSystem->getAsset(mSound->assetTag));

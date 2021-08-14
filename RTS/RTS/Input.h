@@ -25,6 +25,7 @@ struct MouseEvent {
 	MouseButton button; 
 	MouseAction action;
 	Vector2fPtr position{ GCC_NEW Vector2f(0, 0) };
+	Vector2fPtr positionRelative{ GCC_NEW Vector2f(0, 0) };
 };
 typedef shared_ptr<MouseEvent> MouseEventPtr;
 typedef weak_ptr<MouseEvent> WeakMouseEventPtr;
@@ -95,6 +96,7 @@ typedef weak_ptr<InputComponent> WeakInputComponentPtr;
 class MouseMovementHandler {
 public:
 	virtual bool checkForMouseOver(unsigned long id, const Vector2f& position) = 0;
+	virtual bool translateToRelative(unsigned long id, const Vector2f& position, Vector2f& relative) = 0;
 };
 
 class InputListener {

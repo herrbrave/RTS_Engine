@@ -2,63 +2,63 @@
   "font": "Assets/HackNSlasher/Font/adventure-pixels/adventure-pixels.ttf",
   "fontTag":  "adventure-pixels",
   "panel": {
-    "image": "Assets/ui/ui_sheet.png",
-    "section_width": 8,
-    "section_height": 8,
+    "image": "Assets/ui/panel_sheet.png",
+    "section_width": 4,
+    "section_height": 4,
     "sections": {
       "upper_left": {
-        "x": 56,
-        "y": 236,
-        "w": 16,
-        "h": 16
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
       },
       "upper_middle": {
-        "x": 74,
-        "y": 236,
-        "w": 16,
-        "h": 16
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
       },
       "upper_right": {
-        "x": 92,
-        "y": 236,
-        "w": 16,
-        "h": 16
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
       },
       "middle_left": {
-        "x": 56,
-        "y": 254,
-        "w": 16,
-        "h": 16
+        "x": 0,
+        "y": 4,
+        "w": 4,
+        "h": 4
       },
       "middle_right": {
-        "x": 92,
-        "y": 254,
-        "w": 16,
-        "h": 16
+        "x": 8,
+        "y": 4,
+        "w": 4,
+        "h": 4
       },
       "bottom_left": {
-        "x": 56,
-        "y": 272,
-        "w": 16,
-        "h": 16
+        "x": 0,
+        "y": 8,
+        "w": 4,
+        "h": 4
       },
       "bottom_middle": {
-        "x": 74,
-        "y": 272,
-        "w": 16,
-        "h": 16
+        "x": 4,
+        "y": 8,
+        "w": 4,
+        "h": 4
       },
       "bottom_right": {
-        "x": 92,
-        "y": 272,
-        "w": 16,
-        "h": 16
+        "x": 8,
+        "y": 8,
+        "w": 4,
+        "h": 4
       },
       "middle": {
-        "x": 74,
-        "y": 254,
-        "w": 16,
-        "h": 16
+        "x": 4,
+        "y": 4,
+        "w": 4,
+        "h": 4
       }
     }
   },
@@ -236,26 +236,26 @@
     }
   },
   "textbox": {
-    "image": "Assets/ui/ui_sheet.png",
-    "section_width": 4,
+    "image": "Assets/ui/text_box_sheet.png",
+    "section_width": 3,
     "sections": {
       "left": {
-        "x": 424,
-        "y": 360,
-        "w": 4,
-        "h": 16
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 12
       },
       "middle": {
-        "x": 434,
-        "y": 360,
-        "w": 8,
-        "h": 16
+        "x": 3,
+        "y": 0,
+        "w": 5,
+        "h": 12
       },
       "right": {
-        "x": 452,
-        "y": 360,
-        "w": 4,
-        "h": 16
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 12
       }
     }
   }

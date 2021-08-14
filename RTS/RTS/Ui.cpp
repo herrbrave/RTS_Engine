@@ -251,6 +251,23 @@ void ItemPanelDrawable::addItem(ItemPtr item) {
 	forceRedraw = true;
 }
 
+int ItemPanelDrawable::handleClick(const Vector2f& position) {
+	int index = 0;
+	for (auto item : this->items) {
+		int minX = item->position->x - (item->width / 2);
+		int minY = item->position->y - (item->height / 2);
+		int maxX = item->position->x + (item->width / 2);
+		int maxY = item->position->y + (item->height / 2);
+
+		if (minX <= position.x && position.x <= maxX && minY <= position.y <= maxY) {
+			return index;
+		}
+		index++;
+	}
+
+	return -1;
+}
+
 void ItemPanelDrawable::reconfigure() {
 	float itemSize = drawableWidth / columns - ((columns + 1) * margin);
 
@@ -259,11 +276,11 @@ void ItemPanelDrawable::reconfigure() {
 
 		int row = index / columns;
 		item->width = itemSize;
-		item->height = itemSize;
+		item->height = itemHeight == 1.0f ? itemSize : itemHeight;
 
 		float column = index % columns;
-		float x = column * itemSize + ((column + 1) * margin) + (itemSize / 2.0f);
-		float y = row * itemSize + ((row + 1) * margin) + (itemSize / 2.0f);
+		float x = column * item->width + ((column + 1) * margin) + (item->width / 2.0f);
+		float y = row * item->height + ((row + 1) * margin) + (item->height / 2.0f);
 		if (item->position == nullptr) {
 			item->position.reset(GCC_NEW Vector2f(x, y));
 		}
@@ -275,45 +292,60 @@ void ItemPanelDrawable::reconfigure() {
 	forceRedraw = true;
 }
 
+void ItemPanelDrawable::setItemHeight(float itemHeight) {
+	this->itemHeight = itemHeight;
+	this->reconfigure();
+}
+
 void ItemPanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 	this->update(graphicsRef);
 
 	graphicsRef.renderTexture(this->drawawbleArea, position.x, position.y, drawableWidth, drawableHeight, 0.0f, 255, 255, 255, 255);
 }
 
-ItemPanelComponent::ItemPanelComponent(unsigned long entityId, ItemPanelDrawablePtr panelDrawable) : Component(entityId, ComponentType::ITEM_PANEL_COMPONENT), panelDrawable(panelDrawable)  {
+ItemPanelComponent::ItemPanelComponent(unsigned long entityId, PanelDrawablePtr panelDrawable, shared_ptr<ItemPanelDrawable> itemPanelDrawable, InputListenerPtr inputListener) : InputComponent(entityId, inputListener, ComponentType::ITEM_PANEL_COMPONENT), panelDrawable(panelDrawable), itemPanelDrawable(itemPanelDrawable) {
+	inputListener->eventCallbacks.emplace(
+		Input::ON_CLICK,
+		[&](EventPtr evt) {
+			selected = itemPanelDrawable->handleClick(evt->mouseEvent->positionRelative);
 
+			return true;
+		});
 }
 
 void ItemPanelComponent::setColumns(unsigned int columns) {
-	this->panelDrawable->columns = columns;
-	this->panelDrawable->reconfigure();
+	this->itemPanelDrawable->columns = columns;
+	this->itemPanelDrawable->reconfigure();
+}
+
+void ItemPanelComponent::setItemHeight(float itemHeight) {
+	this->itemPanelDrawable->setItemHeight(itemHeight);
 }
 
 void ItemPanelComponent::pushTexture(TexturePtr texture, int x, int y) {
-	this->panelDrawable->items.at(this->getIndex(x, y))->texture.push_back(texture);
-	this->panelDrawable->reconfigure();
+	this->itemPanelDrawable->items.at(this->getIndex(x, y))->texture.push_back(texture);
+	this->itemPanelDrawable->reconfigure();
 }
 
 void ItemPanelComponent::popTexture(int x, int y) {
-	this->panelDrawable->items.at(this->getIndex(x, y))->texture.pop_back();
-	this->panelDrawable->reconfigure();
+	this->itemPanelDrawable->items.at(this->getIndex(x, y))->texture.pop_back();
+	this->itemPanelDrawable->reconfigure();
 }
 
 void ItemPanelComponent::addItem(ItemPtr item) {
-	this->panelDrawable->addItem(item);
+	this->itemPanelDrawable->addItem(item);
 }
 
 void ItemPanelComponent::popItem() {
-	this->panelDrawable->items.pop_back();
-	this->panelDrawable->reconfigure();
+	this->itemPanelDrawable->items.pop_back();
+	this->itemPanelDrawable->reconfigure();
 }
 
 void ItemPanelComponent::removeItem(int x, int y) {
-	this->panelDrawable->items.erase(this->panelDrawable->items.begin() + this->getIndex(x, y));
-	this->panelDrawable->reconfigure();
+	this->itemPanelDrawable->items.erase(this->itemPanelDrawable->items.begin() + this->getIndex(x, y));
+	this->itemPanelDrawable->reconfigure();
 }
 
 int ItemPanelComponent::getIndex(int x, int y) {
-	return (y / this->panelDrawable->columns) + x;
+	return (y / this->itemPanelDrawable->columns) + x;
 }

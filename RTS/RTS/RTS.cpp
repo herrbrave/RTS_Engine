@@ -30,7 +30,7 @@ void RTS::setup() {
 	// world = worldFactory->createWorldFromTMXMap("Assets/test/grid_test.json");
 	//Serializer serializer;
 	//world->serialize(serializer);
-	//serializer.writeTo("world.json");
+	//serializer.writeTo("world.json");b
 
 	//mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
 
@@ -38,10 +38,11 @@ void RTS::setup() {
 	//applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
 	graphicsSystem->addTexture("Assets/ui/ui_sheet.png", "Assets/ui/ui_sheet.png");
-	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 0, 0, 16, 16);
+	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 32, 0, 16, 16);
 
-	mWidgetFactory->createTextBox(512, 348, 700, 25, "", 12);
+	mWidgetFactory->createTextBox(512, 348, 700, 25, "", 14);
 
 	/*
 	graphicsSystem->addTexture("test_panel", 512, 512);

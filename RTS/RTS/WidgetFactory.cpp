@@ -135,6 +135,55 @@ void applyTextbox(SystemManagerPtr systemManager, unsigned long entityId, float 
 	textboxComponent->setFontSize(fontSize);
 }
 
+void applyPanel(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, PanelConfigPtr panelConfig) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
+
+	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+
+	DrawableComponentPtr drawableComponent;
+	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+	}
+	else {
+		PanelDrawablePtr panelDrawable = std::make_shared<PanelDrawable>(w, h, panelConfig);
+
+		graphicsSystem->registerDrawable(entity->id, DrawablePtr(panelDrawable));
+
+		drawableComponent = std::make_shared<DrawableComponent>(entity->id, panelDrawable);
+	}
+
+	drawableComponent->setSize(w, h);
+}
+
+void applyItemPanel(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, int columns, float rowHeight, PanelConfigPtr panelConfig) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
+
+	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+
+	ItemPanelComponentPtr itemPanelComponent;
+	if (entity->getComponents().find(ComponentType::ITEM_PANEL_COMPONENT) != entity->getComponents().end()) {
+		itemPanelComponent = entity->getComponentByType<ItemPanelComponent>(ComponentType::ITEM_PANEL_COMPONENT);
+	}
+	else {
+		PanelDrawablePtr panelDrawable = std::make_shared<PanelDrawable>(w, h, panelConfig);
+		ItemPanelDrawablePtr itemPanelDrawable = std::make_shared<ItemPanelDrawable>(std::to_string(entity->id) + "_item_panel", w - (panelConfig->sectionWidth * 2), h - (panelConfig->sectionHeight * 2));
+
+		graphicsSystem->registerDrawable(entity->id, DrawablePtr(panelDrawable));
+		graphicsSystem->registerDrawable(entity->id, DrawablePtr(itemPanelDrawable));
+
+		InputListenerPtr inputListener = std::make_shared<InputListener>(entity->id);
+		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
+		inputSystem->registerEventListener(inputListener);
+
+		itemPanelComponent = std::make_shared<ItemPanelComponent>(entity->id, panelDrawable, itemPanelDrawable, inputListener);
+	}
+
+	itemPanelComponent->setColumns(columns);
+	itemPanelComponent->setItemHeight(rowHeight);
+}
+
 ButtonConfigPtr createButtonConfig(const rapidjson::Value& value, SystemManagerPtr systemManager) {
 	std::string image = value["image"].GetString();
 	GraphicsSystemPtr graphicsSystem = static_pointer_cast<GraphicsSystem>(systemManager->systems.at(SystemType::GRAPHICS));
@@ -245,26 +294,19 @@ EntityPtr WidgetFactory::createButtonWithIcon(TexturePtr icon, const string& scr
 }
 
 EntityPtr WidgetFactory::createPanel(float x, float y, float width, float height) {
-	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-	EntityPtr entity(GCC_NEW Entity());
-	entitySystem->addEntity(entity);
-
-	PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
-	BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, width, height));
-	physicsSystem->registerBody(entity->id, blockBody);
-	PhysicsComponentPtr physicsComponent(GCC_NEW PhysicsComponent(entity->id, blockBody));
-
-	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	DrawablePtr textureDrawable(GCC_NEW PanelDrawable(width, height, uiConfig->panelConfig));
-	graphicsSystem->registerDrawable(entity->id, textureDrawable);
-	DrawableComponentPtr drawableComponent(GCC_NEW DrawableComponent(entity->id, textureDrawable));
-
-	entity->addComponent(physicsComponent);
-	entity->addComponent(drawableComponent);
+	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
+	applyPanel(mSystemManager, entity->id, width, height, this->uiConfig->panelConfig);
 
 	return entity;
 }
 
+EntityPtr WidgetFactory::createItemPanel(float x, float y, float width, float height, int columns, float rowHeight) {
+	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);
+	applyItemPanel(mSystemManager, entity->id, width, height, columns, rowHeight, this->uiConfig->panelConfig);
+
+	return entity;
+
+}
 
 EntityPtr WidgetFactory::createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress) {
 	EntityPtr entity = this->createPhysicsEntity(x, y, width, height);

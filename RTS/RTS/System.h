@@ -442,6 +442,8 @@ public:
 
 	bool checkForMouseOver(unsigned long id, const Vector2f& position) override;
 
+	bool translateToRelative(unsigned long id, const Vector2f& position, Vector2f& relative) override;
+
 private:
 	SystemManagerPtr mSystemManager;
 };
