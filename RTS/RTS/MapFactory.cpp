@@ -32,30 +32,41 @@ TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
 
 		int count = 0;
 		// Construct all of the tiles first, then we can go and fill in the collision, and the animations.
-		for (; count < tilecount; id++, count++) {
-			TilePtr tile = std::make_shared<Tile>();
-			
-			int x = count % tmxTileset->columns;
-			int y = count / tmxTileset->columns;
+		if (!tmxTileset->image.empty()) {
+			for (; count < tilecount; id++, count++) {
+				TilePtr tile = std::make_shared<Tile>();
 
-			tile->texture = std::make_shared<Texture>(
-				image,
-				x * tileset->tileWidth + spacing + (count * margin),
-				y * tileset->tileHeight + spacing + (count * margin),
-				tileset->tileWidth,
-				tileset->tileHeight); 
+				int x = count % tmxTileset->columns;
+				int y = count / tmxTileset->columns;
 
-			tileset->tiles[id] = tile;
+				tile->texture = std::make_shared<Texture>(
+					image,
+					x * tileset->tileWidth + spacing + (count * margin),
+					y * tileset->tileHeight + spacing + (count * margin),
+					tileset->tileWidth,
+					tileset->tileHeight);
+
+				tileset->tiles[id] = tile;
+			}
+		}
+		else {
+			for (TMXTilePtr tmxTile : tmxTileset->tiles) {
+				TilePtr tile = std::make_shared<Tile>();
+				tile->texture = std::make_shared<Texture>(
+					tmxTile->image,
+					0,
+					0,
+					tmxTile->imageWidth,
+					tmxTile->imageHeight);
+				map->getMapConfig()->images.push_back(tmxTile->image);
+
+				tileset->tiles[id++] = tile;
+			}
 		}
 
 		id = tmxTileset->firstgid;
 		for (TMXTilePtr tmxTile : tmxTileset->tiles) {
 			TilePtr tile = tileset->tiles[id + tmxTile->id];
-
-			if (tmxTileset->image.empty()) {
-				tile->texture->assetTag = tmxTile->image;
-				map->getMapConfig()->images.push_back(tmxTile->image);
-			}
 
 			if (!tmxTile->animation.empty()) {
 				tile->animated = true;
@@ -74,13 +85,11 @@ TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
 			}
 
 			if (!tmxTile->properties.empty()) {
-				string script;
 				for (TMXPropertyPtr prop : tmxTile->properties) {
 					if (prop->name == "script") {
-						script = string((char*) makeShared(prop->getValue<char*>()).get());
+						tile->script = prop->getValue<char[]>().get();
 					}
 				}
-				tile->script = script;
 			}
 		}
 	}
@@ -112,10 +121,8 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 			auto properties = object->properties;
 			for (TMXPropertyPtr prop : properties) {
 				if (string("script").compare(prop->name) == 0) {
-					auto ptr = prop->getValue<char*>();
-					auto shPtr = makeShared(ptr);
-					auto c = (char*)shPtr.get();
-					script = string(c);
+					auto ptr = prop->getValue<char[]>();
+					script = ptr.get();
 				}
 			}
 		}
@@ -141,6 +148,10 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 			obj->tile->texture->flippedDiagonal = flippedDiagonal;
 			obj->tile->texture->flippedHorizontal = flippedHorizontal;
 			obj->tile->texture->flippedVertical = flippedVertical;
+
+			if (!tile->script.empty()) {
+				script = tile->script;
+			}
 		}
 		else {
 			tile = std::make_shared<Tile>();
@@ -224,15 +235,12 @@ MapPtr loadMapFromTMX(const string& path, SystemManagerPtr systemManager) {
 		auto properties = tmxMap->properties;
 		for (TMXPropertyPtr prop : properties) {
 			if (string("script").compare(prop->name) == 0) {
-				auto ptr = prop->getValue<char*>();
-				auto shPtr = makeShared(ptr);
-				auto c = (char*)shPtr.get();
-				script = string(c);
+				auto ptr = prop->getValue<char[]>();
+				script = string(ptr.get());
 			}
 			else if (string("scale").compare(prop->name) == 0) {
 				auto ptr = prop->getValue<float>();
-				auto shPtr = makeShared(ptr);
-				scale = *shPtr.get();
+				scale = *ptr.get();
 			}
 		}
 	}

@@ -42,6 +42,7 @@ class AsepriteMetadata {
 public:
 	int w;
 	int h;
+	string image;
 	AsepriteTags frameTags;
 };
 

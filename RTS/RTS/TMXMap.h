@@ -136,10 +136,10 @@ public:
 	}
 
 	template<class ClassType>
-	weak_ptr<ClassType> getValue() {
+	shared_ptr<ClassType> getValue() {
 		shared_ptr<void> val = value;
 		shared_ptr<ClassType> converted = static_pointer_cast<ClassType>(val);
-		return weak_ptr<ClassType>(converted);
+		return converted;
 	}
 };
 

@@ -3,6 +3,7 @@
 
 #include"Entity.h"
 #include"Map.h"
+#include"Particle.h"
 #include"Serializer.h"
 #include"System.h"
 #include"ScriptComponent.h"
@@ -21,6 +22,7 @@ void applyInput(SystemManagerPtr systemManager, unsigned long entityId, Input in
 void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, const string& path, int width, int height);
 void applyAnimation(SystemManagerPtr systemManager, unsigned long entityId, AnimationSetPtr animationSet, int width, int height);
 void applyScript(SystemManagerPtr systemManager, unsigned long entityId, const string& script);
+void applyParticle(SystemManagerPtr systemManager, unsigned long entityId, const string& animation, Uint32 particleLifeMillis, const Vector2f& gravity, float particleWidth, float particleHeight, float spreadDist, float particleSpeed);
 
 
 class EntityFactory {

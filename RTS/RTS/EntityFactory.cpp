@@ -216,7 +216,47 @@ void applyScript(SystemManagerPtr systemManager, unsigned long entityId, const s
 	entity->addComponent(ComponentPtr(scriptComponent));
 }
 
+void applyParticle(SystemManagerPtr systemManager, unsigned long entityId, const string& animation, Uint32 particleLifeMillis, const Vector2f& gravity, float particleWidth, float particleHeight, float spreadDist, float particleSpeed) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
+	GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
+	ParticleCloudComponentPtr particleCloudComponent;
+	if (entity->getComponents().find(ComponentType::PARTICLE_COMPONENT) == entity->getComponents().end()) {
+		AnimationSystemPtr animationSystem = systemManager->getSystemByType<AnimationSystem>(SystemType::ANIMATION);
+		AnimationSetPtr animationSet = loadAsepriteAnimation(animation);
+		graphicsSystem->addTexture(animationSet->spritesheet, animationSet->spritesheet);
+
+		ParticleCloudPtr particleCloud = std::make_shared<ParticleCloud>();
+
+		particleCloud->particleLifeMillis = particleLifeMillis;
+		particleCloud->spreadDist = spreadDist;
+		particleCloud->gravity = std::make_shared<Vector2f>(gravity);
+		particleCloud->fade = 0.95f;
+
+		AnimationPtr animation = animationSet->animations.at(animationSet->defaultAnimationName);
+		for (auto anim : animation->frames) {
+			particleCloud->particleTextures.push_back(anim);
+		}
+
+		ParticleCloudDrawablePtr particleCloudDrawable = std::make_shared<ParticleCloudDrawable>(particleCloud);
+		particleCloudDrawable->setSize(particleWidth, particleHeight);
+		ParticleSystemPtr particleSystem = systemManager->getSystemByType<ParticleSystem>(SystemType::PARTICLE);
+		particleSystem->registerParticleEmitter(entity->id, particleCloudDrawable);
+		graphicsSystem->registerDrawable(entity->id, particleCloudDrawable);
+
+		particleCloudComponent = std::make_shared<ParticleCloudComponent>(entity->id, particleCloudDrawable);
+
+		entity->addComponent(particleCloudComponent);
+	}
+	else {
+		particleCloudComponent = entity->getComponentByType<ParticleCloudComponent>(ComponentType::PARTICLE_COMPONENT);
+	}
+
+	particleCloudComponent->setGravity(gravity.x, gravity.y);
+	particleCloudComponent->setSpeed(particleSpeed);
+	particleCloudComponent->setParticleMaxRadius(spreadDist);
+}
 
 EntityFactory::EntityFactory(SystemManagerPtr systemManager) {
 	mSystemManager = systemManager;

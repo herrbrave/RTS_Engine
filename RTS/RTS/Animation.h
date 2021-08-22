@@ -240,6 +240,10 @@ public:
 		this->animationHandler = animationHandler;
 	}
 
+	AnimationDrawable(const rapidjson::Value& root) : Drawable(root) {
+		this->animationHandler = std::make_shared<AnimationHandler>(root);
+	}
+
 	void draw(Graphics& graphicsRef, const Vector2f& position) override {
 		if (animationHandler->state == AnimationState::STOPPED) {
 			return;
@@ -249,7 +253,12 @@ public:
 	}
 
 	void onSerialize(Serializer& serializer) const override {
+		serializer.writer.StartObject();
 
+		serializer.writer.String("animationHandler");
+		animationHandler->serialize(serializer);
+
+		serializer.writer.EndObject();
 	}
 };
 
@@ -262,7 +271,7 @@ public:
 	}
 
 	AnimationComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::ANIMATION_COMPONENT) {
-		//this->animationHandler = AnimationHandlerPtr(new AnimationHandler(root["animationHandler"]));
+		this->aninmationDrawable = std::make_shared<AnimationDrawable>(root["aninmationDrawable"]);
 	}
 
 	float getAngle() {

@@ -52,6 +52,7 @@ AsepriteMetadataPtr parseMetadata(const rapidjson::Value& value) {
 
 	metadata->w = value["size"]["w"].GetInt();
 	metadata->h = value["size"]["h"].GetInt();
+	metadata->image = value["image"].GetString();
 
 	// parse tags
 	parseTags(value["frameTags"], metadata->frameTags);

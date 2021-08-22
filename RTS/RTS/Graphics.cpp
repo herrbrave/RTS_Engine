@@ -189,6 +189,8 @@ void SDLGraphics::renderTexture(TexturePtr texture, float x, float y, float w, f
 	AssetPtr asset(mAssetVendor->getAsset(texture->assetTag));
 	shared_ptr<SDL_Texture> sdlTexture = asset->getAsset<SDL_Texture>();
 	
+	bool laser = texture->assetTag == "Assets/KenneyJam/Objects/laser.png";
+
 	SDL_RendererFlip flip = SDL_FLIP_NONE;
 	if (texture->flippedHorizontal) flip = SDL_FLIP_HORIZONTAL;
 	if (texture->flippedVertical) flip = SDL_FLIP_VERTICAL;

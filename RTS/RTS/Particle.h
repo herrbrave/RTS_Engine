@@ -49,8 +49,8 @@ public:
 	vector<TexturePtr> particleTextures;
 	float fade = 0.9f;
 	Vector2fPtr gravity{ nullptr };
-	float startAngle = 90.0f;
-	float endAngle = 270.0f;
+	float startAngle = 0.0f;
+	float endAngle = 360.0f;
 };
 
 class ParticleEmitter {
@@ -73,10 +73,17 @@ public:
 
 	DrawableType getType() override;
 
+	void play();
+
+	void stop();
+
 protected:
 	void onSerialize(Serializer& serializer) const override {
 
 	}
+	
+private:
+	bool playing = true;
 };
 
 class ParticleCloudComponent : public Component {
@@ -93,4 +100,16 @@ public:
 	void setFade(float fade);
 	void setGravity(float x, float y);
 	void setSpawnAngleRange(float start, float end);
+	void play();
+	void stop();
+
+	void setZOrder(int order) {
+		this->particleCloudDrawable->setDrawDepth(order);
+
+		EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(eventData);
+	}
+
+	void serialize(Serializer& serializer) const override {
+	}
 };

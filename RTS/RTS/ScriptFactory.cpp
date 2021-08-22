@@ -24,6 +24,7 @@ void LuaScriptFactory::initialize(LuaScriptPtr script, unsigned long entityId) {
 	int CAMERA = script->state["registrar"]["CAMERA"];
 	int MOUSE_MOVE = script->state["registrar"]["MOUSE_MOVE"];
 	int MAP = script->state["registrar"]["MAP"];
+	int SOUND = script->state["registrar"]["SOUND"];
 
 	script->state["IntList"].SetClass<LuaFriendlyIntVector>(
 		"size", &LuaFriendlyIntVector::size,
@@ -77,6 +78,9 @@ void LuaScriptFactory::initialize(LuaScriptPtr script, unsigned long entityId) {
 	}
 	if (MAP) {
 		this->registerMap(script);
+	}
+	if (SOUND) {
+		this->registerSound(script);
 	}
 
 	auto output = script->invoke("setup");
@@ -190,7 +194,8 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		"multiply", &LuaFriendlyVector2f::muliply,
 		"dot", &LuaFriendlyVector2f::dot,
 		"add", &LuaFriendlyVector2f::add,
-		"subtract", &LuaFriendlyVector2f::subtract);
+		"subtract", &LuaFriendlyVector2f::subtract,
+		"moveToward", &LuaFriendlyVector2f::moveToward);
 
 	script->state["moveAndCollide"] = [this](int entityId, double x, double y) {
 		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
@@ -254,7 +259,21 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		const Vector2f& position = physicsComponent->getPosition();
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(position);
 
-		toDelete.push_back(VoidPtr(vec));
+		return *vec;
+	};
+
+	script->state["getScreenPosition"] = [this](int entityId) -> LuaFriendlyVector2f& {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+		CameraPtr camera = makeShared(graphicsSystem->getCamera());
+
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+		Vector2f position;
+		position.set(physicsComponent->getPosition().x - camera->position->x, physicsComponent->getPosition().y - camera->position->y);
+
+		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(position);
 
 		return *vec;
 	};
@@ -276,8 +295,6 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		auto vec = *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(physicsComponent->getVelocity())));
-
-		toDelete.push_back(VoidPtr(&vec));
 
 		return vec;
 	};
@@ -314,8 +331,6 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 			ids->push(b->id);
 		}
 
-		toDelete.push_back(VoidPtr(ids));
-
 		return *ids;
 	};
 
@@ -327,8 +342,6 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		if (!body->isCollidable()) {
 			return *ids;
 		}
-
-		toDelete.push_back(VoidPtr(ids));
 
 		vector<BodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
@@ -464,9 +477,26 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 
 			drawableComponent->setZOrder(order);
 		}
-		else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
+	};
+
+	script->state["setAnimationZOrder"] = [this](int entityId, int order) {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
 			AnimationComponentPtr animationComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
 			animationComponent->setZOrder(order);
+		}
+	};
+
+	script->state["setParticleZOrder"] = [this](int entityId, int order) {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		if (entity->getComponents().find(ComponentType::PARTICLE_COMPONENT) != entity->getComponents().end()) {
+			ParticleCloudComponentPtr drawableComponent = entity->getComponentByType<ParticleCloudComponent>(ComponentType::PARTICLE_COMPONENT);
+
+			drawableComponent->setZOrder(order);
 		}
 	};
 
@@ -540,34 +570,28 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 		}
 	};
 
-	script->state["addParticle"] = [this](int entityId, int particleLifeMillis, int spreadDist, int gravX, int gravY, int partW, int partH) {
+	script->state["addParticle"] = [this](int entityId, const string& animation, int particleLifeMillis, int spreadDist, double gravX, double gravY, int partW, int partH, double particleSpeed) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-		graphicsSystem->addTexture("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", "Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png");
-		ParticleCloudPtr particleCloud = std::make_shared<ParticleCloud>();
+		Vector2f grav(gravX, gravY);
+		applyParticle(mSystemManager, entityId, animation, particleLifeMillis, grav, partW, partH, spreadDist, particleSpeed);
+	};
 
-		particleCloud->particleLifeMillis = particleLifeMillis;
-		particleCloud->spreadDist = spreadDist;
-		particleCloud->gravity = std::make_shared<Vector2f>((float)gravX, (float)gravY);
-		particleCloud->fade = 0.95f;
+	script->state["playParticle"] = [this](int entityId) {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 0, 0, 16, 16));
-		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 16, 0, 16, 16));
-		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 32, 0, 16, 16));
-		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 48, 0, 16, 16));
-		particleCloud->particleTextures.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Visual FX/Looping Fire/Fireball 16x16.png", 64, 0, 16, 16));
+		ParticleCloudComponentPtr particleCloud = entity->getComponentByType<ParticleCloudComponent>(ComponentType::PARTICLE_COMPONENT);
+		particleCloud->play();
+	};
 
-		ParticleCloudDrawablePtr particleCloudDrawable = std::make_shared<ParticleCloudDrawable>(particleCloud);
-		particleCloudDrawable->setSize(partW, partH);
-		ParticleSystemPtr particleSystem = mSystemManager->getSystemByType<ParticleSystem>(SystemType::PARTICLE);
-		particleSystem->registerParticleEmitter(entity->id, particleCloudDrawable);
+	script->state["stopParticle"] = [this](int entityId) {
+		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		DrawableComponentPtr drawableComponent = std::make_shared<DrawableComponent>(entity->id, particleCloudDrawable);
-		graphicsSystem->registerDrawable(entity->id, particleCloudDrawable);
-		drawableComponent->setZOrder(10);
-		entity->addComponent(drawableComponent);
+		ParticleCloudComponentPtr particleCloud = entity->getComponentByType<ParticleCloudComponent>(ComponentType::PARTICLE_COMPONENT);
+		particleCloud->stop();
 	};
 }
 
@@ -741,7 +765,6 @@ void LuaScriptFactory::registerMouseMove(LuaScriptPtr script) {
 	};
 }
 
-
 void LuaScriptFactory::registerScript(LuaScriptPtr script) {
 
 	script->state["setScript"] = [this](int entityId, string path) {
@@ -750,91 +773,28 @@ void LuaScriptFactory::registerScript(LuaScriptPtr script) {
 }
 
 void LuaScriptFactory::registerUi(LuaScriptPtr script) {
+	script->state["createLabel"] = [this](string text, int fontSize, int x, int y) -> int {
+		EntityPtr entity = mWidgetFactory->createLabel(text, fontSize, x, y);
 
-	script->state["setText"] = [this](int entityId, string text, string font, int r, int g, int b) {
-		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
-		EntityPtr entity = entitySystem->getEntityById(entityId);
-
-		PhysicsComponentPtr physicsComponent;
-		if (entity->getComponents().find(ComponentType::PHYSICS_COMPONENT) == entity->getComponents().end()) {
-			PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
-			BodyPtr blockBody(GCC_NEW Body(entity->id, 0, 0, 0, 0));
-			physicsSystem->registerBody(entity->id, blockBody);
-			physicsComponent.reset(GCC_NEW PhysicsComponent(entity->id, blockBody));
-			entity->addComponent(physicsComponent);
-		}
-		else {
-			physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
-		}
-		LabelComponentPtr labelComponent;
-		if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) == entity->getComponents().end()) {
-			GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-
-			TextDrawablePtr drawable(GCC_NEW TextDrawable(text, font, 12));
-			drawable->setDrawDepth(100);
-			drawable->setColor(r, g, b, 255);
-			graphicsSystem->registerDrawable(entity->id, drawable);
-
-			labelComponent.reset(GCC_NEW LabelComponent(entity->id, drawable));
-			entity->addComponent(labelComponent);
-		}
-		else {
-			labelComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
-		}
-
-		labelComponent->setText(text);
+		return entity->id;
 	};
 
-	script->state["setProgress"] = [this](int entityId, string location, int progress, int maxProgress) {
+	script->state["createProgress"] = [this](int x, int y, int w, int h, int progressMax, int currentProgress) -> int {
+		EntityPtr entity = mWidgetFactory->createProgressBar(x, y, w, h, progressMax, currentProgress);
+
+		return entity->id;
+	};
+
+	script->state["setText"] = [this](int entityId, string text, int fontSize, int r, int g, int b) {
+		applyLabel(mSystemManager, entityId, text, mWidgetFactory->getUIConfig()->fontTag, fontSize, r, g, b, 255);
+	};
+
+	script->state["setProgress"] = [this](int entityId, int progress, int maxProgress) {
 		EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
-		EntityPtr progressEntity{ nullptr };
-		auto it = entity->children.begin();
-		while (it != entity->children.end()) {
-			EntityPtr temp = *it;
-			if (temp->getComponents().find(ComponentType::PROGRESS_COMPONENT) != temp->getComponents().end()) {
-				progressEntity = temp;
-				break;
-			}
-		}
-
-		if (progressEntity != nullptr) {
-			ProgressComponentPtr progressBar = progressEntity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT);
-			progressBar->setProgress(progress, maxProgress);
-		}
-		else {
-			int x = 0;
-			int y = 0;
-			int w = 0;
-			int h = 8;
-			if (string("top").compare(location) == 0) {}
-			if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
-				DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
-				DrawablePtr drawable = drawableComponent->getDrawable();
-				w = drawable->width;
-				if (string("top").compare(location) == 0) {
-					y -= (drawable->height / 2) + 4;
-				}
-				else if (string("bottom").compare(location) == 0) {
-					y += (drawable->height / 2) + 4;
-				}
-			}
-			else if (entity->getComponents().find(ComponentType::ANIMATION_COMPONENT) != entity->getComponents().end()) {
-				AnimationComponentPtr drawableComponent = entity->getComponentByType<AnimationComponent>(ComponentType::ANIMATION_COMPONENT);
-				w = drawableComponent->aninmationDrawable->width;;
-				if (string("top").compare(location) == 0) {
-					y -= (drawableComponent->aninmationDrawable->height / 2) + 4;
-				}
-				else if (string("bottom").compare(location) == 0) {
-					y += (drawableComponent->aninmationDrawable->height / 2) + 4;
-				}
-			}
-
-			progressEntity = mWidgetFactory->createProgressBar(x, y, w, h, maxProgress, progress);
-			entity->children.push_back(progressEntity);
-			progressEntity->parent = entity;
-		}
+		ProgressComponentPtr progressComponent = entity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT);
+		progressComponent->setProgress(progress, maxProgress);
 	};
 }
 
@@ -863,7 +823,7 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 		GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
 		CameraPtr camera = makeShared(graphicsSystem->getCamera());
-		camera->position->set(Vector2f(dx, dy));
+		camera->position->set(Vector2f(dx - graphicsSystem->getGraphicsConfig()->mWidth / 2.0f, dy - graphicsSystem->getGraphicsConfig()->mHeight / 2.0f));
 	};
 
 
@@ -874,12 +834,48 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 
 		auto vec = *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(*camera->position)));
 
-		toDelete.push_back(VoidPtr(&vec));
-
 		return vec;
 	};
 }
 
 void LuaScriptFactory::registerMap(LuaScriptPtr script) {
 
+}
+
+void LuaScriptFactory::registerSound(LuaScriptPtr script) {
+	script->state["loadSound"] = [this](const string& path, const string& tag) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->loadSound(path, tag, SoundType::SOUND);
+	};
+
+	script->state["loadMusic"] = [this](const string& path, const string& tag) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->loadSound(path, tag, SoundType::MUSIC);
+	};
+
+	script->state["playSound"] = [this](const string& tag, int channel, int loop) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->playSound(tag, channel, loop);
+	};
+
+	script->state["playMusic"] = [this](const string& tag) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->playMusic(tag);
+	};
+
+	script->state["stopMusic"] = [this](const string& tag) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->stopMusic(tag);
+	};
+
+	script->state["stopSound"] = [this](const string& tag, int channel) {
+		SoundSystemPtr soundSystem = mSystemManager->getSystemByType<SoundSystem>(SystemType::SOUND);
+
+		soundSystem->stopSound(tag, channel);
+	};
 }

@@ -53,6 +53,7 @@ int LabelComponent::getFontSize() {
 SectionDrawable::SectionDrawable(float width, float height, Vector2f* positionOffset, TexturePtr texture) : Drawable(width, height) {
 	mPosOffset = Vector2fPtr(positionOffset);
 	mTexture = texture;
+	this->isUi = true;
 }
 
 void SectionDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
@@ -102,6 +103,7 @@ ButtonDrawable::ButtonDrawable(float width, float height, ButtonConfigPtr button
 			count++;
 		}
 	}
+	this->isUi = true;
 }
 
 void ButtonDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
@@ -215,6 +217,7 @@ PanelDrawable::PanelDrawable(float width, float height, PanelConfigPtr panelConf
 			count++;
 		}
 	}
+	this->isUi = true;
 }
 
 void PanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
@@ -226,6 +229,7 @@ void PanelDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
 
 ItemPanelDrawable::ItemPanelDrawable(string name, float width, float height) : Drawable(width, height), name(name), drawableWidth(width), drawableHeight(height) {
 	this->drawawbleArea = std::make_shared<Texture>(name, 0, 0, width, height);
+	this->isUi = true;
 }
 
 void ItemPanelDrawable::update(Graphics& graphicsRef) {

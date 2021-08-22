@@ -6,6 +6,8 @@
 #include<cmath>
 #include<memory>
 
+#define CMP_EPSILON 0.00001
+
 class Vector2f;
 typedef shared_ptr<Vector2f> Vector2fPtr;
 typedef weak_ptr<Vector2f> WeakVector2fPtr;
@@ -96,6 +98,13 @@ public:
 
 	float magnitude() {
 		return std::sqrt((x * x) + (y * y));
+	}
+
+	Vector2f moveToward(const Vector2f& to, const float delta) const {
+		Vector2f vec(*this);
+		Vector2f vectorDelta = to - vec;
+		float mag = vectorDelta.magnitude();
+		return mag <= delta || mag < CMP_EPSILON ? to : vec + vectorDelta * (delta / mag);
 	}
 
 	void normalize() {

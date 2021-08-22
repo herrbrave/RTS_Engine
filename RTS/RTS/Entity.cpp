@@ -1,11 +1,28 @@
 #include"Entity.h"
 
 Entity::Entity(const rapidjson::Value& root) {
-	EntityPtr entity(this);
-	for (auto it = root["children"].Begin(); it != root["children"].End(); it++) {
-		auto child = std::make_shared<Entity>(*it);
-		child->parent = entity;
-		children.push_back(child);
+	/*if (root.FindMember("children") != root.MemberEnd()) {
+		EntityPtr entity = std::make_shared<Entity>(this);
+		for (auto it = root["children"].Begin(); it != root["children"].End(); it++) {
+			auto child = std::make_shared<Entity>(*it);
+			child->parent = entity;
+			children.push_back(child);
+		}
+	}*/
+
+	for (auto it = root["components"].MemberBegin(); it != root["components"].MemberEnd(); it++) {
+		const rapidjson::Value& component = it->value;
+
+		switch (COMPONENT_VALUE_MAP.at((Uint8) std::stoi(it->name.GetString()))) {
+			case ComponentType::DRAWABLE_COMPONENT: {
+				this->addComponent(std::make_shared<DrawableComponent>(this->id, component));
+				break;
+			}
+			case ComponentType::ANIMATION_COMPONENT: {
+				this->addComponent(std::make_shared<AnimationComponent>(this->id, component));
+				break;
+			}
+		}
 	}
 }
 

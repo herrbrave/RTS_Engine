@@ -76,6 +76,7 @@ void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const st
 	}
 	else {
 		TextDrawablePtr textDrawable = std::make_shared<TextDrawable>(text, font, fontSize);
+		textDrawable->setDrawDepth(100);
 		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textDrawable));
 		labelComponent = std::make_shared<LabelComponent>(entityId, textDrawable);
 
@@ -99,6 +100,7 @@ void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float
 	}
 	else {
 		ProgressBarDrawablePtr textureDrawable = std::make_shared<ProgressBarDrawable>(w, h, maxProgress, currentProgress);
+		textureDrawable->setDrawDepth(100);
 		graphicsSystem->registerDrawable(entity->id, static_cast<DrawablePtr>(textureDrawable));
 		progressComponent = std::make_shared<ProgressComponent>(entityId, textureDrawable);
 
@@ -319,4 +321,8 @@ EntityPtr WidgetFactory::createTextBox(float x, float y, float width, float heig
 	applyTextbox(mSystemManager, entity->id, width, height, text, uiConfig->fontTag, fontSize, this->uiConfig->textboxConfig);
 
 	return entity;
+}
+
+UIConfigPtr WidgetFactory::getUIConfig() {
+	return this->uiConfig;
 }

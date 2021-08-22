@@ -296,7 +296,7 @@ protected:
 
 	string text;
 	string font;
-	int fontSize;
+	int fontSize = 12;
 };
 
 

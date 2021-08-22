@@ -1,6 +1,10 @@
 #include"Particle.h"
 
 void ParticleCloudDrawable::draw(Graphics& graphicsRef, const Vector2f& position) {
+	if (!this->playing) {
+		return;
+	}
+
 	for (ParticlePtr particle : particles) {
 		Vector2f pos = *particle->position + position;
 		graphicsRef.renderTexture(particleCloud->particleTextures[particle->frame], pos.x, pos.y, this->width, this->height, 0, 255, 255, 0, particle->fade * 255);
@@ -8,6 +12,10 @@ void ParticleCloudDrawable::draw(Graphics& graphicsRef, const Vector2f& position
 }
 
 void ParticleCloudDrawable::update(Uint32 delta) {
+	if (!this->playing) {
+		return;
+	}
+
 	if (particles.size() < MAX_PARTICLES) {
 		for (int count = 0; count < GENERATED_PER_FRAME; count++) {
 			int range = (int) round(particleCloud->endAngle - particleCloud->startAngle);
@@ -60,6 +68,15 @@ DrawableType  ParticleCloudDrawable::getType() {
 	return DrawableType::PARTICLE;
 }
 
+void ParticleCloudDrawable::play() {
+	this->playing = true;
+}
+
+void ParticleCloudDrawable::stop() {
+	this->playing = false;
+	this->particles.clear();
+}
+
 void ParticleCloudComponent::setParticleLifeMillis(Uint32 time) {
 	this->particleCloudDrawable->particleCloud->particleLifeMillis = time;
 }
@@ -83,4 +100,12 @@ void  ParticleCloudComponent::setGravity(float x, float y) {
 void  ParticleCloudComponent::setSpawnAngleRange(float start, float end) {
 	this->particleCloudDrawable->particleCloud->startAngle = start;
 	this->particleCloudDrawable->particleCloud->endAngle = end;
+}
+
+void ParticleCloudComponent::play() {
+	this->particleCloudDrawable->play();
+}
+
+void ParticleCloudComponent::stop() {
+	this->particleCloudDrawable->stop();
 }

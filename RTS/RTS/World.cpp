@@ -56,7 +56,7 @@ void World::serialize(Serializer& serializer) const {
 	}
 	serializer.writer.EndArray();
 
-	serializer.writer.String("entitites");
+	serializer.writer.String("entities");
 	serializer.writer.StartArray();
 	for (EntityPtr entity : this->entities) {
 		entity->serialize(serializer);

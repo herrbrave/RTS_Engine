@@ -44,6 +44,8 @@ public:
 	EntityPtr createProgressBar(float x, float y, float width, float height, unsigned int progressMax, unsigned int currentProgress);
 	EntityPtr createTextBox(float x, float y, float width, float height, const string& text, int fontSize);
 
+	UIConfigPtr getUIConfig();
+
 private:
 	UIConfigPtr uiConfig;
 };

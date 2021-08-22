@@ -9,8 +9,10 @@
 #include<rapidjson\document.h>
 #include<rapidjson\prettywriter.h>
 
+#include"Animation.h"
 #include"Component.h"
 #include"Constants.h"
+#include"Graphics.h"
 #include"State.h"
 #include"Vector2f.h"
 

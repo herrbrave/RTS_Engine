@@ -8,8 +8,8 @@ void RTS::setup() {
 	srand(time(NULL));
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(1024);
-	config->setWindowHeight(768);
+	config->setWindowWidth(1920);
+	config->setWindowHeight(1080);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 
@@ -27,44 +27,9 @@ void RTS::setup() {
 
 	worldFactory = std::make_shared<WorldFactory>(mSystemManager, mEntityFactory);
 
-	// world = worldFactory->createWorldFromTMXMap("Assets/test/grid_test.json");
-	//Serializer serializer;
-	//world->serialize(serializer);
-	//serializer.writeTo("world.json");b
-
-	//mMap = mMapFactory->createTMXMap("Assets/test/grid_test.json");
-
-	//mEntity = mEntityFactory->createDefault(25, 25, 50, 50, 0, 0, 0, 255);
-	//applyScript(mSystemManager, mEntity->id, "Games/test/inventory_test.lua");
+	world = worldFactory->createWorldFromTMXMap("Assets/KenneyJam/KenneyJam.json");
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
-	graphicsSystem->addTexture("Assets/ui/ui_sheet.png", "Assets/ui/ui_sheet.png");
-	TexturePtr texture = std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", 32, 0, 16, 16);
-
-	mWidgetFactory->createTextBox(512, 348, 700, 25, "", 14);
-
-	/*
-	graphicsSystem->addTexture("test_panel", 512, 512);
-	graphicsSystem->addTexture("Assets/HackNSlasher/Items/Weapons.png", "Assets/HackNSlasher/Items/Weapons.png");
-	graphicsSystem->addTexture("Assets/HackNSlasher/Menu/Menu.png", "Assets/HackNSlasher/Menu/Menu.png");
-	ItemPanelDrawablePtr panel = std::make_shared<ItemPanelDrawable>("test_panel", 512.0f, 512.0f);
-	EntityPtr p = mEntityFactory->createPhysicsEntity(512, 348, 512, 512, false);
-
-	ItemPanelComponentPtr drawableComponent = std::make_shared<ItemPanelComponent>(p->id, panel);
-	p->addComponent(drawableComponent);
-	graphicsSystem->registerDrawable(p->id, panel);
-
-	for (int y = 0; y < 5; y++) {
-		for (int x = 0; x < 5; x++) {
-			ItemPtr item = std::make_shared<Item>();
-			item->texture.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Menu/Menu.png", 64, 84, 28, 28));
-			item->texture.push_back(std::make_shared<Texture>("Assets/HackNSlasher/Items/Weapons.png", x * 16, y * 16, 16, 16));
-			item->name = std::to_string(x) + ", " + std::to_string(y);
-			drawableComponent->addItem(item);
-		}
-	}
-	*/
 
 	graphicsSystem->initialize();
 }

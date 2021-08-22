@@ -50,6 +50,7 @@ private:
 	void registerCamera(LuaScriptPtr script);
 	void registerMouseMove(LuaScriptPtr script);
 	void registerMap(LuaScriptPtr script);
+	void registerSound(LuaScriptPtr script);
 
 	EntityFactoryPtr mEntityFactory;
 	WidgetFactoryPtr mWidgetFactory;
@@ -114,6 +115,11 @@ public:
 	void scale(double scaler) {
 		this->vector->x *= scaler;
 		this->vector->y *= scaler;
+	}
+
+	void moveToward(double x, double y, double delta) {
+		Vector2f to(x, y);
+		this->vector->set(this->vector->moveToward(to, delta));
 	}
 
 	double dot(LuaFriendlyVector2f& vec) {

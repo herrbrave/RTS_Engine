@@ -109,3 +109,22 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 
 	return world;
 }
+
+WorldPtr WorldFactory::createWorld(const string& path) {
+	std::ifstream file;
+	file.open(path);
+	if (!file.is_open()) {
+		ERR("Unable to open file: " + path);
+	}
+	std::string line;
+	std::string builder;
+	while (std::getline(file, line)) {
+		builder.append(line);
+	}
+	file.close();
+
+	rapidjson::Document doc;
+	doc.Parse(builder.c_str());
+
+	return std::make_shared<World>((const rapidjson::Value&) doc);
+}

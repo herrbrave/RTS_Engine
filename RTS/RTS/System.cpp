@@ -214,7 +214,7 @@ void GraphicsSystem::initialize() {
 	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 
-	this->sortDrawableList();
+	this->sortDrawableList(true);
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
@@ -237,8 +237,8 @@ void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
 	}
 }
 
-void GraphicsSystem::sortDrawableList() {
-	if (sortedThisFrame) {
+void GraphicsSystem::sortDrawableList(bool forceSort) {
+	if (sortedThisFrame && !forceSort) {
 		return;
 	}
 	mDrawableList.sort([](const DrawablePtr& first, const DrawablePtr& second){
@@ -797,6 +797,36 @@ SoundControllerPtr SoundSystem::createController(const std::string& assetTag, So
 	return SoundControllerPtr(GCC_NEW DefaultSoundController(SoundPtr(GCC_NEW Sound(assetTag, soundType)), mSystemManager));
 }
 
+void SoundSystem::playMusic(const string& assetTag, int loop) {
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
+	AssetPtr asset(assetSystem->getAsset(assetTag));
+	shared_ptr<Mix_Music> mix(asset->getAsset<Mix_Music>()); 
+	Mix_PlayMusic(mix.get(), loop);
+	Mix_VolumeMusic(32);
+}
+
+void SoundSystem::playSound(const string& assetTag, int channel, int loop) {
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
+	AssetPtr asset(assetSystem->getAsset(assetTag));
+	shared_ptr<Mix_Chunk> mix = asset->getAsset<Mix_Chunk>();
+	Mix_Volume(channel, 32);
+	Mix_PlayChannel(channel, mix.get(), loop);
+}
+
+void SoundSystem::stopMusic(const string& assetTag) {
+	AssetSystemPtr assetSystem = mSystemManager->getSystemByType<AssetSystem>(SystemType::ASSET);
+	AssetPtr asset(assetSystem->getAsset(assetTag));
+	shared_ptr<Mix_Music> mix(asset->getAsset<Mix_Music>());
+	Mix_HaltMusic();
+}
+
+void SoundSystem::stopSound(const string& assetTag, int channel) {
+	Mix_HaltChannel(channel);
+}
+
+void SoundSystem::pause(const string& assetTag) {
+
+}
 
 WorldSystem::WorldSystem(SystemManagerPtr systemManager) : System(SystemType::WORLD, systemManager) {}
 

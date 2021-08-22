@@ -54,12 +54,10 @@ void parseTMXProperties(const rapidjson::Value& tiles, TMXProperties& props) {
 		prop->name = tile["name"].GetString();
 		prop->type = tile["type"].GetString();
 		if (prop->type == "string") {
-			auto v = tile["value"].GetString();
+			const char* v = tile["value"].GetString();
 			auto len = strlen(v) + 1;
 			char* cpy = new char[len];
-			for (int index = 0; index < len; index++) {
-				cpy[index] = v[index];
-			}
+			strcpy(cpy, v);
 
 			auto ptr = VoidPtr(static_cast<void*>(cpy));
 			prop->value = ptr;

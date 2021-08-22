@@ -234,7 +234,7 @@ public:
 
 	void drawTexture(TexturePtr texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-	void sortDrawableList();
+	void sortDrawableList(bool forceSort = false);
 
 	void getDrawableById(unsigned long entityId, vector<WeakDrawablePtr>& drawables);
 
@@ -503,6 +503,16 @@ public:
 	}
 
 	void loadSound(const string& path, const string& assetTag, SoundType soundType);
+
+	void playSound(const string& assetTag, int channel, int loop = -1);
+
+	void playMusic(const string& assetTag, int loop = -1);
+
+	void stopSound(const string& assetTag, int channel);
+
+	void stopMusic(const string& assetTag);
+
+	void pause(const string& assetTag);
 
 	SoundControllerPtr createController(const string& assetTag, SoundType soundType);
 

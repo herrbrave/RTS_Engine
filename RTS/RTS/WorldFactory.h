@@ -15,6 +15,7 @@ public:
 	WorldFactory(SystemManagerPtr systemManager, EntityFactoryPtr entityFactory);
 
 	WorldPtr createWorldFromTMXMap(const string& path);
+	WorldPtr createWorld(const string& path);
 
 private:
 	EntityFactoryPtr entityFactory;

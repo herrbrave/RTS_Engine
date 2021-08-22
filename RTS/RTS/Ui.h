@@ -130,6 +130,7 @@ public:
 	ProgressBarDrawable(float width, float height, unsigned int progressMax, unsigned int currentProgress) : Drawable(width, height) {
 		this->progressMax = progressMax;
 		this->currentProgress = currentProgress;
+		this->isUi = true;
 	}
 
 	void draw(Graphics& graphicsRef, const Vector2f& position) override;
@@ -161,6 +162,7 @@ protected:
 class LabelComponent : public Component {
 public:
 	LabelComponent(unsigned long entityId, TextDrawablePtr textDrawable) : Component(entityId, ComponentType::LABEL_COMPONENT), textDrawable(textDrawable) {
+		textDrawable->isUi = true;
 	}
 
 	void serialize(Serializer& serializer) const override {/* no op */ }
@@ -436,6 +438,7 @@ public:
 		this->right = textboxConfig->textboxSections["right"];
 		this->sectionWidth = textboxConfig->sectionWidth;
 		this->cursorIndex = text.length();
+		this->isUi = true;
 	}
 
 	void setText(const string& text) {
