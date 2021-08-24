@@ -252,7 +252,6 @@ void  GraphicsSystem::draw() {
 
 	int totalCount = 0;
 	int drawnCount = 0;
-
 	for (auto drawable : mDrawableList) {
 		totalCount++;
 		if (!drawable->isShowing()) {
@@ -353,6 +352,12 @@ void GraphicsSystem::addTexture(const string& assetTag, int width, int height) {
 	}
 
 	assetSystem->registerAsset(mGraphics->createTexture(width, height, assetTag));
+}
+
+void GraphicsSystem::clearTexture(const string& assetTag) {
+	mGraphics->drawToTexture(assetTag);
+	mGraphics->onBeforeDraw();
+	mGraphics->drawToScreen();
 }
 
 void GraphicsSystem::drawToTexture(const string& assetTag) {
@@ -851,24 +856,36 @@ void WorldSystem::loadWorld(string& path) {
 }
 
 void WorldSystem::addWorld(WorldPtr world) {
+
 	this->world = world;
-
-	for (int y = 0; y < world->map->getMapHeight(); y++) {
-		for (int x = 0; x < world->map->getMapWidth(); x++) {
-			this->registerEntityAndComponents(world->getGridAt(x, y));
-		}
-	}
-
-	for (EntityPtr entity : world->entities) {
-		this->registerEntityAndComponents(entity);
-	}
-
-	this->registerEntityAndComponents(world->script);
-
 }
 
 WorldPtr WorldSystem::getWorld() {
 	return this->world;
+}
+
+void WorldSystem::destroyWorld() {
+	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+	vector<unsigned int> ids;
+
+	for (auto ent : world->entities) {
+		ids.push_back(ent->id);
+	}
+
+	for (auto ent : ids) {
+		entitySystem->deregisterEntity(ent);
+	}
+
+	for (auto row : world->grids) {
+		for (auto grid : row) {
+			entitySystem->deregisterEntity(grid->id);
+		}
+	}
+
+	if (world->script != nullptr) {
+		entitySystem->deregisterEntity(world->script->id);
+	}
 }
 
 void WorldSystem::registerEntityAndComponents(EntityPtr entity) {

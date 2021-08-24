@@ -26,7 +26,8 @@ enum class EventType : Uint8 {
 	LOAD_ASSET = 6,
 	MOUSE_EVENT = 7,
 	KEY_EVENT = 8,
-	SCRIPT_LOADED = 9,	
+	SCRIPT_LOADED = 9,
+	LOAD_WORLD = 10,
 	ENTITY_DESTROYED = 99
 };
 
@@ -262,6 +263,19 @@ public:
 	}
 };
 
+class LoadWorldData : public EventData {
+public:
+	string path;
+
+	LoadWorldData(Uint32 timestamp, const string& path) : EventData(timestamp), path(path) {
+
+	}
+
+	const EventType getEventType() override {
+		return EventType::LOAD_WORLD;
+	}
+};
+
 class EventManager {
 public:
 	EventManager(EventManager const& eventManager) = delete;
@@ -325,6 +339,7 @@ private:
 		mEventListeners.emplace(EventType::LOAD_ASSET, EventDelegateList());
 		mEventListeners.emplace(EventType::MOUSE_EVENT, EventDelegateList());
 		mEventListeners.emplace(EventType::KEY_EVENT, EventDelegateList());
+		mEventListeners.emplace(EventType::LOAD_WORLD, EventDelegateList());
 	}
 };
 

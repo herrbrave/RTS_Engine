@@ -1,7 +1,7 @@
 registrar = {
 	ASSET = 0,
 	DRAWABLE = 1,
-	ENTITY = 0,
+	ENTITY = 1,
 	FACTORY = 1,
 	PHYSICS = 1,
 	ANIMATION = 0,
@@ -55,33 +55,7 @@ function onMouseUp(x, y, button)
 end
 
 function onMouseDown(x, y, button)
-	screenPos = getScreenPosition(entityId)
-	shipPos = getPosition(entityId)
-
-	mousePos = Vector2f.new(x, y)
-	mousePos:subtract(screenPos)
-
-	angle = math.atan(mousePos:getY(), mousePos:getX())
-	setAngle(entityId, angle * (180.0 / math.pi))
-
-	lazerVel = Vector2f.new(math.cos(angle), math.sin(angle))
-	lazerVel:scale(50)
-	shipPos:add(lazerVel)
-	lazerVel:normalize()
-	bullet = createPhysics(math.floor(shipPos:getX()), math.floor(shipPos:getY()), 37, 9)
-	setTexture("Assets/KenneyJam/Objects/laser.png", bullet, 37, 9, 0, 0, 37, 9)
-	setCircleCollision(bullet, 5)
-	setVelocity(bullet, lazerVel:getX(), lazerVel:getY())
-	setSpeed(bullet, 400)
-	setScript(bullet, "Games/KenneyJam/laser.lua")
-	setAngle(bullet, angle * (180.0 / math.pi))
-	setTag(bullet, "bullet")
-	setZOrder(bullet, 10)
-
-	shipPos = nil
-	screenPos = nil
-	mousPos = nil
-	lazerVel = nil
+	
 end
 
 function onKeyDown(keyId, ctrl, shft)
@@ -134,6 +108,13 @@ end
 -- Collition Callback --
 
 function onCollision(id)
+	tag = getTag(id)
+	if tag == "EXIT" then
+		destroyEntity(boostProgress)
+		destroyEntity(boostProgressLabel)
+		return
+	end
+
 	setPosition(entityId, position:getX(), position:getY())
 	vel:setX(0.0)
 	vel:setY(0.0)

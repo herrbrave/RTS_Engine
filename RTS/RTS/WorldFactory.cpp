@@ -1,7 +1,16 @@
  #include"WorldFactory.h"
 
-WorldFactory::WorldFactory(SystemManagerPtr systemManager, EntityFactoryPtr entityFactory) : systemManager(systemManager), entityFactory(entityFactory) {
+WorldFactory::WorldFactory(SystemManagerPtr sys, EntityFactoryPtr entityFactory) : systemManager(sys), entityFactory(entityFactory) {
+	EventDelegate destroyEntityDelegate([this](const EventData& eventData) {
+			LoadWorldData data = dynamic_cast<const LoadWorldData&>(eventData);
+			WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
 
+			worldSystem->destroyWorld();
+			worldSystem->addWorld(createWorldFromTMXMap(data.path));
+		});
+
+	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
+	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::LOAD_WORLD);
 }
 
 WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {

@@ -19,15 +19,14 @@ void RTS::setup() {
 
 	mWidgetFactory = std::make_shared<WidgetFactory>("Assets/ui/ui.json", mSystemManager);
 
+	worldFactory = std::make_shared<WorldFactory>(mSystemManager, mEntityFactory);
+
 	mSoundControllerFactory = std::make_shared<SoundControllerFactory>(mSystemManager);
 
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
-	mMapFactory = std::make_shared<MapFactory>(mEntityFactory, mLuaScriptFactory, mSystemManager);
-
-	worldFactory = std::make_shared<WorldFactory>(mSystemManager, mEntityFactory);
-
-	world = worldFactory->createWorldFromTMXMap("Assets/KenneyJam/KenneyJam.json");
+	WorldSystemPtr worldSystem = mSystemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/KenneyJam/KenneyJam.json"));
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 

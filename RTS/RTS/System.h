@@ -244,6 +244,8 @@ public:
 
 	void addTexture(const string& assetTag, int width, int height);
 
+	void clearTexture(const string& assetTag);
+
 	void drawToTexture(const string& assetTag);
 
 	void drawToScreen();
@@ -524,6 +526,8 @@ public:
 	WorldSystem(SystemManagerPtr systemManager);
 
 	void loadWorld(string& path);
+
+	void destroyWorld();
 
 	void addWorld(WorldPtr world);
 

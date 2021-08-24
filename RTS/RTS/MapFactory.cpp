@@ -10,6 +10,7 @@ void applyGrid(SystemManagerPtr systemManager, unsigned long entityId, GridPtr g
 	GridComponentPtr gridComponent = std::make_shared<GridComponent>(entity->id, gridDrawable, map->getMapConfig()->tileset);
 	entity->addComponent(gridComponent);
 	graphicsSystem->addTexture(grid->name, GRID_WIDTH * grid->tileW, GRID_HEIGHT * grid->tileH);
+	graphicsSystem->clearTexture(grid->name);
 
 	graphicsSystem->registerDrawable(entity->id, gridDrawable);
 }
@@ -41,8 +42,8 @@ TilesetPtr loadTilesetFromTMX(const TMXMapPtr tmxMap, MapPtr map) {
 
 				tile->texture = std::make_shared<Texture>(
 					image,
-					x * tileset->tileWidth + spacing + (count * margin),
-					y * tileset->tileHeight + spacing + (count * margin),
+					x * tileset->tileWidth + margin + ((count - 1) * spacing),
+					y * tileset->tileHeight + margin + ((count - 1) * spacing),
 					tileset->tileWidth,
 					tileset->tileHeight);
 
@@ -164,7 +165,7 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 		tile->collisionHeight = height;
 
 		// Tiled stored location from the top left corner.
-		int x = (int)round(object->x) * mapConfig->scale;
+		int x = (int)(round(object->x) + (object->width / 2)) * mapConfig->scale;
 		int y = (int)(round(object->y) - (object->height / 2)) * mapConfig->scale;
 
 		obj->position = std::make_shared<Vector2f>((float) x, (float) y);
@@ -286,44 +287,6 @@ MapPtr loadMapFromTMX(const string& path, SystemManagerPtr systemManager) {
 		else if (tmxLayer->type == "objectgroup") {
 			loadObjectLayerFromTMX(tmxLayer, map);
 		}
-	}
-
-	return map;
-}
-
-MapFactory::MapFactory(EntityFactoryPtr factory, LuaScriptFactoryPtr luaScriptFactory, SystemManagerPtr systemManager) {
-	mFactory = factory;
-	mSystemManager = systemManager;
-	mLuaScriptFactory = luaScriptFactory;
-}
-
-MapPtr MapFactory::createTMXMap(const string& path) {
-	MapPtr map = loadMapFromTMX(path, mSystemManager);
-
-	MapConfigPtr mapConfig = map->getMapConfig();
-	int gridWidth = map->getGridWidth();
-	int gridHeight = map->getGridHeight();
-	int width = map->getTileWidth() * GRID_WIDTH;
-	int height = map->getTileHeight() * GRID_HEIGHT;
-
-	for (int y = 0; y < gridHeight; y++) {
-		for (int x = 0; x < gridWidth; x++) {
-			EntityPtr entity = mFactory->createPhysicsEntity(x * width + (width / 2), y * height + (height / 2), width, height);
-
-			GridPtr grid = map->gridAt(x * GRID_WIDTH, y * GRID_HEIGHT);
-			applyGrid(mSystemManager, entity->id, grid, map);
-		}
-	}
-
-	if (!mapConfig->script.empty()) {
-		EntityPtr scriptObject = mFactory->createPhysicsEntity(-1, -1, 1, 1);
-		applyScript(mSystemManager, scriptObject->id, mapConfig->script);
-	}
-
-
-	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
-	for (string image : mapConfig->images) {
-		graphicsSystem->addTexture(image, image);
 	}
 
 	return map;

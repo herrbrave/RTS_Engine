@@ -18,9 +18,9 @@ public:
 		WidgetFactoryPtr widgetFactory,
 		SystemManagerPtr systemManager) {
 
-		this->mEntityFactory = entityFactory;
-		this->mWidgetFactory = widgetFactory;
-		this->mSystemManager = systemManager;
+		this->entityFactory = entityFactory;
+		this->widgetFactory = widgetFactory;
+		this->systemManager = systemManager;
 
 		EventDelegate scriptLoadedDelegate([this](const EventData& eventData) {
 			ScriptLoadedData data = dynamic_cast<const ScriptLoadedData&>(eventData);
@@ -49,12 +49,12 @@ private:
 	void registerAsset(LuaScriptPtr script);
 	void registerCamera(LuaScriptPtr script);
 	void registerMouseMove(LuaScriptPtr script);
-	void registerMap(LuaScriptPtr script);
+	void registerWorld(LuaScriptPtr script);
 	void registerSound(LuaScriptPtr script);
 
-	EntityFactoryPtr mEntityFactory;
-	WidgetFactoryPtr mWidgetFactory;
-	SystemManagerPtr mSystemManager;
+	EntityFactoryPtr entityFactory;
+	WidgetFactoryPtr widgetFactory;
+	SystemManagerPtr systemManager;
 
 	vector<VoidPtr> toDelete;
 };
