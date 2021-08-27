@@ -26,7 +26,7 @@ void RTS::setup() {
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
 	WorldSystemPtr worldSystem = mSystemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
-	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/KenneyJam/KenneyJam.json"));
+	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/test/PathMovementTest.json"));
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 

@@ -64,4 +64,21 @@ inline void ERR(const string& error) {
 
 typedef shared_ptr<void> VoidPtr;
 
+struct hash_pair {
+	template<class F, class S>
+	size_t operator()(const std::pair<F, S>& compare) const {
+		auto first = std::hash<F>{} (compare.first);
+		auto second = std::hash<S>{} (compare.second);
+
+		return first ^ second;
+	}
+};
+
+struct equal_pair {
+	template<class F, class S>
+	bool operator()(const std::pair<F, S>& left, const std::pair<F, S>& last) const {
+		return left.first == last.first && left.second == last.second;
+	}
+};
+
 #endif // !__CONSTANTS_H__

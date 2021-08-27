@@ -41,6 +41,26 @@ void LuaScriptFactory::initialize(LuaScriptPtr script, unsigned long entityId) {
 		"at", &LuaFriendlyStringMap::at,
 		"put", &LuaFriendlyStringMap::put);
 
+	script->state["Vector2f"].SetClass<LuaFriendlyVector2f, double, double>(
+		"getX", &LuaFriendlyVector2f::getX,
+		"getY", &LuaFriendlyVector2f::getY,
+		"setX", &LuaFriendlyVector2f::setX,
+		"setY", &LuaFriendlyVector2f::setY,
+		"normalize", &LuaFriendlyVector2f::normalize,
+		"magnitude", &LuaFriendlyVector2f::magnitude,
+		"truncate", &LuaFriendlyVector2f::truncate,
+		"scale", &LuaFriendlyVector2f::scale,
+		"multiply", &LuaFriendlyVector2f::muliply,
+		"dot", &LuaFriendlyVector2f::dot,
+		"add", &LuaFriendlyVector2f::add,
+		"subtract", &LuaFriendlyVector2f::subtract,
+		"moveToward", &LuaFriendlyVector2f::moveToward);
+
+	script->state["Vector2fList"].SetClass<LuaFriendlyVector2fVector>(
+		"size", &LuaFriendlyVector2fVector::size,
+		"at", &LuaFriendlyVector2fVector::at,
+		"push", &LuaFriendlyVector2fVector::push);
+
 	this->registerGeneral(script);
 
 	if (DRAWABLE) {
@@ -181,21 +201,6 @@ void LuaScriptFactory::registerEntity(LuaScriptPtr script) {
 }
 
 void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
-
-	script->state["Vector2f"].SetClass<LuaFriendlyVector2f, double, double>(
-		"getX", &LuaFriendlyVector2f::getX,
-		"getY", &LuaFriendlyVector2f::getY,
-		"setX", &LuaFriendlyVector2f::setX,
-		"setY", &LuaFriendlyVector2f::setY,
-		"normalize", &LuaFriendlyVector2f::normalize,
-		"magnitude", &LuaFriendlyVector2f::magnitude,
-		"truncate", &LuaFriendlyVector2f::truncate,
-		"scale", &LuaFriendlyVector2f::scale,
-		"multiply", &LuaFriendlyVector2f::muliply,
-		"dot", &LuaFriendlyVector2f::dot,
-		"add", &LuaFriendlyVector2f::add,
-		"subtract", &LuaFriendlyVector2f::subtract,
-		"moveToward", &LuaFriendlyVector2f::moveToward);
 
 	script->state["moveAndCollide"] = [this](int entityId, double x, double y) {
 		PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
@@ -839,9 +844,93 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 }
 
 void LuaScriptFactory::registerWorld(LuaScriptPtr script) {
+	script->state["Path"].SetClass<Path>(
+		"size", &Path::size,
+		"getX", &Path::getX,
+		"getY", &Path::getY);
+
 	script->state["loadWorld"] = [this](const string& path) {
 		LoadWorldData* eventData = GCC_NEW LoadWorldData(SDL_GetTicks(), path);
 		EventManager::getInstance().pushEvent(eventData);
+	};
+
+	script->state["getTileCoordinatesAtPoint"] = [this](double x, double y) -> LuaFriendlyVector2f& {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		if (x < 0.0 || x > world->getMap()->getMapWidthPixels() || y < 0.0 || y > world->getMap()->getMapHeightPixels()) {
+			Vector2f coord(-1, -1);
+			LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(coord);
+
+			return *vec;
+		}
+
+		Vector2f point(x, y);
+		EntityPtr grid = world->getGridAtPoint(point);
+		GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+		CellPtr cell = gridComponent->getCellAtPoint(point);
+
+		Vector2f coord(cell->x, cell->y);
+		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(coord);
+
+		return *vec;
+	};
+
+	script->state["pushTexture"] = [this](int x, int y, const string& path, double tx, double ty, double tw, double th) {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		if (x >= 0 && x < world->getMap()->getMapWidth() && y >= 0 && y < world->getMap()->getMapHeight()) {
+			GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+			graphicsSystem->addTexture(path, path);
+
+			EntityPtr grid = world->getGridWithTileAt(x, y);
+			GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+			TexturePtr texture = std::make_shared<Texture>(path, tx, ty, tw, th);
+			gridComponent->pushTexture(x, y, texture);
+		}
+	};
+
+	script->state["pushTextureAtPoint"] = [this](int x, int y, const string& path, double tx, double ty, double tw, double th) {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		if (x >= 0 && x < world->getMap()->getMapWidth() && y >= 0 && y < world->getMap()->getMapHeight()) {
+			GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+			graphicsSystem->addTexture(path, path);
+
+			EntityPtr grid = world->getGridWithTileAt(x, y);
+			GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+			TexturePtr texture = std::make_shared<Texture>(path, tx, ty, tw, th);
+			gridComponent->pushTextureAtPoint(Vector2f(x, y), texture);
+		}
+	};
+
+	script->state["popTexture"] = [this](int x, int y) {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		if (x < 0 || x > world->getMap()->getMapWidth() || y < 0 || y > world->getMap()->getMapHeight()) {
+			return;
+		}
+
+		EntityPtr grid = world->getGridWithTileAt(x, y);
+		GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+		gridComponent->popTexture(x, y);
+	};
+
+	script->state["getPath"] = [this](double sx, double sy, double ex, double ey) -> Path& {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		Path* path = world->buildPath(sx, sy, ex, ey);
+
+		return *path;
 	};
 }
 

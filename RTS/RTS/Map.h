@@ -127,6 +127,8 @@ public:
 
 	Cell(const rapidjson::Value& root);
 
+	bool canOccupy();
+
 	void serialize(Serializer& serializer) const override;
 };
 
@@ -186,7 +188,7 @@ class GridComponent : public Component {
 public:
 	GridDrawablePtr gridDrawable;
 
-	GridComponent(unsigned long entityId, GridDrawablePtr gridDrawable, TilesetPtr tileset) : Component(entityId, ComponentType::GRID_COMPONENT), gridDrawable(gridDrawable) {}
+	GridComponent(unsigned long entityId, GridDrawablePtr gridDrawable) : Component(entityId, ComponentType::GRID_COMPONENT), gridDrawable(gridDrawable) {}
 
 	GridComponent(const rapidjson::Value& root);
 
@@ -196,26 +198,25 @@ public:
 
 	void setColor(int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
-	void setTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+	void setTextureAtPoint(const Vector2f& point, TexturePtr texture);
 
-	void setTexture(int x, int y, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+	void setTexture(int x, int y, TexturePtr texture);
 
-	void pushTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+	void pushTextureAtPoint(const Vector2f& point, TexturePtr texture);
 
-	void pushTexture(int x, int y, unsigned int tileId, bool flipHorizontal = false, bool flipVertical = false, bool flipDiagonal = false, float angle = 0.0f);
+	void pushTexture(int x, int y, TexturePtr texture);
 
 	void popTextureAtPoint(const Vector2f& point);
 
 	void popTexture(int x, int y);
+
+	CellPtr getCellAtPoint(const Vector2f& point);
 
 	Uint8 getZOrder();
 
 	void setZOrder(Uint8 zOrder);
 
 	void serialize(Serializer& serializer) const override;
-
-private: 
-	TilesetPtr tileset;
 };
 
 class Map : public Serializable {
@@ -234,6 +235,10 @@ public:
 	CellPtr cellAtPoint(const Vector2f& point);
 
 	void findPath(vector<Vector2fPtr> path, int startX, int startY, int endX, int endY);
+
+	int getMapWidthPixels();
+
+	int getMapHeightPixels();
 
 	int getMapWidth();
 

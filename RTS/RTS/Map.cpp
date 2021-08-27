@@ -152,6 +152,16 @@ Cell::Cell(const rapidjson::Value& root) {
 	animated = root["animated"].GetBool();
 }
 
+bool Cell::canOccupy() {
+	for (auto tile : this->tiles) {
+		if (tile->collision) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void Cell::serialize(Serializer& serializer) const {
 	serializer.writer.StartObject();
 
@@ -220,7 +230,7 @@ void Grid::serialize(Serializer& serializer) const {
 }
 
 CellPtr Grid::at(int x, int y) {
-	auto index = (y - startY) * columns + ((x - startX) % columns);
+	int index = (y - startY) * columns + ((x - startX) % columns);
 	if (index >= columns * rows) {
 		throw "Index out of bounds.";
 	}
@@ -310,37 +320,39 @@ void GridComponent::setColor(int x, int y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {
 	this->gridDrawable->forceRedraw();
 }
 
-void GridComponent::setTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+void GridComponent::setTextureAtPoint(const Vector2f& point, TexturePtr texture) {
 	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
 	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
 
-	setTexture(x, y, tileId, flipHorizontal, flipHorizontal, flipDiagonal, angle);
+	setTexture(x, y, texture);
 }
 
-void GridComponent::setTexture(int x, int y, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+void GridComponent::setTexture(int x, int y, TexturePtr texture) {
 	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+	TilePtr tile = std::make_shared<Tile>();
 
-	TilePtr tileToCopy = tileset->tiles.at(tileId);
-	TilePtr tile = std::make_shared<Tile>((Tile&)*tileToCopy.get());
+	tile->texture = texture;
 
 	cell->tiles.clear();
 	cell->tiles.push_back(tile);
+	this->gridDrawable->forceRedraw();
 }
 
-void GridComponent::pushTextureAtPoint(const Vector2f& point, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+void GridComponent::pushTextureAtPoint(const Vector2f& point, TexturePtr texture) {
 	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
 	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
 
-	pushTexture(x, y, tileId, flipHorizontal, flipHorizontal, flipDiagonal, angle);
+	pushTexture(x, y, texture);
 }
 
-void GridComponent::pushTexture(int x, int y, unsigned int tileId, bool flipHorizontal, bool flipVertical, bool flipDiagonal, float angle) {
+void GridComponent::pushTexture(int x, int y, TexturePtr texture) {
 	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
+	TilePtr tile = std::make_shared<Tile>();
 
-	TilePtr tileToCopy = tileset->tiles.at(tileId);
-	TilePtr tile = std::make_shared<Tile>((Tile&)*tileToCopy.get());
+	tile->texture = texture;
 
 	cell->tiles.push_back(tile);
+	this->gridDrawable->forceRedraw();
 }
 
 void GridComponent::popTextureAtPoint(const Vector2f& point) {
@@ -353,7 +365,18 @@ void GridComponent::popTextureAtPoint(const Vector2f& point) {
 void GridComponent::popTexture(int x, int y) {
 	CellPtr cell = this->gridDrawable->getGrid()->at(x, y);
 
+	if (cell->tiles.empty()) {
+		return;
+	}
 	cell->tiles.pop_back();
+	this->gridDrawable->forceRedraw();
+}
+
+CellPtr GridComponent::getCellAtPoint(const Vector2f& point) {
+	int x = std::floor(point.x / (float)this->gridDrawable->grid->tileW);
+	int y = std::floor(point.y / (float)this->gridDrawable->grid->tileH);
+
+	return this->gridDrawable->getGrid()->at(x, y);
 }
 
 Uint8 GridComponent::getZOrder() {
@@ -436,6 +459,14 @@ GridPtr Map::gridAt(int x, int y) {
 	y = y / GRID_HEIGHT;
 
 	return this->grids.at(y * gridWidth + (x % gridWidth));
+}
+
+int Map::getMapWidthPixels() {
+	return this->getMapWidth() * this->getTileWidth() * this->mapConfig->scale;
+}
+
+int Map::getMapHeightPixels() {
+	return this->getMapHeight() * this->getTileHeight() * this->mapConfig->scale;
 }
 
 int Map::getMapWidth() {

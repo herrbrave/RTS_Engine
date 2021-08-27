@@ -7,7 +7,7 @@ void applyGrid(SystemManagerPtr systemManager, unsigned long entityId, GridPtr g
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
 	GridDrawablePtr gridDrawable = std::make_shared<GridDrawable>(grid);
-	GridComponentPtr gridComponent = std::make_shared<GridComponent>(entity->id, gridDrawable, map->getMapConfig()->tileset);
+	GridComponentPtr gridComponent = std::make_shared<GridComponent>(entity->id, gridDrawable);
 	entity->addComponent(gridComponent);
 	graphicsSystem->addTexture(grid->name, GRID_WIDTH * grid->tileW, GRID_HEIGHT * grid->tileH);
 	graphicsSystem->clearTexture(grid->name);

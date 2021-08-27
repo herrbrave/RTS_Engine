@@ -169,6 +169,26 @@ private:
 	vector<string> vector;
 };
 
+class LuaFriendlyVector2fVector {
+public:
+	LuaFriendlyVector2fVector() {}
+
+	int size() {
+		return this->vector.size();
+	}
+
+	LuaFriendlyVector2f& at(int index) {
+		return *this->vector[index];
+	}
+
+	void push(LuaFriendlyVector2f* value) {
+		vector.push_back(value);
+	}
+
+private:
+	vector<LuaFriendlyVector2f*> vector;
+};
+
 class LuaFriendlyStringMap {
 public:
 	LuaFriendlyStringMap() {}
