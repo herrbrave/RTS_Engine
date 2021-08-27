@@ -867,9 +867,7 @@ void LuaScriptFactory::registerWorld(LuaScriptPtr script) {
 		}
 
 		Vector2f point(x, y);
-		EntityPtr grid = world->getGridAtPoint(point);
-		GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
-		CellPtr cell = gridComponent->getCellAtPoint(point);
+		CellPtr cell = world->getCellAtPoint(point);
 
 		Vector2f coord(cell->x, cell->y);
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(coord);

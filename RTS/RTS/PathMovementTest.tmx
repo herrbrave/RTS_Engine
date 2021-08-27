@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.5" tiledversion="1.7.2" orientation="orthogonal" renderorder="right-down" width="60" height="30" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="2">
+ <editorsettings>
+  <export target="Assets/test/PathMovementTest.json" format="json"/>
+ </editorsettings>
+ <properties>
+  <property name="scale" type="float" value="4"/>
+ </properties>
  <tileset firstgid="1" name="Dungeon_Tileset" tilewidth="16" tileheight="16" tilecount="100" columns="10">
   <image source="Assets/test/Sprites/Dungeon_Tileset.png" width="160" height="160"/>
   <tile id="0">

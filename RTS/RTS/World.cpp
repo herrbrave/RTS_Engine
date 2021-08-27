@@ -62,8 +62,8 @@ CellPtr World::getCellAtPoint(const Vector2f& point) {
 		throw "WORLD: Out of Bounds";
 	}
 
-	int x = std::floor(point.x / ((float)GRID_WIDTH * this->getMap()->getTileWidth() * this->getMap()->getMapConfig()->scale));
-	int y = std::floor(point.y / ((float)GRID_HEIGHT * this->getMap()->getTileHeight() * this->getMap()->getMapConfig()->scale));
+	int x = std::floor(point.x / ((float)this->getMap()->getTileWidth()));
+	int y = std::floor(point.y / ((float)this->getMap()->getTileHeight()));
 
 	return this->getCellAt(x, y);
 }
@@ -76,6 +76,10 @@ bool World::pointInWorldBounds(const Vector2f& point) {
 	return 0.0f <= point.x && point.x < this->getMap()->getMapWidthPixels() && 0.0f <= point.y && point.y < this->getMap()->getMapHeightPixels();
 }
 
+double tileDistance(int x0, int y0, int x1, int y1) {
+	return std::sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0));
+}
+
 Path* World::buildPath(int sx, int sy, int ex, int ey) {
 	if (!this->inBounds(sx, sy) || !this->inBounds(ex, ey)) {
 		return GCC_NEW Path();
@@ -86,22 +90,29 @@ Path* World::buildPath(int sx, int sy, int ex, int ey) {
 
 	unordered_set<std::pair<int, int>, hash_pair, equal_pair> visited;
 	unordered_map<std::pair<int, int>, std::pair<int, int>, hash_pair, equal_pair> backref;
-	std::deque<std::pair<int, int>> queue;
+	unordered_map<std::pair<int, int>, double, hash_pair, equal_pair> gVals;
+	unordered_map<std::pair<int, int>, double, hash_pair, equal_pair> fVals;
+
+	auto astarComp = [&](const std::pair<int, int> left, const std::pair<int, int> right) {
+		return fVals[right] < fVals[left];
+	};
+	std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, decltype(astarComp)> searchPriority(astarComp);
 
 	std::pair<int, int> cell(start->x, start->y);
-	queue.push_back(cell);
-	visited.insert(cell);
+	gVals[cell] = 0;
+	fVals[cell] = tileDistance(sx, sy, ex, ey);
+	searchPriority.push(cell);
 
-	while (!queue.empty()) {
-		cell = queue.front();
-		queue.pop_front();
+	while (!searchPriority.empty()) {
+		cell = searchPriority.top();
+		searchPriority.pop();
 		visited.insert(cell);
 
 		if (cell.first == ex && cell.second == ey) {
 			
 			while (!(cell.first == sx && cell.second == sy)) {
-				int x = (cell.first * this->getMap()->getTileWidth() * this->getMap()->getMapConfig()->scale) + ((this->getMap()->getTileWidth() * this->getMap()->getMapConfig()->scale) / 2);
-				int y = (cell.second * this->getMap()->getTileHeight() * this->getMap()->getMapConfig()->scale) + ((this->getMap()->getTileWidth() * this->getMap()->getMapConfig()->scale) / 2);
+				int x = (cell.first * this->getMap()->getTileWidth()) + ((this->getMap()->getTileWidth()) / 2);
+				int y = (cell.second * this->getMap()->getTileHeight()) + ((this->getMap()->getTileWidth()) / 2);
 
 				path->path.push_back(Vector2f(x, y));
 				cell = backref[cell];
@@ -124,12 +135,17 @@ Path* World::buildPath(int sx, int sy, int ex, int ey) {
 
 				CellPtr neighbor = this->getCellAt(px, py);
 				std::pair<int, int> neighborCell(px, py);
-				if (visited.find(neighborCell) != visited.end() || std::find(queue.begin(), queue.end(), neighborCell) != queue.end() || !neighbor->canOccupy()) {
+				if (visited.find(neighborCell) != visited.end() || !neighbor->canOccupy()) {
 					continue;
 				}
 
-				backref[neighborCell] = cell;
-				queue.push_back(neighborCell);
+				double gScore = gVals[cell] + tileDistance(cell.first, cell.second, neighbor->x, neighbor->y);
+				if (gVals.find(neighborCell) == gVals.end() || gScore < gVals[neighborCell]) {
+					backref[neighborCell] = cell;
+					gVals[neighborCell] = gScore;
+					fVals[neighborCell] = gScore + tileDistance(neighborCell.first, neighborCell.second, ex, ey);
+					searchPriority.push(neighborCell);
+				}
 			}
 		}
 	}

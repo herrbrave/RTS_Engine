@@ -52,6 +52,12 @@
  "nextlayerid":4,
  "nextobjectid":2,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"scale",
+         "type":"float",
+         "value":4
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.7.2",
  "tileheight":16,
