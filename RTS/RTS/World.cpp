@@ -123,7 +123,7 @@ Path* World::buildPath(int sx, int sy, int ex, int ey) {
 
 		for (int dy = -1; dy <= 1; dy++) {
 			for (int dx = -1; dx <= 1; dx++) {
-				if (std::abs(dx) == std::abs(dy)) {
+				if (dx == 0 && dy == 0) {
 					continue;
 				}
 
@@ -137,6 +137,21 @@ Path* World::buildPath(int sx, int sy, int ex, int ey) {
 				std::pair<int, int> neighborCell(px, py);
 				if (visited.find(neighborCell) != visited.end() || !neighbor->canOccupy()) {
 					continue;
+				}
+
+				if (dx != 0 && dy != 0) {
+					// makeing sure we don't try to cut any corners
+					// e.g. # = current position, 0 = can occupy, x = cannot occupy
+					// 000
+					// 0#x
+					// 00x
+					// Moving diagonal from # would result in clipping the wall just to the right.
+
+					CellPtr xAdjacent = this->getCellAt(px, cell.second);
+					CellPtr yAdjacent = this->getCellAt(cell.first, py);
+					if (!xAdjacent->canOccupy() || !yAdjacent->canOccupy()) {
+						continue;
+					}
 				}
 
 				double gScore = gVals[cell] + tileDistance(cell.first, cell.second, neighbor->x, neighbor->y);
