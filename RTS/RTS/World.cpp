@@ -117,6 +117,13 @@ Path* World::buildPath(int sx, int sy, int ex, int ey) {
 				path->path.push_back(Vector2f(x, y));
 				cell = backref[cell];
 			}
+
+			// make sure to add the first tile location to the map too.
+			int x = (cell.first * this->getMap()->getTileWidth()) + ((this->getMap()->getTileWidth()) / 2);
+			int y = (cell.second * this->getMap()->getTileHeight()) + ((this->getMap()->getTileWidth()) / 2);
+
+			path->path.push_back(Vector2f(x, y));
+
 			std::reverse(path->path.begin(), path->path.end());
 			break;
 		}

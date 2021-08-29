@@ -150,6 +150,10 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr script) {
 		DataSystemPtr dataSystem = systemManager->getSystemByType<DataSystem>(SystemType::DATA);
 		dataSystem->close(path);
 	};
+
+	script->state["include"] = [script](string path) {
+		script->state.Load(path);
+	};
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr script) {
@@ -837,9 +841,9 @@ void LuaScriptFactory::registerCamera(LuaScriptPtr script) {
 
 		CameraPtr camera = makeShared(graphicsSystem->getCamera());
 
-		auto vec = *(GCC_NEW LuaFriendlyVector2f(const_cast<Vector2f&>(*camera->position)));
+		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(camera->position->x, camera->position->y);
 
-		return vec;
+		return *vec;
 	};
 }
 
@@ -871,6 +875,24 @@ void LuaScriptFactory::registerWorld(LuaScriptPtr script) {
 
 		Vector2f coord(cell->x, cell->y);
 		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(coord);
+
+		return *vec;
+	};
+
+	script->state["getTileLocation"] = [this](double x, double y) -> LuaFriendlyVector2f& {
+		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
+
+		WorldPtr world = worldSystem->getWorld();
+
+		if (x < 0.0 || x > world->getMap()->getMapWidth() || y < 0.0 || y > world->getMap()->getMapHeight()) {
+			Vector2f coord(-1, -1);
+			LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(coord);
+
+			return *vec;
+		}
+
+		Vector2f point(x * world->getMap()->getTileWidth() + (world->getMap()->getTileWidth() / 2.0f), y * world->getMap()->getTileHeight() + (world->getMap()->getTileHeight() / 2.0f));
+		LuaFriendlyVector2f* vec = GCC_NEW LuaFriendlyVector2f(point);
 
 		return *vec;
 	};

@@ -16,11 +16,11 @@ registrar = {
 
 function setup()
 	enableMouseMove(entityId)
+	include("Games/behaviors/Paths.lua")
 
 	pos = getPosition(entityId)
 	currentTileCoords = getTileCoordinatesAtPoint(pos:getX(), pos:getY())
-	speed = 220
-	target = Vector2f.new(0.0, 0.0)
+	speed = 325
 
 	tileX = currentTileCoords:getX()
 	tileY = currentTileCoords:getY()
@@ -49,15 +49,7 @@ function onMouseDown(x, y, button)
 	ey = tileCoords:getY()
 
 	pathRef = getPath(sx, sy, ex, ey)
-	path = {}
-	len = pathRef:size() - 1
-	for index=0,len do
-		x = pathRef:getX(index)
-		y = pathRef:getY(index)
-		path[index] = {x, y}
-	end
-	pathIndex = 0
-	pathTime = 0
+	constructPath(pathRef)
 
 	pos = nil
 	currentTileCoords = nil
@@ -96,7 +88,6 @@ function onMouseMove(x, y, button)
 
 	camPos = getCameraPosition()
 	tileCoords = getTileCoordinatesAtPoint(camPos:getX() + x, camPos:getY() + y)
-
 	if tileX ~= tileCoords:getX() or tileY ~= tileCoords:getY() then
 		popTexture(tileX, tileY)
 		pushTexture(tileCoords:getX(), tileCoords:getY(), "Assets/test/Sprites/Selected.png", 0, 0, 16, 16)
@@ -111,50 +102,32 @@ end
 -- Collition Callback --
 
 function onCollision(id)
+	if isThereAPath() then
+		pos = getPosition(entityId)
+		currentTileCoords = getTileCoordinatesAtPoint(pos:getX(), pos:getY())
+		sx = currentTileCoords:getX()
+		sy = currentTileCoords:getY()
 
+		tileCoords = getTileCoordinatesAtPoint(getEndOfPath())
+		ex = tileCoords:getX()
+		ey = tileCoords:getY()
+
+		pathRef = getPath(sx, sy, ex, ey)
+		constructPath(pathRef)
+
+		pos = nil
+		currentTileCoords = nil
+		tileCoords = nil
+	end
 end
 
 function update(delta)
-
+	playerPos = getPosition(entityId)
+	setCameraPosition(math.floor(playerPos:getX()), math.floor(playerPos:getY()))
 end
 
 function onPhysics(delta)
-	step = delta / 1000.0
-	moveTowards(step)
+	updatePath(entityId, speed, delta)
 end
 
 -- Custom Functions --
-
-function moveTowards(step)
-	if path == nil or len <= 0 then
-		return
-	end
-
-	dist = speed * step
-	x = path[pathIndex][1]
-	y = path[pathIndex][2]
-
-	pos = getPosition(entityId)
-	target:setX(x)
-	target:setY(y)
-	target:subtract(pos)
-
-	moveDist = target:magnitude()
-
-	if moveDist < dist then
-		target:normalize()
-		target:scale(moveDist)
-		moveAndSlide(entityId, target:getX(), target:getY())
-		pathIndex = pathIndex + 1
-		if pathIndex > len then
-			path = nil
-			len = 0
-		end
-	else 
-		target:normalize()
-		target:scale(dist)
-		moveAndSlide(entityId, target:getX(), target:getY())
-	end
-
-	pos = nil
-end

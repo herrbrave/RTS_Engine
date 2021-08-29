@@ -284,13 +284,19 @@ void  GraphicsSystem::draw() {
 			translateToCamera(position, mCamera);
 		}
 
-		//if (!drawable->isOnScreen(position.x, position.y, mCamera->position->x + (mCamera->width / 2.0f), mCamera->position->y + (mCamera->height / 2.0f), mCamera->width, mCamera->height)) {
-		//	continue;
-		//}
+		if (!drawable->isOnScreen(position.x, position.y, mCamera->width, mCamera->height)) {
+			continue;
+		}
 		
 		drawable->draw(*mGraphics, position);
 	}
 
+	LuaScriptSystemPtr scriptSystem = mSystemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
+	for (auto entry : scriptSystem->getLuaScripts()) {
+		if (entry.second->state["onDraw"].exists()) {
+			entry.second->invoke("onDraw");
+		}
+	}
 
 	// reset this flag before the next frame.
 	sortedThisFrame = false;
