@@ -120,6 +120,21 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr script) {
 		return scriptComponent->script->invoke("onMessage", message, value);
 	};
 
+	script->state["broadcastMessage"] = [this](int entityId, string message, string value) {
+		LuaScriptSystemPtr luaScriptSystem = systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
+		LuaScripts scripts = luaScriptSystem->getLuaScripts();
+		for (auto entry : scripts) {
+			if (entry.first == entityId) {
+				continue;
+			}
+
+			auto script = entry.second;
+			if (script->state["onBroadcast"].exists()) {
+				script->invoke("onBroadcast", message, value);
+			}
+		}
+	};
+
 	script->state["loadData"] = [this](string path) {
 		SystemManagerPtr systemManager = makeShared<SystemManager>(systemManager);
 		DataSystemPtr dataSystem = systemManager->getSystemByType<DataSystem>(SystemType::DATA);
@@ -455,10 +470,13 @@ void LuaScriptFactory::registerDrawable(LuaScriptPtr script) {
 		applyDrawable(systemManager, entityId, tag, width, height, tx, ty, w, h);
 	};
 
+	script->state["setText"] = [this](string tag, int entityId, const string&text, int fontSize, Uint8 r, Uint8 g, Uint8 b) {
+		applyText(systemManager, entityId, text, widgetFactory->getUIConfig()->fontTag, fontSize, r, g, b);
+	};
+
 	script->state["drawSquare"] = [this](int x0, int y0, int x1, int y1, int r, int g, int b, int a) {
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 	};
-
 
 	script->state["getZOrder"] = [this](int entityId) -> int {
 		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
@@ -788,14 +806,35 @@ void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 		return entity->id;
 	};
 
+	script->state["setLabelZOrder"] = [this](int entityId, int order) {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		if (entity->getComponents().find(ComponentType::LABEL_COMPONENT) != entity->getComponents().end()) {
+			LabelComponentPtr drawableComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
+
+			drawableComponent->setZOrder(order);
+		}
+	};
+
+	script->state["setUI"] = [this](int entityId, bool ui) {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		if (entity->getComponents().find(ComponentType::PROGRESS_COMPONENT) != entity->getComponents().end()) {
+			ProgressComponentPtr progressComponent = entity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT);
+			progressComponent->progressBar->isUi = ui;
+		}
+	};
+
+	script->state["setLabelText"] = [this](int entityId, string text, int fontSize, int r, int g, int b) {
+		applyLabel(systemManager, entityId, text, widgetFactory->getUIConfig()->fontTag, fontSize, r, g, b, 255);
+	};
+
 	script->state["createProgress"] = [this](int x, int y, int w, int h, int progressMax, int currentProgress) -> int {
 		EntityPtr entity = widgetFactory->createProgressBar(x, y, w, h, progressMax, currentProgress);
 
 		return entity->id;
-	};
-
-	script->state["setText"] = [this](int entityId, string text, int fontSize, int r, int g, int b) {
-		applyLabel(systemManager, entityId, text, widgetFactory->getUIConfig()->fontTag, fontSize, r, g, b, 255);
 	};
 
 	script->state["setProgress"] = [this](int entityId, int progress, int maxProgress) {
@@ -804,6 +843,12 @@ void LuaScriptFactory::registerUi(LuaScriptPtr script) {
 
 		ProgressComponentPtr progressComponent = entity->getComponentByType<ProgressComponent>(ComponentType::PROGRESS_COMPONENT);
 		progressComponent->setProgress(progress, maxProgress);
+	};
+
+	script->state["createPanel"] = [this](int x, int y, int w, int h) -> int {
+		EntityPtr entity = widgetFactory->createPanel(x, y, w, h);
+
+		return entity->id;
 	};
 }
 

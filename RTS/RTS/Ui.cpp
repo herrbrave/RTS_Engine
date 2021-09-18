@@ -50,6 +50,21 @@ int LabelComponent::getFontSize() {
 	return this->textDrawable->getFontSize();
 }
 
+void LabelComponent::setColor(Uint8 r, Uint8 g, Uint8 b) {
+	this->textDrawable->setColor(r, g, b, 255);
+}
+
+Uint8 LabelComponent::getZOrder() {
+	return this->textDrawable->getDrawDepth();
+}
+
+void LabelComponent::setZOrder(Uint8 zOrder) {
+	this->textDrawable->setDrawDepth(zOrder);
+
+	EntityZOrderSetEventData* eventData = GCC_NEW EntityZOrderSetEventData(entityId, SDL_GetTicks());
+	EventManager::getInstance().pushEvent(eventData);
+}
+
 SectionDrawable::SectionDrawable(float width, float height, Vector2f* positionOffset, TexturePtr texture) : Drawable(width, height) {
 	mPosOffset = Vector2fPtr(positionOffset);
 	mTexture = texture;

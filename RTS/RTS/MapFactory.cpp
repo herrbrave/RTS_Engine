@@ -129,7 +129,7 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 		}
 
 		TilePtr tile;
-		if (tileVal > 0) {
+		if (object->gid > 0 && tileVal > 0) {
 			tile = std::make_shared<Tile>(*map->getMapConfig()->tileset->tiles.at(tileVal).get());
 			obj->tile = tile;
 
@@ -156,6 +156,7 @@ void loadObjectLayerFromTMX(TMXLayerPtr tmxLayer, MapPtr map) {
 		}
 		else {
 			tile = std::make_shared<Tile>();
+			obj->tile = tile;
 		}
 
 		tile->script = script;

@@ -269,7 +269,7 @@ private:
 	unordered_map<unsigned long, vector<DrawablePtr>> mDrawables;
 	unordered_map<DrawablePtr, unsigned long> mReverseLookup;
 	std::list<DrawablePtr> mDrawableList;
-	bool sortedThisFrame = false;
+	bool sortDrawables = true;
 };
 
 class EntitySystem : public System {

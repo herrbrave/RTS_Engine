@@ -73,6 +73,30 @@ void applyDrawable(SystemManagerPtr systemManager, unsigned long entityId, Textu
 	drawable->setTexture(texture);
 }
 
+void applyText(SystemManagerPtr systemManager, unsigned long entityId, const string& text, const string& font, int fontSize, Uint8 r, Uint8 g, Uint8 b) {
+	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+	EntityPtr entity = entitySystem->getEntityById(entityId);
+
+	DrawableComponentPtr drawableComponent;
+	if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+		drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+	}
+	else {
+		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
+		DrawablePtr textureDrawable = std::make_shared<TextDrawable>(text, font, fontSize);
+		graphicsSystem->registerDrawable(entity->id, textureDrawable);
+		drawableComponent = std::make_shared<DrawableComponent>(entity->id, textureDrawable);
+
+		entity->addComponent(ComponentPtr(drawableComponent));
+	}
+
+	TextDrawablePtr drawable = dynamic_pointer_cast<TextDrawable>(drawableComponent->getDrawable());
+	drawable->setText(text);
+	drawable->setFont(font);
+	drawable->setFontSize(fontSize);
+	drawable->setColor(r, g, b, 255);
+}
+
 void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);

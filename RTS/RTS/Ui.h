@@ -179,6 +179,12 @@ public:
 
 	int getFontSize();
 
+	void setColor(Uint8 r, Uint8 g, Uint8 b);
+
+	Uint8 getZOrder();
+
+	void setZOrder(Uint8 zOrder);
+
 private:
 	TextDrawablePtr textDrawable;
 };
@@ -326,7 +332,6 @@ public:
 		this->progressBar->displayProgress = false;
 	}
 
-private:
 	ProgressBarDrawablePtr progressBar;
 };
 

@@ -154,6 +154,7 @@ public:
 
 	void setAnimation(std::string animationName) {
 		this->currentAnimtionName = animationName;
+		this->currentFrame %= this->animationSet->animations[animationName]->frames.size();
 	}
 
 	void setAnimationSet(AnimationSetPtr animationSet) {

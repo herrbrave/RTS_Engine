@@ -86,6 +86,7 @@ void applyLabel(SystemManagerPtr systemManager, unsigned long entityId, const st
 	labelComponent->setText(text);
 	labelComponent->setFont(font);
 	labelComponent->setFontSize(fontSize);
+	labelComponent->setColor(r, g, b);
 }
 
 void applyProgress(SystemManagerPtr systemManager, unsigned long entityId, float w, float h, unsigned int maxProgress, unsigned int currentProgress, const string& location) {
@@ -149,7 +150,7 @@ void applyPanel(SystemManagerPtr systemManager, unsigned long entityId, float w,
 	}
 	else {
 		PanelDrawablePtr panelDrawable = std::make_shared<PanelDrawable>(w, h, panelConfig);
-
+		panelDrawable->setDrawDepth(100);
 		graphicsSystem->registerDrawable(entity->id, DrawablePtr(panelDrawable));
 
 		drawableComponent = std::make_shared<DrawableComponent>(entity->id, panelDrawable);

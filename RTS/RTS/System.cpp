@@ -191,7 +191,7 @@ void DataSystem::clear() {
 
 void GraphicsSystem::initialize() {
 	EventDelegate zOrderChangeDelegate([this](const EventData& eventData) {
-		sortDrawableList();
+		sortDrawables = true;
 		});
 	EventListenerDelegate zOrderChanged(zOrderChangeDelegate);
 	EventManager::getInstance().addDelegate(zOrderChanged, EventType::ENTITY_ZORDER_SET);
@@ -214,7 +214,7 @@ void GraphicsSystem::initialize() {
 	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 	EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
 
-	this->sortDrawableList(true);
+	sortDrawables = true;
 }
 
 void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawable) {
@@ -224,7 +224,7 @@ void GraphicsSystem::registerDrawable(const unsigned long id, DrawablePtr drawab
 	mDrawables.at(id).push_back(drawable);
 	mReverseLookup.emplace(drawable, id);
 	mDrawableList.push_back(drawable);
-	sortDrawableList();
+	sortDrawables = true;
 }
 
 void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
@@ -238,17 +238,18 @@ void  GraphicsSystem::deregisterDrawable(const unsigned long id) {
 }
 
 void GraphicsSystem::sortDrawableList(bool forceSort) {
-	if (sortedThisFrame && !forceSort) {
-		return;
-	}
 	mDrawableList.sort([](const DrawablePtr& first, const DrawablePtr& second){
 		return first->getDrawDepth() < second->getDrawDepth();
 	});
-	sortedThisFrame = true;
+	sortDrawables = false;
 }
 
 void  GraphicsSystem::draw() {
 	mGraphics->onBeforeDraw();
+
+	if (sortDrawables) {
+		this->sortDrawableList();
+	}
 
 	int totalCount = 0;
 	int drawnCount = 0;
@@ -298,8 +299,6 @@ void  GraphicsSystem::draw() {
 		}
 	}
 
-	// reset this flag before the next frame.
-	sortedThisFrame = false;
 	if (__DEBUG__) {
 		PhysicsSystemPtr physicsSystem = mSystemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
 		for (auto bod : physicsSystem->mBodies) {

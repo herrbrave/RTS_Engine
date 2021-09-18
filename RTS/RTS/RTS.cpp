@@ -8,8 +8,8 @@ void RTS::setup() {
 	srand(time(NULL));
 
 	GraphicsConfig* config = GCC_NEW GraphicsConfig();
-	config->setWindowWidth(1920);
-	config->setWindowHeight(1080);
+	config->setWindowWidth(1024);
+	config->setWindowHeight(768);
 	config->setWindowX(SDL_WINDOWPOS_CENTERED);
 	config->setWindowY(SDL_WINDOWPOS_CENTERED);
 
@@ -26,7 +26,7 @@ void RTS::setup() {
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
 	WorldSystemPtr worldSystem = mSystemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
-	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/test/PathMovementTest.json"));
+	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/AutumnJam/AutumnJam.json"));
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
