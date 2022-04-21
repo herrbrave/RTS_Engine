@@ -394,6 +394,10 @@ void EntitySystem::addEntity(EntityPtr entity) {
 	EventManager::getInstance().pushEvent(eventData);
 }
 
+bool  EntitySystem::exists(unsigned long id) {
+	return mEntityMap.find(id) != mEntityMap.end();
+}
+
 EntityPtr EntitySystem::getEntityById(unsigned long id) {
 	return mEntityMap.at(id);
 }

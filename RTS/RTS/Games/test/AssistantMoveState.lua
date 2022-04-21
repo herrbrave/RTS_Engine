@@ -9,6 +9,7 @@ DashMoveState.new = function(context)
 	self.context = context
 
 	function self.setup()
+		context.state = DASH
 		self.context.velocity:scale(3.0)
 		self.dashTime = 0
 	end
@@ -16,7 +17,6 @@ DashMoveState.new = function(context)
 	function self.update(dt)
 
 		characterPos = getPosition(entityId)
-		setCameraPosition(math.floor(characterPos:getX()), math.floor(characterPos:getY()))
 
 		self.dashTime = self.dashTime + dt
 		if self.dashTime > 125 then
@@ -49,14 +49,28 @@ BasicWASDMoveState.new = function(context)
 	self.dashState = DashMoveState.new(context)
 
 	function self.setup()
+		context.state = IDLE
 	end
 
 	function self.update(dt)
 		step = dt / 1000.0
 		characterPos = getPosition(entityId)
-		setCameraPosition(math.floor(characterPos:getX()), math.floor(characterPos:getY()))
 		if keys[SDLK_SPACE] then
 			self.context.stateMachine.pushState(self.dashState)
+		elseif keys[SDLK_e] then
+			collisions = checkCollisions(entityId)
+			onBox = false
+			if collisions:size() > 0 then
+				for index=0,collisions:size()-1 do
+					if collisions:at(index) == context.box then
+						onBox = true
+						break
+					end
+				end
+				if onBox then
+					sendMessage(context.box, "OPEN_CHEST", "open")
+				end
+			end
 		end
 
 		if keys[SDLK_w] then
@@ -73,6 +87,11 @@ BasicWASDMoveState.new = function(context)
 			self.context.input:setX(1)
 		else
 			self.context.input:setX(0)
+		end
+
+		if keys[SDLK_1] and context.torch ~= 0 then
+			sendMessage(context.torch, "DETONATE", "TRUE")
+			context.torch = 0
 		end
 
 		self.context.input:normalize()
@@ -93,6 +112,44 @@ BasicWASDMoveState.new = function(context)
 	end
 
 	function self.teardown()
+	end
+
+	return self
+end
+
+HurtMoveState = {}
+
+HurtMoveState.new = function(context) 
+	local self = State.new()
+
+	self.context = context
+
+	function self.setup()
+		context.state = HURT
+		self.hurtTime = 0
+		context.hurtVector:scale(750)
+		setColor(entityId, 255, 0, 0, 255)
+	end
+
+	function self.update(dt)
+
+		characterPos = getPosition(entityId)
+
+		self.hurtTime = self.hurtTime + dt
+		if self.hurtTime > 100 then
+			self.context.stateMachine.popState()
+		end
+	end
+
+	function self.onPhysics(dt)
+		step = dt / 1000.0
+		if self.context.hurtVector:magnitude() > 0 then
+			moveAndSlide(entityId, self.context.hurtVector:getX() * step, self.context.hurtVector:getY() * step)
+		end
+	end
+
+	function self.teardown()
+		setColor(entityId, 255, 255, 255, 255)
 	end
 
 	return self

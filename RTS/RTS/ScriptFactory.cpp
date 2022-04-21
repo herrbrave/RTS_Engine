@@ -169,6 +169,10 @@ void LuaScriptFactory::registerGeneral(LuaScriptPtr script) {
 	script->state["include"] = [script](string path) {
 		script->state.Load(path);
 	};
+
+	script->state["random"] = [script](int limit) -> int {
+		return rand() % limit;
+	};
 }
 
 void LuaScriptFactory::registerFactory(LuaScriptPtr script) {
@@ -342,10 +346,6 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		BodyPtr body(GCC_NEW Body(0, posX, posY, width, height));
 		body->setCollider(ColliderPtr(collider));
 
-		toDelete.push_back(colliderShape);
-		toDelete.push_back(collider);
-		toDelete.push_back(body);
-
 		vector<BodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
@@ -367,14 +367,26 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 			return *ids;
 		}
 
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+		Vector2f originalPosition(body->getPosition());
+		while (entity->parent != nullptr) {
+			BodyPtr parentBody = makeShared(physicsSystem->getBody(entity->parent->id));
+			*body->collider->colliderShape->position += *parentBody->position;
+
+			entity = entity->parent;
+		}
+
 		vector<BodyPtr> bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
+		body->collider->colliderShape->position->set(originalPosition);
 
 		for (auto& bodyPtr : bodies) {
 			BodyPtr b = bodyPtr;
 			ids->push(b->id);
 		}
-
+			
 		return *ids;
 	};
 
@@ -387,6 +399,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height))));
+
+		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(data);
 	};
 
 	script->state["setCircleCollision"] = [this](int entityId, int radius) {
@@ -398,6 +413,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius))));
+
+		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(data);
 	};
 
 	script->state["setOBBCollision"] = [this](int entityId, int width, int height, int angle) {
@@ -409,6 +427,9 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 		BodyPtr body = physicsComponent->getBody();
 		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
 		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle))));
+
+		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(data);
 	};
 
 	script->state["setTarget"] = [this](int entityId, double x, double y, double threshold) {
@@ -435,6 +456,10 @@ void LuaScriptFactory::registerPhysics(LuaScriptPtr script) {
 
 	script->state["getTag"] = [this](int entityId) {
 		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+		if (!entitySystem->exists(entityId)) {
+			return string("");
+		}
 
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -705,6 +730,8 @@ void LuaScriptFactory::registerInput(LuaScriptPtr script, unsigned long entityId
 	script->state["SDLK_a"] = (int)SDLK_a;
 	script->state["SDLK_s"] = (int)SDLK_s;
 	script->state["SDLK_d"] = (int)SDLK_d;
+	script->state["SDLK_e"] = (int)SDLK_e;
+	script->state["SDLK_q"] = (int)SDLK_q;
 	script->state["SDLK_1"] = (int)SDLK_1;
 	script->state["SDLK_2"] = (int)SDLK_2;
 	script->state["SDLK_3"] = (int)SDLK_3;

@@ -57,10 +57,10 @@ WorldPtr WorldFactory::createWorldFromTMXMap(const string& path) {
 							script = tile->script;
 						}
 					}
-					if (collision) {
+					if (collision || !script.empty()) {
 						int lx = x0 * map->getTileWidth();
 						int ly = y0 * map->getTileHeight();
-						EntityPtr t = entityFactory->createPhysicsEntity(sx + lx - xoffset, sy + ly - yoffset, map->getTileWidth(), map->getTileHeight(), true);
+						EntityPtr t = entityFactory->createPhysicsEntity(sx + lx - xoffset, sy + ly - yoffset, map->getTileWidth(), map->getTileHeight(), collision);
 						if (!script.empty()) {
 							applyScript(systemManager, t->id, script);
 						}

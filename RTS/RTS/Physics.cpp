@@ -418,6 +418,8 @@ void AABBColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& 
 		}
 	}
 	else if (collider->colliderType() == ColliderType::CIRCLE) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider->position + delta);
 	}
 	else if (collider->colliderType() == ColliderType::OBB) {
 	}
@@ -502,8 +504,12 @@ void CircleColliderShape::intersect(const ColliderShapePtr& collider, Manifold* 
 
 void CircleColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
 	if (collider->colliderType() == ColliderType::AABB) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider->position + delta);
 	}
 	else if (collider->colliderType() == ColliderType::CIRCLE) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider->position + delta);
 	}
 	else if (collider->colliderType() == ColliderType::OBB) {
 	}

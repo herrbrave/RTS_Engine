@@ -29,6 +29,7 @@ public:
 
 		EventListenerDelegate scriptLoadedListener(scriptLoadedDelegate);
 		EventManager::getInstance().addDelegate(scriptLoadedListener, EventType::SCRIPT_LOADED);
+		srand(time(NULL));
 	}
 
 	LuaScriptPtr create(const string& scriptPath, unsigned long entityId);

@@ -1,6 +1,6 @@
 registrar = {
 	ASSET = 0,
-	DRAWABLE = 0,
+	DRAWABLE = 1,
 	ENTITY = 0,
 	FACTORY = 0,
 	PHYSICS = 1,
@@ -18,7 +18,9 @@ mouseOver = false
 
 function setup()
 	print("setup worker", entityId)
-	setProgress(entityId, "top", 80, 100)
+	setTag(entityId, "WORKER")
+	setZOrder(entityId, 10)
+	setCircleCollision(entityId, 8)
 end
 
 -- Standard Mouse/Key events
@@ -37,6 +39,7 @@ function onMouseUp(x, y, button)
 		setSpeed(entityId, 125)
 	elseif button == MOUSE_BUTTON_LEFT and not mouseOver then
 		selected = false
+		setColor(entityId, 255, 255, 255, 255)
 	end
 end
 
@@ -67,6 +70,7 @@ end
 function onClickEntity(button)
 	print("onClickEntity", button);
 	selected = true
+		setColor(entityId, 128, 128, 128, 255)
 end
 
 function onDragEntity(button)
@@ -81,4 +85,15 @@ end
 
 function update(delta)
 
+end
+
+function onMessage(message, value)
+
+	if message == "SELECTED" then
+		selected = true
+		setColor(entityId, 128, 128, 128, 255)
+		return "1"
+	end
+
+	return "0"
 end

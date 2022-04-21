@@ -8,36 +8,14 @@ registrar = {
 	INPUT = 1,
 	SCRIPT = 0,
 	ASSET = 0,
-	CAMERA = 1,
+	CAMERA = 0,
 	MOUSE_MOVE = 0,
 	UI = 1,
 	WORLD = 0,
 }
 
-
 function setup()
 	print("setup State Test")
-
-	keys = {}
-	keys[SDLK_w] = false
-	keys[SDLK_a] = false
-	keys[SDLK_s] = false
-	keys[SDLK_d] = false
-	keyChange = false
-
-	include("Games/test/BasicWASDMoveState.lua")
-
-	context = {}
-	context.velocity = Vector2f.new(0, 0)
-	context.accelerate = 800
-	context.speed = 150
-	context.friction = 1200
-
-	moveState = BasicWASDMoveState.new(context)
-	stateMachine = StateMachine.new()
-	stateMachine.pushState(moveState)
-
-	context.stateMachine = stateMachine
 end
 
 -- Standard Mouse/Key events
@@ -51,17 +29,11 @@ function onMouseDown(x, y, button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
-	if keys[keyId] == false then
-		keyChange = true
-	end
-	keys[keyId] = true
+
 end
 
 function onKeyUp(keyId, ctrl, shft)
-	if keys[keyId] == true then
-		keyChange = true
-	end
-	keys[keyId] = false
+
 end
 
 -- Entity Mouse Events
@@ -94,13 +66,9 @@ function onCollision(id)
 end
 
 function update(delta)
-	stateMachine.update(delta)
+
 end
 
 function onBroadcast(message, value)
 
-end
-
-function onPhysics(delta)
-	stateMachine.onPhysics(delta)
 end

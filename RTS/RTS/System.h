@@ -290,6 +290,8 @@ public:
 
 	void addEntity(EntityPtr entity);
 
+	bool exists(unsigned long id);
+
 	EntityPtr getEntityById(unsigned long id);
 
 	void deregisterEntity(unsigned long id);

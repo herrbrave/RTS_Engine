@@ -41,10 +41,14 @@ StateMachine.new = function()
 		table.insert(self.states, state)
 	end
 
+	function self.peekState()
+		return self.states[#self.states]
+	end
+
 	function self.popState()
 		if #self.states > 0 then
 			self.states[#self.states].teardown()
-			table.remove(self.states, #states)
+			table.remove(self.states, #self.states)
 		end
 
 		if #self.states > 0 then
