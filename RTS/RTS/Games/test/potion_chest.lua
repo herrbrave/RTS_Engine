@@ -106,12 +106,10 @@ end
 function onMessage(message, value)
 
 	if message == "OPEN_CHEST" and state ~= OPEN_STATE then
-		print(message, value)
 		state = OPEN_STATE
 		open_counter = 0
 		change = true
 		item = random(100)
-		print(tostring(item))
 		createItem(item)
 	end
 

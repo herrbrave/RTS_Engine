@@ -121,9 +121,11 @@ end
 function onMessage(message, value)
 
 	if message == "PICK_UP" then
+		print("Picked Up")
 		state = EQUIPPED
 		setCircleCollision(entityId, 150)
 	elseif message == "DETONATE" then
+		print("boom!")
 		ids = checkCollisions(entityId)
 		print("ids", tostring(ids:size()))
 		for index=0,ids:size()-1 do

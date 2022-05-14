@@ -6,11 +6,9 @@ DashMoveState = {}
 DashMoveState.new = function(context) 
 	local self = State.new()
 
-	self.context = context
-
 	function self.setup()
 		context.state = DASH
-		self.context.velocity:scale(3.0)
+		context.velocity:scale(3.0)
 		self.dashTime = 0
 	end
 
@@ -20,19 +18,19 @@ DashMoveState.new = function(context)
 
 		self.dashTime = self.dashTime + dt
 		if self.dashTime > 125 then
-			self.context.stateMachine.popState()
+			context.stateMachine.popState()
 		end
 	end
 
 	function self.onPhysics(dt)
 		step = dt / 1000.0
-		if self.context.velocity:magnitude() > 0 then
-			moveAndSlide(entityId, self.context.velocity:getX() * step, self.context.velocity:getY() * step)
+		if context.velocity:magnitude() > 0 then
+			moveAndSlide(entityId, context.velocity:getX() * step, context.velocity:getY() * step)
 		end
 	end
 
 	function self.teardown()
-		self.context.velocity:scale(0.3333)
+		context.velocity:scale(0.3333)
 	end
 
 	return self
@@ -43,9 +41,7 @@ BasicWASDMoveState = {}
 BasicWASDMoveState.new = function(context) 
 	local self = State.new()
 
-	self.context = context
-
-	self.context.input = Vector2f.new(0, 0)
+	context.input = Vector2f.new(0, 0)
 	self.dashState = DashMoveState.new(context)
 
 	function self.setup()
@@ -54,60 +50,54 @@ BasicWASDMoveState.new = function(context)
 
 	function self.update(dt)
 		step = dt / 1000.0
-		characterPos = getPosition(entityId)
 		if keys[SDLK_SPACE] then
-			self.context.stateMachine.pushState(self.dashState)
+			context.stateMachine.pushState(self.dashState)
 		elseif keys[SDLK_e] then
 			collisions = checkCollisions(entityId)
 			onBox = false
-			if collisions:size() > 0 then
-				for index=0,collisions:size()-1 do
-					if collisions:at(index) == context.box then
-						onBox = true
-						break
-					end
-				end
-				if onBox then
-					sendMessage(context.box, "OPEN_CHEST", "open")
+			for _i=0,collisions:size()-1 do
+				self.collisionTag = getTag(collisions:at(_i))
+				if self.collisionTag == "BOX" then
+					sendMessage(collisions:at(_i), "OPEN_CHEST", "open")
 				end
 			end
 		end
 
 		if keys[SDLK_w] then
-			self.context.input:setY(-1)
+			context.input:setY(-1)
 		elseif keys[SDLK_s] then
-			self.context.input:setY(1)
+			context.input:setY(1)
 		else
-			self.context.input:setY(0)
+			context.input:setY(0)
 		end
 
 		if keys[SDLK_a] then
-			self.context.input:setX(-1)
+			context.input:setX(-1)
 		elseif keys[SDLK_d] then
-			self.context.input:setX(1)
+			context.input:setX(1)
 		else
-			self.context.input:setX(0)
+			context.input:setX(0)
 		end
-
-		if keys[SDLK_1] and context.torch ~= 0 then
+		-- detonate torch
+		if keys[SDLK_1] and context.torch > 0 then
 			sendMessage(context.torch, "DETONATE", "TRUE")
 			context.torch = 0
 		end
 
-		self.context.input:normalize()
-		self.context.input:scale(self.context.speed)
+		context.input:normalize()
+		context.input:scale(context.speed)
 
-		if self.context.input:magnitude() > 0 then
-			self.context.velocity:moveToward(self.context.input:getX(), self.context.input:getY(), step * self.context.accelerate)
+		if context.input:magnitude() > 0 then
+			context.velocity:moveToward(context.input:getX(), context.input:getY(), step * context.accelerate)
 		else
-			self.context.velocity:moveToward(0, 0, step * self.context.friction)
+			context.velocity:moveToward(0, 0, step * context.friction)
 		end
 	end
 
 	function self.onPhysics(dt)
 		step = dt / 1000.0
-		if self.context.velocity:magnitude() > 0 then
-			moveAndSlide(entityId, self.context.velocity:getX() * step, self.context.velocity:getY() * step)
+		if context.velocity:magnitude() > 0 then
+			moveAndSlide(entityId, context.velocity:getX() * step, context.velocity:getY() * step)
 		end
 	end
 
@@ -122,8 +112,6 @@ HurtMoveState = {}
 HurtMoveState.new = function(context) 
 	local self = State.new()
 
-	self.context = context
-
 	function self.setup()
 		context.state = HURT
 		self.hurtTime = 0
@@ -137,14 +125,14 @@ HurtMoveState.new = function(context)
 
 		self.hurtTime = self.hurtTime + dt
 		if self.hurtTime > 100 then
-			self.context.stateMachine.popState()
+			context.stateMachine.popState()
 		end
 	end
 
 	function self.onPhysics(dt)
 		step = dt / 1000.0
-		if self.context.hurtVector:magnitude() > 0 then
-			moveAndSlide(entityId, self.context.hurtVector:getX() * step, self.context.hurtVector:getY() * step)
+		if context.hurtVector:magnitude() > 0 then
+			moveAndSlide(entityId, context.hurtVector:getX() * step, context.hurtVector:getY() * step)
 		end
 	end
 

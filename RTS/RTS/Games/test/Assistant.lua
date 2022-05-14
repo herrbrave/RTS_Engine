@@ -63,47 +63,49 @@ function setup()
 	setLabelText(inventory_label, "Inventory", 25, 255, 255, 255)
 	setLabelZOrder(inventory_label, 100)
 
-	inventory_0 = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185, 700, 80, 80, 0, 128, 16, 16)
-	setZOrder(inventory_0, 100)
+	context.INVENTORY_EMPTY = 0
+	context.INVENTORY_BONES = 1
+	context.INVENTORY_GOLD = 2
+	context.inventory_type_map = {}
+	context.inventory_type_map["EMPTY"] = context.INVENTORY_EMPTY
+	context.inventory_type_map["BONES"] = context.INVENTORY_BONES
 
-	inventory_1 = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 265, 700, 80, 80, 0, 128, 16, 16)
-	setZOrder(inventory_1, 100)
-
-	inventory_2 = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 345, 700, 80, 80, 0, 128, 16, 16)
-	setZOrder(inventory_2, 100)
-
-	INVENTORY_EMPTY = 0
-	INVENTORY_BONES = 1
-	INVENTORY_GOLD = 2
-
+	context.inventorySizeMax = 2
 	context.inventory = {}
-	context.inventory[0] = {}
-	context.inventory[0].type = INVENTORY_EMPTY
-	context.inventory[0].id = inventory_0
-	context.inventory[1] = {}
-	context.inventory[1].type = INVENTORY_EMPTY
-	context.inventory[1].id = inventory_1
-	context.inventory[2] = {}
-	context.inventory[2].type = INVENTORY_EMPTY
-	context.inventory[2].id = inventory_2
+	_i = 0
+	while _i <= context.inventorySizeMax do
+		context.inventory[_i] = {}
+		context.inventory[_i].type = INVENTORY_EMPTY
+		context.inventory[_i].id = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185 + (_i * 80), 700, 80, 80, 0, 128, 16, 16)
+		setZOrder(context.inventory[_i].id, 100)
+		_i = _i + 1
+	end
 	context.inventorySize = function()
 		_i = 0
-		while _i <= 2  do
+		while _i <= context.inventorySizeMax  do
 			if context.inventory[_i].type ~= INVENTORY_EMPTY then
 				_i = _i + 1
+			else
+				break
 			end
 		end
 
 		return _i
 	end
 	context.inventoryPush = function(item)
-		for _i=0,2 do
+		print("ADDING TO INVENTORY")
+		for _i=0,context.inventorySizeMax do
 			if context.inventory[_i].type == INVENTORY_EMPTY then
-				context.inventory[_i].type = item
+				context.inventory[_i].type = context.inventory_type_map[item]
+				print("ADD TO INVENTORY AT:", _i, item, context.inventory[_i].type)
 				inventory_change = true
-				break
+				return true
 			end
 		end
+		return false
+	end
+	context.inventoryPop = function()
+
 	end
 
 	inventory_change = true
@@ -159,22 +161,19 @@ end
 -- Collition Callback --
 
 function onCollision(id)
-	tag = getTag(id)
-	if tag == "BOX" then
-		context.box = id
-	end
+
 end
 
 function update(delta)
 	stateMachine.update(delta)
 	if inventory_change then
-
+		print("Updating Invetory")
 		for i=0,2 do
-			if context.inventory[i].type == INVENTORY_EMPTY then
+			if context.inventory[i].type == context.INVENTORY_EMPTY then
 				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 128, 112, 16, 16)
-			elseif context.inventory[i].type == INVENTORY_BONES then
+			elseif context.inventory[i].type == context.INVENTORY_BONES then
 				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 112, 112, 16, 16)
-			elseif context.inventory[i].type == INVENTORY_GOLD then
+			elseif context.inventory[i].type == context.INVENTORY_GOLD then
 				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 96, 128, 16, 16)
 			end
 		end
@@ -186,14 +185,7 @@ end
 function onMessage(message, value)
 
 	if message == "ADD_INVENTORY" then
-		print(message, value)
-		for index=0,2 do
-			if context.inventory[index].type == INVENTORY_EMPTY then
-				context.inventory[index].type = INVENTORY_BONES
-				inventory_change = true
-				break
-			end
-		end
+		return context.inventoryPush(value)
 	elseif message == "HURT" then
 		if context.state ~= HURT then
 			id = tonumber(value)
@@ -214,7 +206,7 @@ function onMessage(message, value)
 		health = math.min(100, health + hurtVal)
 		setProgress(healthProgress, health, 100)
 	elseif message == "TORCH" then
-		if context.torch == 0 then
+		if context.torch == nil or context.torch == 0 then
 			context.torch = tonumber(value)
 			setChild(entityId, context.torch)
 			setPosition(context.torch, 32, 0)

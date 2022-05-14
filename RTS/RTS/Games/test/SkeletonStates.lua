@@ -5,8 +5,6 @@ SpawnState = {}
 SpawnState.new = function(context) 
 	local self = State.new()
 
-	self.context = context
-
 	self.SPAWN_DURATION = 550.0
 
 	function self.setup()
@@ -19,7 +17,7 @@ SpawnState.new = function(context)
 
 	function self.update(dt)
 		if self.spawn_time >= self.SPAWN_DURATION then
-			self.context.pushState(self.context.idle_state)
+			context.pushState(context.idle_state)
 		end
 
 		self.spawn_time = self.spawn_time + dt
@@ -38,7 +36,7 @@ SpawnState.new = function(context)
 
 	function self.teardown()
 		setPosition(entityId, self.middle:getX(), self.middle:getY())
-		self.context.state = self.context.IDLE
+		context.state = context.IDLE
 	end
 
 	return self
@@ -49,8 +47,6 @@ IdleState = {}
 
 IdleState.new = function(context) 
 	local self = State.new()
-
-	self.context = context
 
 	self.speed = 100
 
@@ -96,8 +92,6 @@ AttackState = {}
 AttackState.new = function(context) 
 	local self = State.new()
 
-	self.context = context
-
 	function self.setup()
 
 	end
@@ -110,14 +104,14 @@ AttackState.new = function(context)
 		self.collisions = checkCollisions(entityId)
 		self.still_in_range = false
 		for index=0,self.collisions:size()-1 do
-			if self.collisions:at(index) == self.context.target then
+			if self.collisions:at(index) == context.target then
 				still_in_range = true
 				break
 			end
 		end
 
 		if self.still_in_range == false then
-			self.context.state = IDLE
+			context.state = IDLE
 			return
 		end
 
