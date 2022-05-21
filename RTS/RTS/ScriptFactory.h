@@ -24,7 +24,7 @@ public:
 
 		EventDelegate scriptLoadedDelegate([this](const EventData& eventData) {
 			ScriptLoadedData data = dynamic_cast<const ScriptLoadedData&>(eventData);
-			initialize(data.script, data.id);
+			initialize(*data.script, data.id);
 		});
 
 		EventListenerDelegate scriptLoadedListener(scriptLoadedDelegate);
@@ -37,21 +37,21 @@ public:
 	void clean();
 
 private:
-	void initialize(LuaScriptPtr script, unsigned long entityId);
-	void registerGeneral(LuaScriptPtr script);
-	void registerFactory(LuaScriptPtr script);
-	void registerEntity(LuaScriptPtr script);
-	void registerPhysics(LuaScriptPtr script);
-	void registerDrawable(LuaScriptPtr script);
-	void registerAnimation(LuaScriptPtr script);
-	void registerInput(LuaScriptPtr script, unsigned long entityId);
-	void registerScript(LuaScriptPtr script);
-	void registerUi(LuaScriptPtr script);
-	void registerAsset(LuaScriptPtr script);
-	void registerCamera(LuaScriptPtr script);
-	void registerMouseMove(LuaScriptPtr script);
-	void registerWorld(LuaScriptPtr script);
-	void registerSound(LuaScriptPtr script);
+	void initialize(LuaScript& script, unsigned long entityId);
+	void registerGeneral(LuaScript& script);
+	void registerFactory(LuaScript& script);
+	void registerEntity(LuaScript& script);
+	void registerPhysics(LuaScript& script);
+	void registerDrawable(LuaScript& script);
+	void registerAnimation(LuaScript& script);
+	void registerInput(LuaScript& script, unsigned long entityId);
+	void registerScript(LuaScript& script);
+	void registerUi(LuaScript& script);
+	void registerAsset(LuaScript& script);
+	void registerCamera(LuaScript& script);
+	void registerMouseMove(LuaScript& script);
+	void registerWorld(LuaScript& script);
+	void registerSound(LuaScript& script);
 
 	EntityFactoryPtr entityFactory;
 	WidgetFactoryPtr widgetFactory;

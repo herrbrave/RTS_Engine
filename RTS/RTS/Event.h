@@ -58,6 +58,8 @@ public:
 		mTimestamp = timestamp;
 	}
 
+	virtual ~EventData() {}
+
 	virtual const EventType getEventType() = 0;
 	const Uint32 getTimestamp() { return mTimestamp;  }
 
@@ -88,6 +90,10 @@ public:
 	EntityPositionSetEventData(unsigned long entityId, const Vector2f& position, Uint32 timestamp) : EventData(timestamp) {
 		mEntityId = entityId;
 		mPosition = Vector2fPtr(GCC_NEW Vector2f(position));
+	}
+
+	~EntityPositionSetEventData() {
+		this->mPosition.reset();
 	}
 
 	const EventType getEventType() override {
@@ -251,12 +257,17 @@ public:
 class ScriptLoadedData : public EventData {
 public:
 	unsigned long id;
-	LuaScriptPtr script;
+	LuaScript* script;
 
-	ScriptLoadedData(Uint32 timestamp, unsigned long id, const LuaScriptPtr& script) : EventData(timestamp) {
+	ScriptLoadedData(Uint32 timestamp, unsigned long id, LuaScript* script) : EventData(timestamp) {
 		this->id = id;
 		this->script = script;
 	}
+	
+	~ScriptLoadedData() {
+		this->script = nullptr;
+	}
+
 
 	const EventType getEventType() override {
 		return EventType::SCRIPT_LOADED;
@@ -292,14 +303,14 @@ public:
 	}
 
 	void removeDelegate(const EventListenerDelegate& eventDelegate, EventType eventType) {
-		this->mRemoveList.push_back(std::pair<const EventListenerDelegate&, EventType>(eventDelegate, eventType));
+		this->mRemoveList.push_back(std::pair<unsigned long, EventType>(eventDelegate.id, eventType));
 	}
 
 	void update() {
 		// remove event listeners in the remove list.
 		for (auto it = mRemoveList.begin(); it != mRemoveList.end(); ++it) {
 			EventDelegateList& eventDelegates = mEventListeners.at(it->second);
-			auto del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [it](EventListenerDelegate val) { return val.id == it->first.id; });
+			auto del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [&it](EventListenerDelegate val) { return val.id == it->first; });
 			if (del != eventDelegates.end()) {
 				eventDelegates.erase(del);
 			}
@@ -325,7 +336,7 @@ public:
 private:
 	EventDataQueue mQueue;
 	EventDataListeners mEventListeners;
-	vector<std::pair<const EventListenerDelegate&, EventType>> mRemoveList;
+	vector<std::pair<unsigned long, EventType>> mRemoveList;
 
 	EventManager() {
 		mEventListeners.emplace(EventType::ENTITY_COLLISION_EVENT, EventDelegateList());

@@ -338,7 +338,7 @@ public:
 
 	LuaScripts getLuaScripts();
 
-	void registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript);
+	void registerLuaScript(unsigned long id, LuaScript* luaScript);
 
 	void deregisterLuaScript(unsigned long id);
 
@@ -381,6 +381,10 @@ public:
 			EventData& nonConstEventData = const_cast<EventData&>(eventData);
 			EntityPositionSetEventData& positionData = reinterpret_cast<EntityPositionSetEventData&>(nonConstEventData);
 
+			if (this->mBodies.find(positionData.getEntityId()) == this->mBodies.end()) {
+				return;
+			}
+
 			BodyPtr body = makeShared(getBody(positionData.getEntityId()));
 			quadTree->removeBody(body);
 			if (body->collider != nullptr) {
@@ -392,6 +396,10 @@ public:
 		EventListenerDelegate collisionChangeListener([this](const EventData& eventData) {
 			EventData& nonConstEventData = const_cast<EventData&>(eventData);
 			EntityCollisionSetEventData& collisionData = reinterpret_cast<EntityCollisionSetEventData&>(nonConstEventData);
+
+			if (this->mBodies.find(collisionData.getEntityId()) == this->mBodies.end()) {
+				return;
+			}
 
 			BodyPtr body = makeShared(getBody(collisionData.getEntityId()));
 			quadTree->removeBody(body);

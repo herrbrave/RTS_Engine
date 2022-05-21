@@ -433,7 +433,7 @@ LuaScripts LuaScriptSystem::getLuaScripts() {
 	return this->mLuaScripts;
 }
 
-void LuaScriptSystem::registerLuaScript(unsigned long id, const LuaScriptPtr& luaScript) {
+void LuaScriptSystem::registerLuaScript(unsigned long id, LuaScript* luaScript) {
 	mLuaScripts.emplace(id, luaScript);
 }
 

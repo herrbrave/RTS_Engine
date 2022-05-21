@@ -53,6 +53,8 @@ public:
 		this->entityId = entityId;
 		this->componentId = componentId;
 	}
+	
+	virtual ~Component() {}
 
 	virtual void serialize(Serializer& serializer) const = 0;
 };

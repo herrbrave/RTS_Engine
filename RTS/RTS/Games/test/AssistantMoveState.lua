@@ -50,9 +50,9 @@ BasicWASDMoveState.new = function(context)
 
 	function self.update(dt)
 		step = dt / 1000.0
-		if keys[SDLK_SPACE] then
+		if context.keys[SDLK_SPACE] then
 			context.stateMachine.pushState(self.dashState)
-		elseif keys[SDLK_e] then
+		elseif context.keys[SDLK_e] then
 			collisions = checkCollisions(entityId)
 			onBox = false
 			for _i=0,collisions:size()-1 do
@@ -63,25 +63,20 @@ BasicWASDMoveState.new = function(context)
 			end
 		end
 
-		if keys[SDLK_w] then
+		if context.keys[SDLK_w] then
 			context.input:setY(-1)
-		elseif keys[SDLK_s] then
+		elseif context.keys[SDLK_s] then
 			context.input:setY(1)
 		else
 			context.input:setY(0)
 		end
 
-		if keys[SDLK_a] then
+		if context.keys[SDLK_a] then
 			context.input:setX(-1)
-		elseif keys[SDLK_d] then
+		elseif context.keys[SDLK_d] then
 			context.input:setX(1)
 		else
 			context.input:setX(0)
-		end
-		-- detonate torch
-		if keys[SDLK_1] and context.torch > 0 then
-			sendMessage(context.torch, "DETONATE", "TRUE")
-			context.torch = 0
 		end
 
 		context.input:normalize()

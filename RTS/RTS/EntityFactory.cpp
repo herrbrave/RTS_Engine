@@ -232,7 +232,7 @@ void applyScript(SystemManagerPtr systemManager, unsigned long entityId, const s
 	}
 
 	LuaScriptSystemPtr luaScriptSystem = systemManager->getSystemByType<LuaScriptSystem>(SystemType::LUA_SCRIPT);
-	LuaScriptPtr luaScript(GCC_NEW LuaScript(script));
+	LuaScript* luaScript = GCC_NEW LuaScript(script);
 
 	LuaScriptComponentPtr scriptComponent(GCC_NEW LuaScriptComponent(entity->id, luaScript));
 	ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);

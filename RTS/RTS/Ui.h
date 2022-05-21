@@ -235,12 +235,12 @@ private:
 class ButtonComponent : public InputComponent {
 public:
 
-	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, LuaScriptPtr script)
+	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, LuaScript* script)
 		: InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT), buttonDrawable(drawable) {
 		this->initialize(inputListener, drawable, script);
 	}
 
-	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, TextureDrawablePtr icon, LuaScriptPtr script) : InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT), buttonDrawable(drawable) {
+	ButtonComponent(unsigned long entityId, ButtonDrawablePtr drawable, InputListenerPtr inputListener, TextureDrawablePtr icon, LuaScript* script) : InputComponent(entityId, inputListener, ComponentType::BUTTON_COMPONENT), buttonDrawable(drawable) {
 		this->icon = icon;
 		initialize(inputListener, drawable, script);
 	}
@@ -268,7 +268,7 @@ private:
 	ButtonDrawablePtr buttonDrawable;
 	TextureDrawablePtr icon;
 
-	void initialize(InputListenerPtr inputListener, ButtonDrawablePtr drawable, LuaScriptPtr luaScript) {
+	void initialize(InputListenerPtr inputListener, ButtonDrawablePtr drawable, LuaScript* luaScript) {
 		inputListener->eventCallbacks.emplace(
 			Input::ON_MOUSE_ENTER,
 			[drawable, luaScript](EventPtr evt) {

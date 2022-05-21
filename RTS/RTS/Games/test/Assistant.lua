@@ -20,13 +20,6 @@ function setup()
 
 	setTag(entityId, "PLAYER")
 
-	keys = {}
-	keys[SDLK_w] = false
-	keys[SDLK_a] = false
-	keys[SDLK_s] = false
-	keys[SDLK_d] = false
-	keyChange = false
-
 	include("Games/test/AssistantMoveState.lua")
 
 	IDLE = 0
@@ -40,6 +33,13 @@ function setup()
 	context.speed = 220
 	context.friction = 2400
 	context.box = 0
+
+	context.keys = {}
+	context.keys[SDLK_w] = false
+	context.keys[SDLK_a] = false
+	context.keys[SDLK_s] = false
+	context.keys[SDLK_d] = false
+	context.keyChange = false
 
 	moveState = BasicWASDMoveState.new(context)
 	hurtState = HurtMoveState.new(context)
@@ -122,17 +122,17 @@ function onMouseDown(x, y, button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
-	if keys[keyId] == false then
-		keyChange = true
+	if context.keys[keyId] == false then
+		context.keyChange = true
 	end
-	keys[keyId] = true
+	context.keys[keyId] = true
 end
 
 function onKeyUp(keyId, ctrl, shft)
-	if keys[keyId] == true then
-		keyChange = true
+	if context.keys[keyId] == true then
+		context.keyChange = true
 	end
-	keys[keyId] = false
+	context.keys[keyId] = false
 end
 
 -- Entity Mouse Events
@@ -218,7 +218,10 @@ function onMessage(message, value)
 end
 
 function onBroadcast(message, value)
-
+	if message == "TORCH_EXPENDED" then
+		removeChild(entityId, context.torch)
+		context.torch = 0
+	end
 end
 
 function onPhysics(delta)

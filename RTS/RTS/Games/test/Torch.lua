@@ -4,8 +4,8 @@ registrar = {
 	ENTITY = 1,
 	FACTORY = 1,
 	PHYSICS = 1,
-	ANIMATION = 0,
-	INPUT = 0,
+	ANIMATION = 1,
+	INPUT = 1,
 	SCRIPT = 1,
 	ASSET = 0,
 	CAMERA = 0,
@@ -21,19 +21,19 @@ function setup()
 	setCircleCollision(entityId, 24)
 	setTag(entityId, "TORCH")
 	setZOrder(entityId, 11)
+	charges = 3
 
-	top = Vector2f.new(512, 0)
-	middle = Vector2f.new(512, 280)
-	pos = getPosition(entityId)
+	include("Games/test/TorchState.lua")
 
-	SPAWNING = 0
-	IDLE = 1
-	EQUIPPED = 2
+	context = {}
 
-	SPAWN_DURATION = 550.0
+	context.keys = {}
+	context.keys[SDLK_1] = false
+	context.keyChange = false
 
-	state = SPAWNING
-	spawn_time = 0
+	context.stateMachine = StateMachine.new()
+	context.stateMachine.pushState(TorchSpawnState.new(context))
+
 
 end
 
@@ -48,11 +48,18 @@ function onMouseDown(x, y, button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
-
+	print("for some reason I'm still alive")
+	if context.keys[keyId] == false then
+		context.keyChange = true
+	end
+	context.keys[keyId] = true
 end
 
 function onKeyUp(keyId, ctrl, shft)
-
+	if context.keys[keyId] == true then
+		context.keyChange = true
+	end
+	context.keys[keyId] = false
 end
 
 -- Entity Mouse Events
@@ -82,36 +89,15 @@ end
 
 function onCollision(id)
 	if getTag(id) == "PLAYER" and state == IDLE then
-		sendMessage(id, "TORCH", tostring(entityId))
+		print("pick me up")
+		if context.idle_active then
+			sendMessage(id, "TORCH", tostring(entityId))
+		end
 	end
 end
 
 function update(delta)
-	if state == SPAWNING then
-		if spawn_time >= SPAWN_DURATION then
-			setPosition(entityId, middle:getX(), middle:getY())
-			state = IDLE
-			hover_value = 0
-		else
-			t = spawn_time / SPAWN_DURATION
-			t_squared = t * t
-			t_inverse_squared = (1.0 - t) * (1.0 - t)
-
-			px =  t_inverse_squared * pos:getX() + (2 * t * top:getX() - 2 * t_squared * top:getX()) + t_squared * middle:getX()
-			py =  t_inverse_squared * pos:getY() + (2 * t * top:getY() - 2 * t_squared * top:getY()) + t_squared * middle:getY()
-
-			setPosition(entityId, px, py)
-		end
-
-		spawn_time = spawn_time + delta
-	elseif state == IDLE then
-		prog = (hover_value / 1000.0) * 2 * math.pi
-		offset = math.cos(prog) * 10.0
-
-		setPosition(entityId, middle:getX(), middle:getY() + offset)
-
-		hover_value = (hover_value + delta) % 1000
-	end
+	context.stateMachine.update(delta)
 end
 
 function onBroadcast(message, value)
@@ -121,26 +107,13 @@ end
 function onMessage(message, value)
 
 	if message == "PICK_UP" then
-		print("Picked Up")
-		state = EQUIPPED
-		setCircleCollision(entityId, 150)
-	elseif message == "DETONATE" then
-		print("boom!")
-		ids = checkCollisions(entityId)
-		print("ids", tostring(ids:size()))
-		for index=0,ids:size()-1 do
-			tag = getTag(ids:at(index))
-			print("tag", tag)
-			if tag == "SKELETON" then
-				sendMessage(ids:at(index), "DETONATE", "TRUE")
-			end
-		end
-		destroyEntity(entityId)
+		print("picked up")
+		context.onPickup()
 	end
 
 	return false
 end
 
 function onPhysics(delta)
-
+	context.stateMachine.onPhysics(delta)
 end

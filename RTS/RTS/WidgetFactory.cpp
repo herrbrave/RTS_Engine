@@ -18,7 +18,7 @@ void applyButtonWithText(SystemManagerPtr systemManager, unsigned long entityId,
 		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
 		inputSystem->registerEventListener(inputListener);
 
-		LuaScriptPtr luaScript = std::make_shared<LuaScript>(script);
+		LuaScript* luaScript = GCC_NEW LuaScript(script);
 
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);
 		EventManager::getInstance().pushEvent(scriptLoaded);
@@ -51,7 +51,7 @@ void applyButtonWithIcon(SystemManagerPtr systemManager, unsigned long entityId,
 		InputSystemPtr inputSystem = systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
 		inputSystem->registerEventListener(inputListener);
 
-		LuaScriptPtr luaScript = std::make_shared<LuaScript>(script);
+		LuaScript* luaScript = GCC_NEW LuaScript(script);
 
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entity->id, luaScript);
 		EventManager::getInstance().pushEvent(scriptLoaded);

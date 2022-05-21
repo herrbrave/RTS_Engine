@@ -13,7 +13,7 @@ public:
 		this->path = scriptPath;
 	}
 
-	~LuaScript() {
+	virtual ~LuaScript() {
 		for (auto deleter : deleters) {
 			deleter();
 		}

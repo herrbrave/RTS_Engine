@@ -58,8 +58,6 @@ void RTS::update() {
 
 	EventManager::getInstance().update();
 
-	mLuaScriptFactory->clean();
-
 	mLastTime = lastTime;
 }
 

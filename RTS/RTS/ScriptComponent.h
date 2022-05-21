@@ -9,18 +9,22 @@ typedef weak_ptr<LuaScriptComponent> WeakLuaScriptComponentPtr;
 
 class LuaScriptComponent : public Component {
 public:
-	LuaScriptPtr script;
+	LuaScript* script;
 
-	LuaScriptComponent(unsigned long entityId, const LuaScriptPtr& script) : Component(entityId, ComponentType::LUA_SCRIPT_COMPONENT) {
+	LuaScriptComponent(unsigned long entityId, LuaScript* script) : Component(entityId, ComponentType::LUA_SCRIPT_COMPONENT) {
 		this->script = script;
 	}
 
 	LuaScriptComponent(unsigned long entityId, const rapidjson::Value& root) : Component(entityId, ComponentType::LUA_SCRIPT_COMPONENT) {
-		this->script = std::make_shared<LuaScript>(root["script"].GetString());
+		this->script = GCC_NEW LuaScript(root["script"].GetString());
 
 		this->script->state["entityId"] = (int)entityId;
 		ScriptLoadedData* scriptLoaded = GCC_NEW ScriptLoadedData(SDL_GetTicks(), entityId, this->script);
 		EventManager::getInstance().pushEvent(scriptLoaded);
+	}
+
+	~LuaScriptComponent() {
+		this->script = nullptr;
 	}
 
 	void serialize(Serializer& serializer) const override {
