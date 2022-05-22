@@ -132,7 +132,7 @@ TorchExplosionState.new = function(context)
 	function self.setup()
 		self.explosion = createAnimated("Assets/test/explosion_animation.json", 0, 0, 300, 300)
 		setChild(entityId, self.explosion)
-		setZOrder(self.explosion, 14)
+		setAnimationZOrder(self.explosion, 14)
 		playAnimation(self.explosion)
 
 		local ids = checkCollisions(entityId)

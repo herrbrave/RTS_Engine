@@ -61,6 +61,12 @@ BasicWASDMoveState.new = function(context)
 					sendMessage(collisions:at(_i), "OPEN_CHEST", "open")
 				end
 			end
+		elseif context.keys[SDLK_2] and context.inventorySize() > 0 then
+			local pos = getPosition(entityId)
+			item = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185, 700, 64, 64, 112, 112, 16, 16)
+			setPosition(item, pos:getX(), pos:getY())
+			setScript(item, "Games/test/BonesIngredient.lua")
+			context.inventoryPop()
 		end
 
 		if context.keys[SDLK_w] then

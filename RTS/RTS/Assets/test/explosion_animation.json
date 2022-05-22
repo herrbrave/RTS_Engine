@@ -1,5 +1,5 @@
 {
-    "name" : "Player",
+    "name" : "explosion",
     "spritesheet" : "Assets/test/explosion.png",
     "defaultAnimationName" : "explosion",
     "fps" : 24,

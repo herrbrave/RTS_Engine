@@ -6,7 +6,7 @@ registrar = {
 	PHYSICS = 1,
 	ANIMATION = 0,
 	INPUT = 1,
-	SCRIPT = 0,
+	SCRIPT = 1,
 	ASSET = 0,
 	CAMERA = 1,
 	MOUSE_MOVE = 0,
@@ -80,6 +80,11 @@ function setup()
 		setZOrder(context.inventory[_i].id, 100)
 		_i = _i + 1
 	end
+	context.inventoryPrint = function()
+		for _i=0,context.inventorySizeMax do
+			print("INVENTORY AT:", _i, context.inventory[_i].type)
+		end
+	end
 	context.inventorySize = function()
 		_i = 0
 		while _i <= context.inventorySizeMax  do
@@ -97,15 +102,24 @@ function setup()
 		for _i=0,context.inventorySizeMax do
 			if context.inventory[_i].type == INVENTORY_EMPTY then
 				context.inventory[_i].type = context.inventory_type_map[item]
-				print("ADD TO INVENTORY AT:", _i, item, context.inventory[_i].type)
 				inventory_change = true
 				return true
 			end
 		end
+		context.inventoryPrint()
 		return false
 	end
 	context.inventoryPop = function()
-
+		print("REMOVING FROM INVENTORY")
+		local size = context.inventorySize()
+		if size <= 0 then
+			print("Can't pop and empty inventory.")
+			return
+		end
+		context.inventory[size - 1].type = INVENTORY_EMPTY
+		inventory_change = true
+		context.inventoryPrint()
+		return false
 	end
 
 	inventory_change = true

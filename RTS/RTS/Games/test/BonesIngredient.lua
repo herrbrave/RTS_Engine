@@ -4,8 +4,8 @@ registrar = {
 	ENTITY = 1,
 	FACTORY = 1,
 	PHYSICS = 1,
-	ANIMATION = 1,
-	INPUT = 1,
+	ANIMATION = 0,
+	INPUT = 0,
 	SCRIPT = 1,
 	ASSET = 0,
 	CAMERA = 0,
@@ -16,24 +16,18 @@ registrar = {
 
 
 function setup()
-	print("setup Torch", tostring(entityId))
+	print("setup Bones", tostring(entityId))
 
 	setCircleCollision(entityId, 24)
-	setTag(entityId, "TORCH")
+	setTag(entityId, "BONES_INGREDIENT")
 	setZOrder(entityId, 11)
-	charges = 3
 
-	include("Games/test/TorchState.lua")
+	include("Games/test/BonesState.lua")
 
 	context = {}
 
-	context.keys = {}
-	context.keys[SDLK_1] = false
-	context.keyChange = false
-
 	context.stateMachine = StateMachine.new()
-	context.stateMachine.pushState(TorchSpawnState.new(context))
-
+	context.stateMachine.pushState(BonesThrowState.new(context))
 
 end
 
@@ -48,17 +42,11 @@ function onMouseDown(x, y, button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
-	if context.keys[keyId] == false then
-		context.keyChange = true
-	end
-	context.keys[keyId] = true
+
 end
 
 function onKeyUp(keyId, ctrl, shft)
-	if context.keys[keyId] == true then
-		context.keyChange = true
-	end
-	context.keys[keyId] = false
+
 end
 
 -- Entity Mouse Events
@@ -87,11 +75,7 @@ end
 -- Collition Callback --
 
 function onCollision(id)
-	if getTag(id) == "PLAYER" and state == IDLE then
-		if context.idle_active then
-			sendMessage(id, "TORCH", tostring(entityId))
-		end
-	end
+
 end
 
 function update(delta)
@@ -103,10 +87,6 @@ function onBroadcast(message, value)
 end
 
 function onMessage(message, value)
-
-	if message == "PICK_UP" then
-		context.onPickup()
-	end
 
 	return false
 end

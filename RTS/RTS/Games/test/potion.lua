@@ -83,11 +83,8 @@ function setup()
 
 		end
 
-		function self.handleCollision(id)
-			tag = getTag(id)
-			if "BONES_MISSLE" == tag then
-				self.life = math.min(0, self.life - 50)
-			end
+		function self.heal(ingredient)
+			self.life = math.min(self.max_life, self.life + 25)
 		end
 
 		return self
@@ -143,11 +140,8 @@ function setup()
 
 		end
 
-		function self.handleCollision(id)
-			tag = getTag(id)
-			if "BONES_MISSLE" == tag then
-				self.life = math.min(0, self.life - 50)
-			end
+		function self.heal(ingredient)
+			self.life = math.min(self.max_life, self.life + 25)
 		end
 
 		return self
@@ -207,11 +201,8 @@ function setup()
 
 		end
 
-		function self.handleCollision(id)
-			tag = getTag(id)
-			if "BONES_MISSLE" == tag then
-				self.life = math.min(0, self.life - 50)
-			end
+		function self.heal(ingredient)
+			self.life = math.min(self.max_life, self.life + 25)
 		end
 
 		return self
@@ -270,7 +261,7 @@ end
 -- Collition Callback --
 
 function onCollision(id)
-	context.stateMachine.peekState().handleCollision(id)
+
 end
 
 function update(delta)
@@ -278,7 +269,9 @@ function update(delta)
 end
 
 function onBroadcast(message, value)
-
+	if "INGREDIENT_ADDED" then
+		context.stateMachine.peekState().heal(value)
+	end
 end
 
 function onPhysics(delta)
