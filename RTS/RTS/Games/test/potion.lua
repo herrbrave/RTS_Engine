@@ -84,7 +84,7 @@ function setup()
 		end
 
 		function self.heal(ingredient)
-			self.life = math.min(self.max_life, self.life + 25)
+			self.life = math.max(0, self.life - 5000)
 		end
 
 		return self
