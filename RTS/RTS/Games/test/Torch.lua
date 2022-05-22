@@ -48,7 +48,6 @@ function onMouseDown(x, y, button)
 end
 
 function onKeyDown(keyId, ctrl, shft)
-	print("for some reason I'm still alive")
 	if context.keys[keyId] == false then
 		context.keyChange = true
 	end
@@ -107,7 +106,6 @@ end
 function onMessage(message, value)
 
 	if message == "PICK_UP" then
-		print("picked up")
 		context.onPickup()
 	end
 

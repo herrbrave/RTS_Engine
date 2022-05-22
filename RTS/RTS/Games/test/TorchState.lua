@@ -98,7 +98,6 @@ TorchWeaponState.new = function(context)
 		setCircleCollision(entityId, 150)
 		setPosition(entityId, 30, 0)
 		if self.charges == 0 then
-			print("I'm totally dead")
 			broadcastMessage(entityId, "TORCH_EXPENDED", "TRUE")
 			destroyEntity(entityId)
 		end

@@ -311,10 +311,13 @@ public:
 		for (auto it = mRemoveList.begin(); it != mRemoveList.end(); ++it) {
 			EventDelegateList& eventDelegates = mEventListeners.at(it->second);
 			auto del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [&it](EventListenerDelegate val) { return val.id == it->first; });
-			if (del != eventDelegates.end()) {
-				eventDelegates.erase(del);
+			while (del != eventDelegates.end()) {
+				eventDelegates.erase(del); 
+				del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [&it](EventListenerDelegate val) { return val.id == it->first; });
+				ERR("Deleting delegate for: " + std::to_string(it->first));
 			}
 		}
+		mRemoveList.clear();
 
 		while (mQueue.size() > 0) {
 			EventDataPtr eventData = mQueue.front();
@@ -323,6 +326,11 @@ public:
 			const EventType& eventType = eventData->getEventType();
 			EventDelegateList eventDelegates = mEventListeners.at(eventType);
 			for (auto eventDelegate : eventDelegates) {
+				// It's possible for an event to delete someting that had an event listener. Check if the eventDelegate matches an event delegate that's marked for removal. 
+				if (eventDelegate.invokable == nullptr 
+					|| std::find_if(mRemoveList.begin(), mRemoveList.end(), [&eventDelegate, &eventType](std::pair<unsigned long, EventType> val) { return val.first == eventDelegate.id && val.second == eventType; }) != mRemoveList.end()) {
+					continue;
+				}
 				eventDelegate(*eventData);
 			}
 		}

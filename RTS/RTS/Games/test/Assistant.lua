@@ -167,7 +167,6 @@ end
 function update(delta)
 	stateMachine.update(delta)
 	if inventory_change then
-		print("Updating Invetory")
 		for i=0,2 do
 			if context.inventory[i].type == context.INVENTORY_EMPTY then
 				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 128, 112, 16, 16)
