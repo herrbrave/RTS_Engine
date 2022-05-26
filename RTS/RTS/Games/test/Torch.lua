@@ -7,7 +7,6 @@ registrar = {
 	ANIMATION = 1,
 	INPUT = 1,
 	SCRIPT = 1,
-	ASSET = 0,
 	CAMERA = 0,
 	MOUSE_MOVE = 0,
 	UI = 0,

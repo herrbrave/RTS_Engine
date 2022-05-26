@@ -314,7 +314,6 @@ public:
 			while (del != eventDelegates.end()) {
 				eventDelegates.erase(del); 
 				del = std::find_if(eventDelegates.begin(), eventDelegates.end(), [&it](EventListenerDelegate val) { return val.id == it->first; });
-				ERR("Deleting delegate for: " + std::to_string(it->first));
 			}
 		}
 		mRemoveList.clear();

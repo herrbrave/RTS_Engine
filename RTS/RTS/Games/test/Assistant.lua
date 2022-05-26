@@ -25,6 +25,7 @@ function setup()
 	IDLE = 0
 	DASH = 1
 	HURT = 2
+	DEAD = 3
 
 	context = {}
 	context.velocity = Vector2f.new(0, 0)
@@ -49,11 +50,11 @@ function setup()
 	context.stateMachine = stateMachine
 
 	-- Set up Player health
-	health = 100
-	healthLabel = createLabel("label", 25, 200, 70)
-	setLabelText(healthLabel, "Health", 25, 255, 255, 255)
-	setLabelZOrder(healthLabel, 100)
-	healthProgress = createProgress(290, 70, 100, 25, 100, 100)
+	context.health = 100
+	context.healthLabel = createLabel("label", 25, 200, 70)
+	setLabelText(context.healthLabel, "Health", 25, 255, 255, 255)
+	setLabelZOrder(context.healthLabel, 100)
+	context.healthProgress = createProgress(290, 70, 100, 25, 100, 100)
 
 	-- Set up Torch
 	context.torch = 0
@@ -75,20 +76,15 @@ function setup()
 	_i = 0
 	while _i <= context.inventorySizeMax do
 		context.inventory[_i] = {}
-		context.inventory[_i].type = INVENTORY_EMPTY
+		context.inventory[_i].type = context.INVENTORY_EMPTY
 		context.inventory[_i].id = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185 + (_i * 80), 700, 80, 80, 0, 128, 16, 16)
 		setZOrder(context.inventory[_i].id, 100)
 		_i = _i + 1
 	end
-	context.inventoryPrint = function()
-		for _i=0,context.inventorySizeMax do
-			print("INVENTORY AT:", _i, context.inventory[_i].type)
-		end
-	end
 	context.inventorySize = function()
 		_i = 0
 		while _i <= context.inventorySizeMax  do
-			if context.inventory[_i].type ~= INVENTORY_EMPTY then
+			if context.inventory[_i].type ~= context.INVENTORY_EMPTY then
 				_i = _i + 1
 			else
 				break
@@ -98,31 +94,27 @@ function setup()
 		return _i
 	end
 	context.inventoryPush = function(item)
-		print("ADDING TO INVENTORY")
 		for _i=0,context.inventorySizeMax do
-			if context.inventory[_i].type == INVENTORY_EMPTY then
+			if context.inventory[_i].type == context.INVENTORY_EMPTY then
 				context.inventory[_i].type = context.inventory_type_map[item]
-				inventory_change = true
-				return true
+				break
 			end
 		end
-		context.inventoryPrint()
+		updateInventoryImages()
 		return false
 	end
 	context.inventoryPop = function()
-		print("REMOVING FROM INVENTORY")
 		local size = context.inventorySize()
 		if size <= 0 then
 			print("Can't pop and empty inventory.")
 			return
 		end
-		context.inventory[size - 1].type = INVENTORY_EMPTY
-		inventory_change = true
-		context.inventoryPrint()
+		context.inventory[size-1].type = context.INVENTORY_EMPTY
+		updateInventoryImages()
 		return false
 	end
-
-	inventory_change = true
+	context.inventoryCharge = 100
+	context.inventoryChargeProgress = createProgress(280, 745, 250, 25, 100, 100)
 end
 
 -- Standard Mouse/Key events
@@ -180,18 +172,9 @@ end
 
 function update(delta)
 	stateMachine.update(delta)
-	if inventory_change then
-		for i=0,2 do
-			if context.inventory[i].type == context.INVENTORY_EMPTY then
-				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 128, 112, 16, 16)
-			elseif context.inventory[i].type == context.INVENTORY_BONES then
-				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 112, 112, 16, 16)
-			elseif context.inventory[i].type == context.INVENTORY_GOLD then
-				setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 96, 128, 16, 16)
-			end
-		end
-
-		inventory_change = false
+	if context.inventoryCharge < 100 then
+		context.inventoryCharge = math.min(context.inventoryCharge + (20.0 * (delta / 1000)), 100)
+		setProgress(context.inventoryChargeProgress, math.floor(context.inventoryCharge), 100)
 	end
 end
 
@@ -211,13 +194,13 @@ function onMessage(message, value)
 			context.stateMachine.pushState(hurtState)
 
 			hurtVal = 7
-			health = math.max(0, health - hurtVal)
-			setProgress(healthProgress, health, 100)
+			context.health = math.max(0, context.health - hurtVal)
+			setProgress(context.healthProgress, context.health, 100)
 		end
 	elseif message == "HEAL" then
 		hurtVal = value
-		health = math.min(100, health + hurtVal)
-		setProgress(healthProgress, health, 100)
+		context.health = math.min(100, context.health + hurtVal)
+		setProgress(context.healthProgress, context.health, 100)
 	elseif message == "TORCH" then
 		if context.torch == nil or context.torch == 0 then
 			context.torch = tonumber(value)
@@ -239,4 +222,18 @@ end
 
 function onPhysics(delta)
 	stateMachine.onPhysics(delta)
+end
+
+function updateInventoryImages()
+	print("Updating Inventory")
+	for i=0,context.inventorySizeMax do
+		print("Inventory at: ", i, context.inventory[i].type)
+		if context.inventory[i].type == context.INVENTORY_EMPTY then
+			setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 0, 128, 16, 16)
+		elseif context.inventory[i].type == context.INVENTORY_BONES then
+			setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 112, 112, 16, 16)
+		elseif context.inventory[i].type == context.INVENTORY_GOLD then
+			setTexture("Assets/test/Sprites/Dungeon_Tileset.png", context.inventory[i].id, 64, 64, 96, 128, 16, 16)
+		end
+	end
 end

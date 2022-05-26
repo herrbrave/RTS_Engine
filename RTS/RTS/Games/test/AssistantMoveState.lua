@@ -62,11 +62,14 @@ BasicWASDMoveState.new = function(context)
 				end
 			end
 		elseif context.keys[SDLK_2] and context.inventorySize() > 0 then
-			local pos = getPosition(entityId)
-			item = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185, 700, 64, 64, 112, 112, 16, 16)
-			setPosition(item, pos:getX(), pos:getY())
-			setScript(item, "Games/test/BonesIngredient.lua")
-			context.inventoryPop()
+			if context.inventoryCharge == 100 then
+				local pos = getPosition(entityId)
+				item = createTextured("Assets/test/Sprites/Dungeon_Tileset.png", 185, 700, 64, 64, 112, 112, 16, 16)
+				setPosition(item, pos:getX(), pos:getY())
+				setScript(item, "Games/test/BonesIngredient.lua")
+				context.inventoryPop()
+				context.inventoryCharge = 0
+			end
 		end
 
 		if context.keys[SDLK_w] then
@@ -126,7 +129,11 @@ HurtMoveState.new = function(context)
 
 		self.hurtTime = self.hurtTime + dt
 		if self.hurtTime > 100 then
-			context.stateMachine.popState()
+			if context.health > 0 then
+				context.stateMachine.popState()
+			else
+				context.stateMachine.pushState(DeadState.new(context))
+			end
 		end
 	end
 
@@ -139,6 +146,41 @@ HurtMoveState.new = function(context)
 
 	function self.teardown()
 		setColor(entityId, 255, 255, 255, 255)
+	end
+
+	return self
+end
+
+DeadState = {}
+
+DeadState.new = function(context) 
+	local self = State.new()
+
+	self.deadText = createLabel("You're DEAD!", 35, 640, 348)
+	self.timer = 0
+
+	function self.setup()
+		context.state = DEAD
+		setColor(entityId, 64, 64, 64, 128)
+		broadcastMessage(entityId, "PLAYER_DEAD", "TRUE")
+	end
+
+	function self.update(dt)
+		self.prog = math.cos((self.timer / 1000.0) * 2 * math.pi)
+
+		self.offset = self.prog * 128.0
+
+		setColor(self.deadText, 255, math.floor(128 - self.prog), math.floor(128 - self.prog), 255)
+
+		self.timer = (self.timer + dt) % 1000
+	end
+
+	function self.onPhysics(dt)
+
+	end
+
+	function self.teardown()
+
 	end
 
 	return self

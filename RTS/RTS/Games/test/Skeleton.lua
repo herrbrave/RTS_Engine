@@ -33,6 +33,7 @@ function setup()
 
 	state = SPAWNING
 	spawn_time = 0
+	game_over = false
 
 	idle_pattern = {}
 	idle_pattern[0] = Vector2f.new(700, 280)
@@ -88,7 +89,7 @@ end
 
 function onCollision(id)
 	tag = getTag(id)
-	if tag == "PLAYER" and state == IDLE then
+	if tag == "PLAYER" and state == IDLE and game_over == false then
 		target = id
 		state = ATTACK
 	end
@@ -154,7 +155,10 @@ function update(delta)
 end
 
 function onBroadcast(message, value)
-
+	if "PLAYER_DEAD" == message then
+		game_over = true
+		state = IDLE
+	end
 end
 
 function onMessage(message, value)
