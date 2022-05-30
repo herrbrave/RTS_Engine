@@ -182,21 +182,19 @@ function onMessage(message, value)
 
 	if message == "ADD_INVENTORY" then
 		return context.inventoryPush(value)
-	elseif message == "HURT" then
-		if context.state ~= HURT then
-			id = tonumber(value)
-			skelePos = getPosition(id)
-			playerPosition = getPosition(entityId)
-			playerPosition:subtract(skelePos)
-			playerPosition:normalize()
-			context.hurtVector:setX(playerPosition:getX())
-			context.hurtVector:setY(playerPosition:getY())
-			context.stateMachine.pushState(hurtState)
+	elseif message == "HURT" and context.state ~= HURT then
+		id = tonumber(value)
+		skelePos = getPosition(id)
+		playerPosition = getPosition(entityId)
+		playerPosition:subtract(skelePos)
+		playerPosition:normalize()
+		context.hurtVector:setX(playerPosition:getX())
+		context.hurtVector:setY(playerPosition:getY())
+		context.stateMachine.pushState(hurtState)
 
-			hurtVal = 7
-			context.health = math.max(0, context.health - hurtVal)
-			setProgress(context.healthProgress, context.health, 100)
-		end
+		hurtVal = 7
+		context.health = math.max(0, context.health - hurtVal)
+		setProgress(context.healthProgress, context.health, 100)
 	elseif message == "HEAL" then
 		hurtVal = value
 		context.health = math.min(100, context.health + hurtVal)
@@ -217,6 +215,14 @@ function onBroadcast(message, value)
 	if message == "TORCH_EXPENDED" then
 		removeChild(entityId, context.torch)
 		context.torch = 0
+	elseif message == "DETONATE" then
+		if "BOOM" == value then
+			context.health = 0
+			setProgress(context.healthProgress, context.health, 100)
+			context.hurtVector:setX(0.0)
+			context.hurtVector:setY(0.0)
+			context.stateMachine.pushState(hurtState)
+		end
 	end
 end
 

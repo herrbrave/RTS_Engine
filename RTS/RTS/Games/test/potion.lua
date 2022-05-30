@@ -4,7 +4,7 @@ registrar = {
 	ENTITY = 1,
 	FACTORY = 1,
 	PHYSICS = 1,
-	ANIMATION = 0,
+	ANIMATION = 1,
 	INPUT = 1,
 	SCRIPT = 0,
 	ASSET = 0,
@@ -141,7 +141,7 @@ function setup()
 		end
 
 		function self.heal(ingredient)
-			self.life = math.min(self.max_life, self.life + 25)
+			self.life = math.max(0, self.life - 3500)
 		end
 
 		return self
@@ -173,7 +173,7 @@ function setup()
 
 		function self.update(dt)
 			if self.life > self.life_span then
-				--self.context.stateMachine.pushState(self.context.states[UNSTABLE])
+				self.context.stateMachine.pushState(BoomState.new(context))
 				return
 			end
 
@@ -202,7 +202,44 @@ function setup()
 		end
 
 		function self.heal(ingredient)
-			self.life = math.min(self.max_life, self.life + 25)
+			self.life = math.max(0, self.life - 5000)
+		end
+
+		return self
+	end
+
+	BoomState = {}
+
+	BoomState.new = function(context) 
+		local self = State.new()
+
+		self.context = context
+
+		function self.setup()
+			self.explosion = createAnimated("Assets/test/explosion_animation.json", 0, 0, 1024, 1024)
+			setChild(entityId, self.explosion)
+			setAnimationZOrder(self.explosion, 18)
+			playAnimation(self.explosion)
+			setLabelText(self.context.healthLabel, "BOOM", 45, 255, 32, 32)
+		end
+
+		function self.update(dt)
+			if self.explosion ~= 0 and isAnimationPlaying(self.explosion) == false then
+				destroyEntity(self.explosion)
+				broadcastMessage(entityId, "DETONATE", "BOOM")
+				self.explosion = 0
+				destroyEntity(entityId)
+			end
+		end
+
+		function self.onPhysics(dt)
+		end
+
+		function self.teardown()
+
+		end
+
+		function self.heal(ingredient)
 		end
 
 		return self
@@ -212,6 +249,7 @@ function setup()
 	context.states[STABLE] = StableState.new(context)
 	context.states[UNSTABLE] = UnstableState.new(context)
 	context.states[VOLITILE] = VolitileState.new(context)
+
 
 	context.stateMachine = StateMachine.new()
 	context.stateMachine.pushState(context.states[STABLE])

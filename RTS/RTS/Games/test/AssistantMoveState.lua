@@ -156,7 +156,7 @@ DeadState = {}
 DeadState.new = function(context) 
 	local self = State.new()
 
-	self.deadText = createLabel("You're DEAD!", 35, 640, 348)
+	self.deadText = createLabel("You're DEAD!", 35, 512, 348)
 	self.timer = 0
 
 	function self.setup()
