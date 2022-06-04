@@ -473,6 +473,8 @@ public:
 
 		EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
 		EventManager::getInstance().addDelegate(destroyEntityListener, EventType::ENTITY_DESTROYED);
+
+		this->inputState = std::make_shared<InputState>();
 	}
 
 	void registerEventListener(InputListenerPtr inputListener);
@@ -486,9 +488,14 @@ public:
 
 	void clear() override;
 
+	InputState& getInputState() {
+		return *this->inputState;
+	}
+
 private:
 	unordered_map<unsigned long, InputListenerPtr> mListeners;
 	MouseMovementHandlerPtr mMouseMovementHandler{ nullptr };
+	InputStatePtr inputState;
 };
 
 class DefaultSoundController : public SoundController {

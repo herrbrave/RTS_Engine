@@ -78,7 +78,7 @@ function setup()
 		end
 
 		function self.update(dt)
-			if context.keys[SDLK_SPACE] then
+			if inputState.keyPressed(SDLK_SPACE) == true then
 				context.stateMachine.pushState(context.states[STABLE])
 			end
 		end
@@ -339,7 +339,7 @@ function setup()
 
 	context.gameStarted = false
 	context.gameOver = false
-	context.timer = 1 * 60 * 1000
+	context.timer = 5 * 60 * 1000
 	context.timerLabel = createLabel("--:--", 22, 512, 450)
 	setLabelZOrder(context.timerLabel, 202)
 

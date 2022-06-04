@@ -50,9 +50,10 @@ BasicWASDMoveState.new = function(context)
 
 	function self.update(dt)
 		step = dt / 1000.0
-		if context.keys[SDLK_SPACE] then
+
+		if inputState.keyPressed(SDLK_SPACE) == true then
 			context.stateMachine.pushState(self.dashState)
-		elseif context.keys[SDLK_e] then
+		elseif inputState.keyPressed(SDLK_e) then
 			collisions = checkCollisions(entityId)
 			onBox = false
 			for _i=0,collisions:size()-1 do
@@ -61,7 +62,7 @@ BasicWASDMoveState.new = function(context)
 					sendMessage(collisions:at(_i), "OPEN_CHEST", "open")
 				end
 			end
-		elseif context.keys[SDLK_2] and context.inventorySize() > 0 then
+		elseif inputState.keyPressed(SDLK_2) == true and context.inventorySize() > 0 then
 			if context.inventoryCharge == 100 then
 				local pos = getPosition(entityId)
 				item = createTextured("Assets/Potion 'Sploder/Sprites/Dungeon_Tileset.png", 185, 700, 64, 64, 112, 112, 16, 16)
@@ -73,17 +74,17 @@ BasicWASDMoveState.new = function(context)
 			end
 		end
 
-		if context.keys[SDLK_w] then
+		if inputState.keyPressed(SDLK_w) == true then
 			context.input:setY(-1)
-		elseif context.keys[SDLK_s] then
+		elseif inputState.keyPressed(SDLK_s) == true then
 			context.input:setY(1)
 		else
 			context.input:setY(0)
 		end
 
-		if context.keys[SDLK_a] then
+		if inputState.keyPressed(SDLK_a) == true then
 			context.input:setX(-1)
-		elseif context.keys[SDLK_d] then
+		elseif inputState.keyPressed(SDLK_d) == true then
 			context.input:setX(1)
 		else
 			context.input:setX(0)

@@ -641,6 +641,8 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 				KeyEventData* keyDownEventData = GCC_NEW KeyEventData(SDL_GetTicks(), keyEvent->key,KeyAction::DOWN,  keyEvent->ctrlDown, keyEvent->shiftDown);
 				EventManager::getInstance().pushEvent(keyDownEventData);
 
+				this->inputState->keys[keyEvent->key] = true;
+
 				break;
 		}
 		case SDL_KEYUP: {
@@ -648,6 +650,8 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 
 				KeyEventData* keyUpEventData = GCC_NEW KeyEventData(SDL_GetTicks(), keyEvent->key, KeyAction::UP, keyEvent->ctrlDown, keyEvent->shiftDown);
 				EventManager::getInstance().pushEvent(keyUpEventData);
+
+				this->inputState->keys[keyEvent->key] = false;
 
 				break;
 		}
@@ -657,6 +661,17 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 				MouseEventData* mouseDownEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_DOWN);
 				EventManager::getInstance().pushEvent(mouseDownEventData);
 
+				// TODO: Fix this later
+				if (mouseEvent->button == MouseButton::LEFT) {
+					this->inputState->keys[SDL_BUTTON_LEFT] = true;
+				}
+				else if (mouseEvent->button == MouseButton::MIDDLE) {
+					this->inputState->keys[SDL_BUTTON_MIDDLE] = true;
+				}
+				else if (mouseEvent->button == MouseButton::RIGHT) {
+					this->inputState->keys[SDL_BUTTON_RIGHT] = true;
+				}
+
 				break;
 		}
 		case SDL_MOUSEBUTTONUP: {
@@ -665,6 +680,17 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 				MouseEventData* mouseUpEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_UP);
 				EventManager::getInstance().pushEvent(mouseUpEventData);
 
+				// TODO: Fix this later
+				if (mouseEvent->button == MouseButton::LEFT) {
+					this->inputState->keys[SDL_BUTTON_LEFT] = false;
+				}
+				else if (mouseEvent->button == MouseButton::MIDDLE) {
+					this->inputState->keys[SDL_BUTTON_MIDDLE] = false;
+				}
+				else if (mouseEvent->button == MouseButton::RIGHT) {
+					this->inputState->keys[SDL_BUTTON_RIGHT] = false;
+				}
+
 				break;
 		}
 		case SDL_MOUSEMOTION: {
@@ -672,6 +698,9 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 
 				MouseEventData* mouseMoveEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::MOVE);
 				EventManager::getInstance().pushEvent(mouseMoveEventData);
+
+				this->inputState->mouseX = mouseEvent->position->x;
+				this->inputState->mouseY = mouseEvent->position->y;
 
 				break;
 		}

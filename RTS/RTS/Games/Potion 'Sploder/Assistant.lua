@@ -36,13 +36,6 @@ function setup()
 	context.friction = 2400
 	context.box = 0
 
-	context.keys = {}
-	context.keys[SDLK_w] = false
-	context.keys[SDLK_a] = false
-	context.keys[SDLK_s] = false
-	context.keys[SDLK_d] = false
-	context.keyChange = false
-
 	moveState = BasicWASDMoveState.new(context)
 	hurtState = HurtMoveState.new(context)
 	stateMachine = StateMachine.new()
@@ -131,20 +124,6 @@ end
 
 function onMouseDown(x, y, button)
 
-end
-
-function onKeyDown(keyId, ctrl, shft)
-	if context.keys[keyId] == false then
-		context.keyChange = true
-	end
-	context.keys[keyId] = true
-end
-
-function onKeyUp(keyId, ctrl, shft)
-	if context.keys[keyId] == true then
-		context.keyChange = true
-	end
-	context.keys[keyId] = false
 end
 
 -- Entity Mouse Events

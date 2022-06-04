@@ -81,6 +81,29 @@ enum class Input {
 	ON_MOUSE_MOVE,
 };
 
+class InputState {
+public:
+	InputState() {}
+	int getMouseX() {
+		return this->mouseX;
+	}
+	int getMouseY() {
+		return this->mouseY;
+	}
+	bool keyPressed(int keyVal) {
+		return this->keys.find((Sint32)keyVal) != this->keys.end() ? this->keys[(Sint32)keyVal] : false;
+	}
+	bool mousePressed(int mouseVal) {
+		return this->mouseButtons.find(mouseVal) != this->mouseButtons.end() ? this->mouseButtons[mouseVal] : false;
+	}
+
+	std::unordered_map<Sint32, bool> keys;
+	std::unordered_map<int, bool> mouseButtons;
+	int mouseX = 0;
+	int mouseY = 0;
+};
+typedef shared_ptr<InputState> InputStatePtr;
+
 class MouseMovementHandler;
 typedef shared_ptr<MouseMovementHandler> MouseMovementHandlerPtr;
 typedef weak_ptr<MouseMovementHandler> WeakMouseMovementHandlerPtr;

@@ -6,6 +6,7 @@
 #include"WidgetFactory.h"
 
 #include<cmath>
+#include<unordered_map>
 
 class LuaScriptFactory;
 typedef shared_ptr<LuaScriptFactory> LuaScriptFactoryPtr;
@@ -52,6 +53,7 @@ private:
 	void registerMouseMove(LuaScript& script);
 	void registerWorld(LuaScript& script);
 	void registerSound(LuaScript& script);
+	void registerInputListeners(LuaScript& script, unsigned long entityId);
 
 	EntityFactoryPtr entityFactory;
 	WidgetFactoryPtr widgetFactory;

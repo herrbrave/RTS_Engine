@@ -105,7 +105,7 @@ TorchWeaponState.new = function(context)
 
 	function self.update(dt)
 		-- detonate torch
-		if context.keys[SDLK_1] and self.weapon_active then
+		if inputState.keyPressed(SDLK_1) == true and self.weapon_active then
 			context.stateMachine.pushState(TorchExplosionState.new(context))
 			self.charges = self.charges - 1
 			if self.charges <= 0 then

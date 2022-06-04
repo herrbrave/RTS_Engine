@@ -752,6 +752,22 @@ void LuaScriptFactory::registerInput(LuaScript& script, unsigned long entityId) 
 	script.state["MOUSE_BUTTON_MIDDLE"] = static_cast<int>(MouseButton::MIDDLE);
 	script.state["MOUSE_BUTTON_RIGHT"] = static_cast<int>(MouseButton::RIGHT);
 
+	InputSystemPtr inputSystem = this->systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
+	
+	script.state["inputState"].SetObj(
+		inputSystem->getInputState(),
+		"keyPressed", &InputState::keyPressed,
+		"mousePressed", &InputState::mousePressed,
+		"mouseX", &InputState::getMouseX,
+		"mouseY", &InputState::getMouseY);
+
+	script.state["enableInputListeners"] = [this, &script](int entityId) {
+		registerInputListeners(script, entityId);
+	};
+}
+
+void LuaScriptFactory::registerInputListeners(LuaScript& script, unsigned long entityId) {
+
 	EventDelegate mouseEventDelegate([&script](const EventData& eventData) {
 		MouseEventData data = dynamic_cast<const MouseEventData&>(eventData);
 

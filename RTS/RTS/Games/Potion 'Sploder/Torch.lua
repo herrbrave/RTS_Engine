@@ -27,10 +27,6 @@ function setup()
 
 	context = {}
 
-	context.keys = {}
-	context.keys[SDLK_1] = false
-	context.keyChange = false
-
 	context.stateMachine = StateMachine.new()
 	context.stateMachine.pushState(TorchSpawnState.new(context))
 
@@ -45,20 +41,6 @@ end
 
 function onMouseDown(x, y, button)
 
-end
-
-function onKeyDown(keyId, ctrl, shft)
-	if context.keys[keyId] == false then
-		context.keyChange = true
-	end
-	context.keys[keyId] = true
-end
-
-function onKeyUp(keyId, ctrl, shft)
-	if context.keys[keyId] == true then
-		context.keyChange = true
-	end
-	context.keys[keyId] = false
 end
 
 -- Entity Mouse Events
