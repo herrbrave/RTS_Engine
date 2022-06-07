@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.8" tiledversion="1.8.4" orientation="orthogonal" renderorder="right-down" width="24" height="16" tilewidth="24" tileheight="24" infinite="0" nextlayerid="5" nextobjectid="5">
  <editorsettings>
-  <export target="Alienators.tmj" format="json"/>
+  <export target="Alienators.json" format="json"/>
  </editorsettings>
+ <properties>
+  <property name="scale" type="float" value="2"/>
+  <property name="script" value="Games/Alienators/alienators.lua"/>
+ </properties>
  <tileset firstgid="1" name="oryx_16bit_scifi_creatures_trans" tilewidth="24" tileheight="24" tilecount="1312" columns="32">
   <image source="oryx_16bit_scifi_creatures_trans.png" width="768" height="984"/>
  </tileset>
@@ -15,6 +19,11 @@
  <tileset firstgid="1897" name="oryx_16bit_scifi_world_trans" tilewidth="24" tileheight="24" tilecount="1435" columns="35">
   <image source="oryx_16bit_scifi_world_trans.png" width="840" height="984"/>
   <tile id="218">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
+  <tile id="221">
    <objectgroup draworder="index" id="2">
     <object id="1" x="0" y="0" width="24" height="24"/>
    </objectgroup>
@@ -39,7 +48,33 @@
     <object id="1" x="0" y="0" width="24" height="24"/>
    </objectgroup>
   </tile>
+  <tile id="267">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
   <tile id="270">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+    <object id="2" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
+  <tile id="303">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
+  <tile id="304">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
+  <tile id="305">
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="0" width="24" height="24"/>
+   </objectgroup>
+  </tile>
+  <tile id="306">
    <objectgroup draworder="index" id="2">
     <object id="1" x="0" y="0" width="24" height="24"/>
    </objectgroup>
@@ -47,16 +82,19 @@
   <tile id="307">
    <objectgroup draworder="index" id="2">
     <object id="1" x="0" y="0" width="24" height="24"/>
+    <object id="2" x="0" y="0" width="24" height="24"/>
    </objectgroup>
   </tile>
   <tile id="308">
    <objectgroup draworder="index" id="2">
     <object id="1" x="0" y="0" width="24" height="24"/>
+    <object id="2" x="0" y="0" width="24" height="24"/>
    </objectgroup>
   </tile>
   <tile id="309">
    <objectgroup draworder="index" id="2">
     <object id="1" x="0" y="0" width="24" height="24"/>
+    <object id="2" x="0" y="0" width="24" height="24"/>
    </objectgroup>
   </tile>
  </tileset>

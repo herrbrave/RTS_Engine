@@ -3,7 +3,7 @@ registrar = {
 	DRAWABLE = 0,
 	ENTITY = 0,
 	FACTORY = 0,
-	PHYSICS = 0,
+	PHYSICS = 1,
 	ANIMATION = 0,
 	INPUT = 0,
 	SCRIPT = 0,
@@ -17,10 +17,11 @@ registrar = {
 
 
 function setup()
-	print("setup ALIENATOR GAME", tostring(entityId))
+	print("setup ROBOT", tostring(entityId))
 
-	include("Games/Alienators/alienator_state.lua")
+	include("Games/Alienators/alienators_state.lua")
 
+	context = {}
 	context.stateMachine = StateMachine.new()
 end
 
@@ -67,7 +68,7 @@ function onCollision(id)
 end
 
 function update(delta)
-	stateMachine.update(delta)
+	context.stateMachine.update(delta)
 end
 
 function onMessage(message, value)
@@ -79,5 +80,5 @@ function onBroadcast(message, value)
 end
 
 function onPhysics(delta)
-	stateMachine.onPhysics(delta)
+	context.stateMachine.onPhysics(delta)
 end

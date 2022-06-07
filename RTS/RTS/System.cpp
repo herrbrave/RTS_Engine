@@ -661,16 +661,7 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 				MouseEventData* mouseDownEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_DOWN);
 				EventManager::getInstance().pushEvent(mouseDownEventData);
 
-				// TODO: Fix this later
-				if (mouseEvent->button == MouseButton::LEFT) {
-					this->inputState->keys[SDL_BUTTON_LEFT] = true;
-				}
-				else if (mouseEvent->button == MouseButton::MIDDLE) {
-					this->inputState->keys[SDL_BUTTON_MIDDLE] = true;
-				}
-				else if (mouseEvent->button == MouseButton::RIGHT) {
-					this->inputState->keys[SDL_BUTTON_RIGHT] = true;
-				}
+				this->inputState->mouseButtons[(int) mouseEvent->button] = true;
 
 				break;
 		}
@@ -680,16 +671,7 @@ void InputSystem::handleEvent(const SDL_Event& evt) {
 				MouseEventData* mouseUpEventData = GCC_NEW MouseEventData(SDL_GetTicks(), mouseEvent->position->x, mouseEvent->position->y, mouseEvent->button, MouseAction::CLICK_UP);
 				EventManager::getInstance().pushEvent(mouseUpEventData);
 
-				// TODO: Fix this later
-				if (mouseEvent->button == MouseButton::LEFT) {
-					this->inputState->keys[SDL_BUTTON_LEFT] = false;
-				}
-				else if (mouseEvent->button == MouseButton::MIDDLE) {
-					this->inputState->keys[SDL_BUTTON_MIDDLE] = false;
-				}
-				else if (mouseEvent->button == MouseButton::RIGHT) {
-					this->inputState->keys[SDL_BUTTON_RIGHT] = false;
-				}
+				this->inputState->mouseButtons[(int)mouseEvent->button] = false;
 
 				break;
 		}

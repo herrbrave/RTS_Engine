@@ -1,12 +1,12 @@
 
 
-Paths = {}
-Paths.new = function(context)
+PathSolver = {}
+PathSolver.new = function()
 	local self = setmetatable({}, StateMachine)
 	self.path = nil
 	self.pathIndex = -1
 	self.pathLength = 0
-	self.pathTarget = Vector.new(0.0, 0.0)
+	self.pathTarget = Vector2f.new(0.0, 0.0)
 
 	function self.isThereAPath()
 		if self.path == nil or self.pathLength <= 0 then
@@ -29,7 +29,7 @@ Paths.new = function(context)
 		for _index=0,self.pathLength do
 			self.path[_index] = {_pathRef:getX(_index), _pathRef:getY(_index)}
 		end
-		_pathIndex = 0
+		self.pathIndex = 0
 	end
 
 	function self.updatePath(_id, _speed, _delta)
@@ -47,21 +47,21 @@ Paths.new = function(context)
 
 
 	function self.moveAlongPath(_id, _dist)
-		local _pathX = _path[_pathIndex][1]
-		local _pathY = _path[_pathIndex][2]
+		local _pathX = self.path[self.pathIndex][1]
+		local _pathY = self.path[self.pathIndex][2]
 
 		local _pathEntityPosition = getPosition(_id)
 		self.pathTarget:setX(_pathX)
 		self.pathTarget:setY(_pathY)
 		self.pathTarget:subtract(_pathEntityPosition)
 
-		local _moveDist = _pathTarget:magnitude()
+		local _moveDist = self.pathTarget:magnitude()
 
 		if _moveDist < _dist then
 			self.pathTarget:normalize()
 			self.pathTarget:scale(_moveDist)
 			moveAndSlide(_id, self.pathTarget:getX(), self.pathTarget:getY())
-			_pathIndex = _pathIndex + 1
+			self.pathIndex = self.pathIndex + 1
 			if self.pathIndex > self.pathLength then
 				self.path = nil
 				self.pathLength = -1

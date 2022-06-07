@@ -1,32 +1,28 @@
 registrar = {
 	ASSET = 0,
-	DRAWABLE = 1,
+	DRAWABLE = 0,
 	ENTITY = 0,
 	FACTORY = 0,
 	PHYSICS = 1,
 	ANIMATION = 0,
-	INPUT = 1,
+	INPUT = 0,
 	SCRIPT = 0,
-	CAMERA = 1,
+	ASSET = 0,
+	CAMERA = 0,
 	MOUSE_MOVE = 0,
 	UI = 0,
-	WORLD = 1,
+	WORLD = 0,
 	SOUND = 0,
 }
 
 
 function setup()
-	print("setup Marine", tostring(entityId))
+	print("setup ALIENATORS GAME", tostring(entityId))
 
-	setTag(entityId, "MARINE")
-	setCircleCollision(entityId, 32)
-
-	include("Games/Alienators/marine_state.lua")
+	include("Games/Alienators/alienators_state.lua")
 
 	context = {}
 	context.stateMachine = StateMachine.new()
-	context.moveState = SearchMoveState.new(context)
-	context.stateMachine.pushState(context.moveState)
 end
 
 -- Standard Mouse/Key events

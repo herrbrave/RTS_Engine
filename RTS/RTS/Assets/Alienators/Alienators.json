@@ -21,11 +21,10 @@
             3052, 3052, 3052, 3052, 3052, 3055, 3055, 3053, 3054, 3052, 3054, 3052, 3052, 3055, 3053, 3052, 3052, 3055, 3055, 3053, 3054, 3053, 3053, 3055],
          "height":16,
          "id":1,
-         "locked":true,
          "name":"Space",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":24,
          "x":0,
          "y":0
@@ -49,7 +48,6 @@
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
          "height":16,
          "id":2,
-         "locked":true,
          "name":"Floors",
          "opacity":1,
          "type":"tilelayer",
@@ -77,11 +75,10 @@
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
          "height":16,
          "id":3,
-         "locked":true,
          "name":"Effects",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":24,
          "x":0,
          "y":0
@@ -172,6 +169,17 @@
  "nextlayerid":5,
  "nextobjectid":5,
  "orientation":"orthogonal",
+ "properties":[
+        {
+         "name":"scale",
+         "type":"float",
+         "value":2
+        }, 
+        {
+         "name":"script",
+         "type":"string",
+         "value":"Games\/Alienators\/alienators.lua"
+        }],
  "renderorder":"right-down",
  "tiledversion":"1.8.4",
  "tileheight":24,
@@ -179,7 +187,7 @@
         {
          "columns":32,
          "firstgid":1,
-         "image":"oryx_16bit_scifi_creatures_trans.png",
+         "image":"Assets\/Alienators\/oryx_16bit_scifi_creatures_trans.png",
          "imageheight":984,
          "imagewidth":768,
          "margin":0,
@@ -192,7 +200,7 @@
         {
          "columns":10,
          "firstgid":1313,
-         "image":"oryx_16bit_scifi_FX_sm_trans.png",
+         "image":"Assets\/Alienators\/oryx_16bit_scifi_FX_sm_trans.png",
          "imageheight":480,
          "imagewidth":240,
          "margin":0,
@@ -205,7 +213,7 @@
         {
          "columns":24,
          "firstgid":1513,
-         "image":"oryx_16bit_scifi_vehicles_trans.png",
+         "image":"Assets\/Alienators\/oryx_16bit_scifi_vehicles_trans.png",
          "imageheight":384,
          "imagewidth":576,
          "margin":0,
@@ -218,7 +226,7 @@
         {
          "columns":35,
          "firstgid":1897,
-         "image":"oryx_16bit_scifi_world_trans.png",
+         "image":"Assets\/Alienators\/oryx_16bit_scifi_world_trans.png",
          "imageheight":984,
          "imagewidth":840,
          "margin":0,
@@ -229,6 +237,32 @@
          "tiles":[
                 {
                  "id":218,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
+                 "id":221,
                  "objectgroup":
                     {
                      "draworder":"index",
@@ -358,7 +392,148 @@
                     }
                 }, 
                 {
+                 "id":267,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
                  "id":270,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }, 
+                            {
+                             "height":24,
+                             "id":2,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
+                 "id":303,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
+                 "id":304,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
+                 "id":305,
+                 "objectgroup":
+                    {
+                     "draworder":"index",
+                     "id":2,
+                     "name":"",
+                     "objects":[
+                            {
+                             "height":24,
+                             "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }],
+                     "opacity":1,
+                     "type":"objectgroup",
+                     "visible":true,
+                     "x":0,
+                     "y":0
+                    }
+                }, 
+                {
+                 "id":306,
                  "objectgroup":
                     {
                      "draworder":"index",
@@ -401,6 +576,17 @@
                              "width":24,
                              "x":0,
                              "y":0
+                            }, 
+                            {
+                             "height":24,
+                             "id":2,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
                             }],
                      "opacity":1,
                      "type":"objectgroup",
@@ -420,6 +606,17 @@
                             {
                              "height":24,
                              "id":1,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
+                            }, 
+                            {
+                             "height":24,
+                             "id":2,
                              "name":"",
                              "rotation":0,
                              "type":"",
@@ -453,6 +650,17 @@
                              "width":24,
                              "x":0,
                              "y":0
+                            }, 
+                            {
+                             "height":24,
+                             "id":2,
+                             "name":"",
+                             "rotation":0,
+                             "type":"",
+                             "visible":true,
+                             "width":24,
+                             "x":0,
+                             "y":0
                             }],
                      "opacity":1,
                      "type":"objectgroup",
@@ -466,7 +674,7 @@
         {
          "columns":22,
          "firstgid":3332,
-         "image":"oryx_16bit_scifi_items_trans.png",
+         "image":"Assets\/Alienators\/oryx_16bit_scifi_items_trans.png",
          "imageheight":144,
          "imagewidth":352,
          "margin":0,
