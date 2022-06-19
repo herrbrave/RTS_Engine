@@ -332,6 +332,7 @@ public:
 class Graphics {
 public:
 	Graphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetVendor) : mAssetVendor(assetVendor), mGraphicsConfig(graphicsConfig) { }
+	virtual ~Graphics() {}
 	virtual void onBeforeDraw() = 0;
 	virtual void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) = 0;
 	virtual void renderTexture(SDL_Texture* texture, float x, float y, float w, float h, float tx, float ty, float tw, float th, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a, SDL_RendererFlip flip) = 0;
@@ -361,6 +362,7 @@ protected:
 class SDLGraphics : public Graphics {
 public:
 	SDLGraphics(GraphicsConfigPtr graphisConfig, AssetVendorPtr assetVendor);
+	~SDLGraphics();
 	void onBeforeDraw() override;
 	void renderTexture(TexturePtr texture, float x, float y, float w, float h, float angle, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;
 	void renderText(const string& text, const string& font, int fontSize, float x, float y, Uint8 r, Uint8 g, Uint8 b, Uint8 a) override;

@@ -16,7 +16,8 @@
 enum ColliderType : Uint8 {
 	AABB = 0,
 	CIRCLE = 1,
-	OBB,
+	OBB = 2,
+	RAY = 3,
 };
 const unordered_map<string, ColliderType> COLLIDER_TYPE_VALUES {
 	{ "AABB", ColliderType::AABB },
@@ -58,11 +59,17 @@ class OBBColliderShape;
 typedef shared_ptr<OBBColliderShape> OBBColliderShapePtr;
 typedef weak_ptr<OBBColliderShape> WeakOBBColliderShapePtr;
 
+class RayColliderShape;
+typedef shared_ptr<RayColliderShape> RayColliderShapePtr;
+typedef weak_ptr<RayColliderShape> WeakRayColliderShapePtr;
+
 const static float EPSILON = 0.000001f;
 
 bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb);
 bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle);
 bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle);
+bool checkCollisionAABB_Ray(const AABBColliderShape& aabb, const RayColliderShape& ray);
+bool checkCollisionCircle_Ray(const RayColliderShape& obb, const CircleColliderShape& circle);
 void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle, Manifold* manifold);
 void intersectAABBSegment(const AABBColliderShape& aabb, const Vector2f& position, const Vector2f& delta, Manifold* manifold, float paddingX = 0.0f, float paddingY = 0.0f);
 
@@ -73,6 +80,7 @@ void project(Vector2f& a, Vector2f& b, Vector2f& result);
 class Body;
 typedef shared_ptr<Body> BodyPtr;
 typedef weak_ptr<Body> WeakBodyPtr;
+typedef vector<Body*> BodyList;
 
 class QuadtreeNode;
 typedef shared_ptr<QuadtreeNode> QuadtreeNodePtr;
@@ -131,8 +139,8 @@ class ColliderShape {
 public:
 	Vector2fPtr position;
 
-	ColliderShape(Vector2fPtr position) {
-		this->position = position;
+	ColliderShape(Vector2f* position) {
+		this->position = Vector2fPtr(position);
 	}
 
 	ColliderShape(const ColliderShape& colliderShape) {
@@ -156,13 +164,13 @@ public:
 
 	virtual void onSerialize(Serializer& serializer) const = 0;
 
-	virtual bool checkCollision(const ColliderShapePtr& collider) const = 0;
+	virtual bool checkCollision(const ColliderShape& collider) const = 0;
 
-	virtual void intersect(const ColliderShapePtr& collider, Manifold* manifold) const = 0;
+	virtual void intersect(const ColliderShape& collider, Manifold* manifold) const = 0;
 
-	virtual void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const = 0;
+	virtual void sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const = 0;
 
-	virtual ColliderType colliderType() = 0;
+	virtual ColliderType colliderType() const = 0;
 
 	virtual void setPosition(const Vector2f& position);
 };
@@ -172,7 +180,7 @@ public:
 	int width;
 	int height;
 
-	AABBColliderShape(Vector2fPtr position, int width, int height) : ColliderShape(position) {
+	AABBColliderShape(Vector2f* position, int width, int height) : ColliderShape(position) {
 		this->width = width;
 		this->height = height;
 	}
@@ -195,11 +203,11 @@ public:
 		serializer.writer.Int(this->height);
 	}
 
-	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
-	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
+	bool checkCollision(const ColliderShape& collider) const override;
+	void intersect(const ColliderShape& collider, Manifold* manifold) const override;
+	void sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const override;
 
-	ColliderType colliderType() override;
+	ColliderType colliderType() const override;
 
 	ExtentPtr getExtent() const;
 };
@@ -208,7 +216,7 @@ class CircleColliderShape : public ColliderShape {
 public:
 	int radius;
 
-	CircleColliderShape(Vector2fPtr position, int radius) : ColliderShape(position) {
+	CircleColliderShape(Vector2f* position, int radius) : ColliderShape(position) {
 		this->radius = radius;
 	}
 
@@ -226,11 +234,11 @@ public:
 		serializer.writer.Int(this->radius);
 	}
 
-	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
-	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
+	bool checkCollision(const ColliderShape& collider) const override;
+	void intersect(const ColliderShape& collider, Manifold* manifold) const override;
+	void sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const override;
 
-	ColliderType colliderType() override;
+	ColliderType colliderType() const override;
 };
 
 class OBBColliderShape : public ColliderShape {
@@ -242,7 +250,7 @@ public:
 	Vector2fPtr axis[2];
 	float origin[2];
 
-	OBBColliderShape(Vector2fPtr position, int width, int height, int angle) : ColliderShape(position), 
+	OBBColliderShape(Vector2f* position, int width, int height, int angle) : ColliderShape(position), 
 		corners{
 			std::make_shared<Vector2f>(0, 0),
 			std::make_shared<Vector2f>(0, 0),
@@ -309,19 +317,49 @@ public:
 		serializer.writer.Int(this->angle);
 	}
 
-	bool checkCollision(const ColliderShapePtr& collider) const override;
-	void intersect(const ColliderShapePtr& collider, Manifold* manifold) const override;
+	bool checkCollision(const ColliderShape& collider) const override;
+	void intersect(const ColliderShape& collider, Manifold* manifold) const override;
 
-	ColliderType colliderType() override;
+	ColliderType colliderType() const override;
 
 	void setPosition(const Vector2f& position) override;
-	void sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const override;
+	void sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const override;
 
 	void setAngle(int angle);
 
 private:
 	void setup();
 	bool overlapOneWay(const OBBColliderShape& obb) const;
+};
+
+class RayColliderShape : public ColliderShape {
+public:
+	Vector2fPtr end;
+
+	RayColliderShape(Vector2f* begin, Vector2f* end) : ColliderShape(begin) {
+		this->end = Vector2fPtr(end);
+	}
+
+	RayColliderShape(const ColliderShape& colliderShape) : ColliderShape(colliderShape) {
+		const RayColliderShape& ray = static_cast<const RayColliderShape&>(colliderShape);
+		this->end = ray.end;
+	}
+
+	RayColliderShape(const rapidjson::Value& root) : ColliderShape(root) {
+		// TODO
+	}
+
+	void onSerialize(Serializer& serializer) const override {
+		// TODO
+	}
+
+	bool checkCollision(const ColliderShape& collider) const override;
+	void intersect(const ColliderShape& collider, Manifold* manifold) const override;
+	void sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const override;
+
+	ColliderType colliderType() const override {
+		return ColliderType::RAY;
+	}
 };
 
 class Collider {
@@ -359,12 +397,12 @@ public:
 	int id;
 	float mass;
 	float speed;
-	Vector2fPtr position{ nullptr };
-	Vector2fPtr velocity{ nullptr };
+	Vector2f* position;
+	Vector2f* velocity;
 	float width;
 	float height;
-	ColliderPtr collider{ nullptr };
-	TargetPtr target;
+	Collider* collider;
+	Target* target;
 	string tag;
 
 	Body(int id, float x, float y, float width, float height);
@@ -373,10 +411,12 @@ public:
 
 	Body(const Body& copy);
 
+	~Body();
+
 	bool checkPoint(const Vector2f& point);
 
 	void setSpeed(float speed);
-	float getSpeed();
+	float getSpeed() const;
 
 	void setMass(float mass);
 	float getMass();
@@ -387,13 +427,13 @@ public:
 	void setVelocity(const Vector2f& vector);
 	const Vector2f& getVelocity();
 
-	void setCollider(ColliderPtr collider);
-	WeakColliderPtr getCollider();
+	void setCollider(Collider* collider);
+	const Collider& getCollider();
 	bool isCollidable();
 
-	void setTarget(TargetPtr target);
-	TargetPtr getTarget();
-	bool hasTarget();
+	void setTarget(Target* target);
+	const Target& getTarget() const;
+	bool hasTarget() const;
 
 	float getWidth();
 	float getHeight();
@@ -439,26 +479,31 @@ public:
 class QuadtreeNode {
 public:
 	QuadtreeNode(float x, float y, float width, float height);
-	std::vector<QuadtreeNodePtr> children;
-	std::unordered_set<BodyPtr> bodiesContainer;
+	~QuadtreeNode() {
+		if (this->mBody != nullptr) {
+			delete mBody;
+		}
+	}
+	std::vector<QuadtreeNode*> children;
+	std::unordered_set<Body*> bodiesContainer;
 
-	void pushChild(QuadtreeNodePtr node) {
+	void pushChild(QuadtreeNode* node) {
 		children.push_back(node);
 	}
 
 	bool leaf{ false };
 
-	bool check(BodyPtr body);
-	void add(BodyPtr body);
-	void remove(BodyPtr body);
-	bool contains(BodyPtr body);
+	bool check(const Body& body);
+	void add(Body* body);
+	void remove(const Body& body);
+	bool contains(const Body& body);
 
 	void clear();
 
-	ExtentPtr getNodeExtent();
+	const ExtentPtr getNodeExtent();
 
 private:
-	BodyPtr mBody{ nullptr };
+	Body* mBody;
 };
 
 class Quadtree {
@@ -466,29 +511,30 @@ public:
 	const static int MIN_SIZE{ 100 };
 
 	Quadtree(float x, float y, float width, float height);
-	void addBody(BodyPtr body);
-	void removeBody(BodyPtr body);
-	void getCollidingBodies(BodyPtr body, vector<BodyPtr>& bodies);
-	void getNeigboringBodies(BodyPtr body, vector<BodyPtr>& bodies);
+	~Quadtree();
+	void addBody(Body* body);
+	void removeBody(Body& body);
+	void getCollidingBodies(const Body& body, BodyList bodies);
+	void getNeigboringBodies(const Body& body, BodyList bodies);
 	void clear();
 
 private:
-	void addHelper(BodyPtr body, QuadtreeNodePtr node);
-	void removeHelper(BodyPtr body, QuadtreeNodePtr node);
-	void createTree(QuadtreeNodePtr parent);
-	QuadtreeNodePtr mRootNode{ nullptr };
-	vector<QuadtreeNodePtr> mLeaves;
+	void addHelper(Body& body, QuadtreeNode& node);
+	void removeHelper(Body& body, QuadtreeNode& node);
+	void createTree(QuadtreeNode* parent);
+	QuadtreeNode* mRootNode{ nullptr };
+	vector<QuadtreeNode*> mLeaves;
 };
 
 class Target {
 public:
-	virtual const Vector2f& getTargetPosition() = 0;
+	virtual const Vector2f& getTargetPosition() const = 0;
 
 	void setThreshold(float threshold) {
 		this->mThreshold = threshold;
 	}
 
-	float getThreshold() {
+	float getThreshold() const {
 		return this->mThreshold;
 	}
 
@@ -500,7 +546,7 @@ class BodyTarget : public Target {
 public:
 	BodyTarget(BodyPtr body);
 
-	const Vector2f& getTargetPosition() override;
+	const Vector2f& getTargetPosition() const override;
 
 private:
 	BodyPtr mBody;
@@ -510,7 +556,7 @@ class PositionTarget : public Target {
 public:
 	PositionTarget(Vector2fPtr position);
 
-	const Vector2f& getTargetPosition() override;
+	const Vector2f& getTargetPosition() const override;
 
 private:
 	Vector2fPtr mPosition;
@@ -528,7 +574,7 @@ public:
 		mBody->id = entityId;
 	}
 
-	void setCollider(ColliderPtr collider);
+	void setCollider(Collider* collider);
 	bool isCollidable();
 	void setPosition(const Vector2f& position);
 	const Vector2f& getPosition();
@@ -549,11 +595,11 @@ public:
 		return mBody;
 	}
 
-	void setTarget(TargetPtr target) {
+	void setTarget(Target* target) {
 		mBody->setTarget(target);
 	}
 
-	TargetPtr getTarget() {
+	const Target& getTarget() {
 		return mBody->getTarget();
 	}
 
@@ -580,21 +626,21 @@ private:
 class PhysicsBehavior {
 public:
 	/* return true if the body was updated. */
-	virtual bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) = 0;
+	virtual bool updateBehavior(float step, Body& body, QuadtreePtr quadtree) = 0;
 };
 
 class BasicBehavior : public PhysicsBehavior {
 public:
-	bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) override;
+	bool updateBehavior(float step, Body& body, QuadtreePtr quadtree) override;
 private:
-	void handleCollision(const Vector2f& delta, Vector2f& newPosition, BodyPtr& body, QuadtreePtr quadtree);
+	void handleCollision(const Vector2f& delta, Vector2f& newPosition, Body& body, QuadtreePtr quadtree);
 };
 
 class SteeringBehavior : public PhysicsBehavior {
 public:
-	bool updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) override;
+	bool updateBehavior(float step, Body& body, QuadtreePtr quadtree) override;
 private:
-	Vector2f applySteeringToVelocity(BodyPtr& body, float step);
+	Vector2f applySteeringToVelocity(Body& body, float step);
 };
 
 #endif // !__PHYSICS_H__

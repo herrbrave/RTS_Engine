@@ -480,13 +480,13 @@ void ParticleSystem::clear() {
 void PhysicsSystem::registerBody(const unsigned long id, BodyPtr body) {
 	mBodies[id] = body;
 	if (body->isCollidable()) {
-		quadTree->addBody(body);
+		quadTree->addBody(body.get());
 	}
 }
 
 void PhysicsSystem::deregisterBody(const unsigned long id) {
 	if (mBodies.find(id) != mBodies.end()) {
-		quadTree->removeBody(mBodies.at(id));
+		quadTree->removeBody(*mBodies.at(id));
 		mBodies.erase(mBodies.find(id));
 	}
 }
@@ -495,11 +495,15 @@ void PhysicsSystem::setWorldSize(int width, int height) {
 	if (this->quadTree != nullptr) {
 		this->quadTree->clear();
 	}
+	if (quadTree != nullptr) {
+		quadTree->clear();
+		quadTree.reset();
+	}
 
-	quadTree.reset(GCC_NEW Quadtree(width / 2, height / 2, width, height));
+	quadTree = std::make_shared<Quadtree>(width / 2, height / 2, width, height);
 	for (auto& it = this->mBodies.begin(); it != this->mBodies.end(); it++) {
 		if (it->second->isCollidable()) {
-			this->quadTree->addBody(it->second);
+			this->quadTree->addBody(it->second.get());
 		}
 	}
 }
@@ -525,13 +529,13 @@ void PhysicsSystem::update(Uint32 delta) {
 	for (auto element : mBodies) {
 		for (auto behavior : mBehaviors) {
 			BodyPtr body = element.second;
-			if (!behavior->updateBehavior(step, body, quadTree) || !body->isCollidable()) {
+			if (!behavior->updateBehavior(step, *body, quadTree) || !body->isCollidable()) {
 				continue;
 			}
 
 			// update the bodies location in the tree.
-			quadTree->removeBody(element.second);
-			quadTree->addBody(element.second);
+			quadTree->removeBody(*element.second);
+			quadTree->addBody(element.second.get());
 		}
 	}
 
@@ -544,12 +548,12 @@ void PhysicsSystem::update(Uint32 delta) {
 }
 Sweep PhysicsSystem::sweep(const Vector2f& position, const Vector2f& delta, BodyPtr body) {
 	// Handle overlap
-	vector<BodyPtr> bodies;
+	BodyList bodies;
 
 	// project body to potential new position
-	Vector2f oldPos(body->position);
+	Vector2f& oldPos = *body->position;
 	body->collider->colliderShape->position->set(position + delta);
-	this->quadTree->getCollidingBodies(body, bodies);
+	this->quadTree->getCollidingBodies(*body, bodies);
 	// remove position update so we can sweep the body for collisions.
 	body->collider->colliderShape->position->set(oldPos);
 
@@ -559,14 +563,13 @@ Sweep PhysicsSystem::sweep(const Vector2f& position, const Vector2f& delta, Body
 	sweep.time = 1.0f;
 	sweep.position->set(newPosition);
 	for (auto bod : bodies) {
-		auto bodPtr = bod;
 		Sweep currentSweep;
-		bodPtr->collider->colliderShape->sweep(body->collider->colliderShape, delta, &currentSweep);
+		bod->collider->colliderShape->sweep(*body->collider->colliderShape, delta, &currentSweep);
 		if (currentSweep.time < sweep.time) {
 			sweep = currentSweep;
 		}
 
-		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, bodPtr->id, SDL_GetTicks());
+		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, bod->id, SDL_GetTicks());
 		EventManager::getInstance().pushEvent(eventData);
 	}
 
@@ -595,8 +598,8 @@ Vector2f PhysicsSystem::handleCollision(const Vector2f& delta, BodyPtr body, boo
 	}
 
 	body->position->set(finalPos);
-	quadTree->removeBody(body);
-	quadTree->addBody(body);
+	quadTree->removeBody(*body);
+	quadTree->addBody(body.get());
 
 	return Vector2f(sweep.manifold->normal);
 }

@@ -123,7 +123,7 @@ void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float 
 	}
 }
 
-void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShapePtr collider) {
+void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float x, float y, float w, float h, ColliderShape* collider) {
 	EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 	EntityPtr entity = entitySystem->getEntityById(entityId);
 
@@ -137,7 +137,7 @@ void applyPhysics(SystemManagerPtr systemManager, unsigned long entityId, float 
 		BodyPtr blockBody(GCC_NEW Body(entity->id, x, y, w, h));
 		physicsSystem->registerBody(entity->id, blockBody);
 		physicsComponent = PhysicsComponentPtr(GCC_NEW PhysicsComponent(entity->id, blockBody));
-		physicsComponent->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), w, h))));
+		physicsComponent->setCollider(GCC_NEW Collider(GCC_NEW AABBColliderShape(GCC_NEW Vector2f(x, y), w, h)));
 		entity->addComponent(physicsComponent);
 	}
 
@@ -291,7 +291,7 @@ EntityPtr EntityFactory::createDefault(float x, float y, float width, float heig
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 
-	applyPhysics((SystemManagerPtr) this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+	applyPhysics((SystemManagerPtr) this->mSystemManager, entity->id, x, y, width, height, GCC_NEW AABBColliderShape(GCC_NEW Vector2f(x, y), width, height));
 	applyDrawable((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, r, g, b, a);
 
 	return entity;
@@ -304,7 +304,7 @@ EntityPtr EntityFactory::createTexturedEntity(const string& assetTag, float x, f
 
 	applyDrawable((SystemManagerPtr)this->mSystemManager, entity->id, assetTag, width, height, tx, ty, w, h);
 	if (isCollidable) {
-		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, GCC_NEW AABBColliderShape(GCC_NEW Vector2f(x, y), width, height));
 	}
 	else {
 		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);
@@ -359,7 +359,7 @@ EntityPtr EntityFactory::createFromSerialization(const string& path) {
 
 			BodyPtr body = comp->getBody();
 			physicsSystem->registerBody(entity->id, body);
-			comp->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(body->getPosition().x, body->getPosition().y), body->getWidth(), body->getHeight()))));
+			comp->setCollider(GCC_NEW Collider(GCC_NEW AABBColliderShape(GCC_NEW Vector2f(body->getPosition().x, body->getPosition().y), body->getWidth(), body->getHeight())));
 		}
 		else if (componentId == ComponentType::ANIMATION_COMPONENT) {
 			AnimationComponent* animationComponent = GCC_NEW AnimationComponent(entity->id, component);
@@ -413,7 +413,7 @@ EntityPtr EntityFactory::createPhysicsEntity(float x, float y, float width, floa
 	EntityPtr entity(GCC_NEW Entity());
 	entitySystem->addEntity(entity);
 	if (isCollidable) {
-		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, ColliderShapePtr(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), width, height)));
+		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height, GCC_NEW AABBColliderShape(GCC_NEW Vector2f(x, y), width, height));
 	}
 	else {
 		applyPhysics((SystemManagerPtr)this->mSystemManager, entity->id, x, y, width, height);

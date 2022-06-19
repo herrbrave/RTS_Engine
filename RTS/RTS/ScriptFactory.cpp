@@ -336,6 +336,27 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 		return vec;
 	};
 
+	script.state["castRay"] = [this](int x0, int y0, int x1, int y1) -> LuaFriendlyIntVector& {
+		PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+
+		Vector2f begin(x0, y0);
+		Vector2f end(x1, y1);
+		RayColliderShape colliderShape(&begin, &end);
+		Collider collider(&colliderShape);
+		Body body(0, x0, y0, 1, 1);
+		body.setCollider(&collider);
+
+		BodyList bodies;
+		physicsSystem->quadTree->getCollidingBodies(body, bodies);
+
+		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
+		for (auto bodyPtr : bodies) {
+			ids->push(bodyPtr->id);
+		}
+
+		return *ids;
+	};
+
 	script.state["checkCollisionsArea"] = [this](int x0, int y0, int x1, int y1) -> LuaFriendlyIntVector& {
 		PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
 
@@ -350,18 +371,18 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 		int posX = upperLeftX + (width / 2);
 		int posY = upperLeftY + (height / 2);
 
-		AABBColliderShapePtr colliderShape = std::make_shared<AABBColliderShape>(std::make_shared<Vector2f>(posX, posY), width, height);
-		ColliderPtr collider = std::make_shared<Collider>(colliderShape.get());
-		BodyPtr body(GCC_NEW Body(0, posX, posY, width, height));
-		body->setCollider(ColliderPtr(collider));
+		Vector2f pos(posX, posY);
+		AABBColliderShape colliderShape(&pos, width, height);
+		Collider collider(&colliderShape);
+		Body body(0, posX, posY, width, height);
+		body.setCollider(&collider);
 
-		vector<BodyPtr> bodies;
+		BodyList bodies;
 		physicsSystem->quadTree->getCollidingBodies(body, bodies);
 
 		LuaFriendlyIntVector* ids = GCC_NEW LuaFriendlyIntVector();
-		for (auto& bodyPtr : bodies) {
-			BodyPtr b = bodyPtr;
-			ids->push(b->id);
+		for (auto bodyPtr : bodies) {
+			ids->push(bodyPtr->id);
 		}
 
 		return *ids;
@@ -387,13 +408,12 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 			entity = entity->parent;
 		}
 
-		vector<BodyPtr> bodies;
-		physicsSystem->quadTree->getCollidingBodies(body, bodies);
+		BodyList bodies;
+		physicsSystem->quadTree->getCollidingBodies(*body, bodies);
 		body->collider->colliderShape->position->set(originalPosition);
 
-		for (auto& bodyPtr : bodies) {
-			BodyPtr b = bodyPtr;
-			ids->push(b->id);
+		for (auto bodyPtr : bodies) {
+			ids->push(bodyPtr->id);
 		}
 			
 		return *ids;
@@ -406,8 +426,8 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = physicsComponent->getBody();
-		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
-		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height))));
+		Vector2f* pos = GCC_NEW Vector2f(body->position->x, body->position->y);
+		body->setCollider(GCC_NEW Collider(GCC_NEW AABBColliderShape(pos, width, height)));
 
 		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
 		EventManager::getInstance().pushEvent(data);
@@ -420,8 +440,8 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = physicsComponent->getBody();
-		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
-		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius))));
+		Vector2f* pos = GCC_NEW Vector2f(body->position->x, body->position->y);
+		body->setCollider(GCC_NEW Collider(GCC_NEW CircleColliderShape(pos, radius)));
 
 		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
 		EventManager::getInstance().pushEvent(data);
@@ -434,8 +454,23 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		BodyPtr body = physicsComponent->getBody();
-		Vector2fPtr pos = std::make_shared<Vector2f>(body->position->x, body->position->y);
-		body->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle))));
+		Vector2f* pos = GCC_NEW Vector2f(body->position->x, body->position->y);
+		body->setCollider(GCC_NEW Collider(GCC_NEW OBBColliderShape(pos, width, height, angle)));
+
+		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
+		EventManager::getInstance().pushEvent(data);
+	};
+
+	script.state["setRayCollision"] = [this](int entityId, int x0, int y0, int x1, int y1) {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+		BodyPtr body = physicsComponent->getBody();
+		Vector2f* begin = GCC_NEW Vector2f(x0, y0);
+		Vector2f* end = GCC_NEW Vector2f(x1, y1);
+		body->setCollider(GCC_NEW Collider(GCC_NEW RayColliderShape(begin, end)));
 
 		EntityCollisionSetEventData* data = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
 		EventManager::getInstance().pushEvent(data);
@@ -448,7 +483,7 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 
 		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 		Vector2fPtr position(GCC_NEW Vector2f(x, y));
-		TargetPtr target(GCC_NEW PositionTarget(position));
+		Target* target = GCC_NEW PositionTarget(position);
 		target->setThreshold(threshold);
 
 		physicsComponent->setTarget(target);

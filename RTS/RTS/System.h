@@ -386,9 +386,9 @@ public:
 			}
 
 			BodyPtr body = makeShared(getBody(positionData.getEntityId()));
-			quadTree->removeBody(body);
+			quadTree->removeBody(*body);
 			if (body->collider != nullptr) {
-				quadTree->addBody(body);
+				quadTree->addBody(body.get());
 			}
 		});
 		EventManager::getInstance().addDelegate(positionChangeListener, EventType::ENTITY_POSITION_SET);
@@ -402,9 +402,9 @@ public:
 			}
 
 			BodyPtr body = makeShared(getBody(collisionData.getEntityId()));
-			quadTree->removeBody(body);
+			quadTree->removeBody(*body);
 			if (body->collider != nullptr) {
-				quadTree->addBody(body);
+				quadTree->addBody(body.get());
 			}
 		});
 		EventManager::getInstance().addDelegate(collisionChangeListener, EventType::ENTITY_COLLISION_SET);

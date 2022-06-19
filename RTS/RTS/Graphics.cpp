@@ -111,17 +111,21 @@ SDLGraphics::SDLGraphics(GraphicsConfigPtr graphicsConfig, AssetVendorPtr assetV
 
 	mWindow.reset(
 		SDL_CreateWindow(
-		graphicsConfig->mTitle.c_str(),
-		graphicsConfig->mWindowX,
-		graphicsConfig->mWindowY,
-		graphicsConfig->mWidth,
-		graphicsConfig->mHeight,
-		graphicsConfig->mFlags)
-		);
+			graphicsConfig->mTitle.c_str(),
+			graphicsConfig->mWindowX,
+			graphicsConfig->mWindowY,
+			graphicsConfig->mWidth,
+			graphicsConfig->mHeight,
+			graphicsConfig->mFlags | SDL_WINDOW_ALLOW_HIGHDPI)
+	);
 
 	mRenderer.reset(
-		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE)
+		SDL_CreateRenderer(mWindow.get(), -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_TARGETTEXTURE | SDL_RENDERER_PRESENTVSYNC)
 	);
+}
+
+SDLGraphics::~SDLGraphics() {
+	SDL_Quit();
 }
 
 void SDLGraphics::drawSquare(float x, float y, float width, float height, Uint8 r, Uint8 g, Uint8 b, Uint8 a) {

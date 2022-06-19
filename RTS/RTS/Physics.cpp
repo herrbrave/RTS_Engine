@@ -4,33 +4,59 @@ Body::Body(int id, float x, float y, float width, float height) {
 	this->id = id;
 	this->speed = 0;
 	this->mass = 3;
-	this->position.reset(GCC_NEW Vector2f(x, y));
-	this->velocity.reset(GCC_NEW Vector2f(0, 0));
+	this->position = GCC_NEW Vector2f(x, y);
+	this->velocity = GCC_NEW Vector2f(0, 0);
 	this->width = width;
 	this->height = height;
+	this->collider = nullptr;
+	this->target = nullptr;
 }
 
 Body::Body(const rapidjson::Value& root) {
+	this->id = 0;
 	this->speed = root["speed"].GetDouble();
 	this->mass = root["mass"].GetDouble();
-	this->position.reset(GCC_NEW Vector2f(root["position"]));
-	this->velocity.reset(GCC_NEW Vector2f(root["velocity"]));
+	this->position = GCC_NEW Vector2f(root["position"]);
+	this->velocity = GCC_NEW Vector2f(root["velocity"]);
 	this->width = root["width"].GetDouble();
 	this->height = root["height"].GetDouble();
 	if (root.FindMember("tag") != root.MemberEnd()) {
 		this->tag = root["tag"].GetString();
 	}
+	if (root.FindMember("collider") != root.MemberEnd()) {
+		this->collider = GCC_NEW Collider(root["collider"]);
+	}
+	else {
+		this->collider = nullptr;
+	}
+	this->target = nullptr;
 }
 
 Body::Body(const Body& copy) {
+	this->id = copy.id;
 	this->speed = copy.speed;
 	this->mass = copy.mass;
-	this->position.reset(GCC_NEW Vector2f(*copy.position));
-	this->velocity.reset(GCC_NEW Vector2f(*copy.velocity));
+	this->position = GCC_NEW Vector2f(*copy.position);
+	this->velocity = GCC_NEW Vector2f(*copy.velocity);
 	this->width = copy.width;
 	this->height = copy.height;
 	if (copy.collider != nullptr) {
-		this->collider.reset(GCC_NEW Collider(*copy.collider));
+		this->collider = GCC_NEW Collider(*copy.collider);
+	}
+	else {
+		this->collider = nullptr;
+	}
+	this->target = nullptr;
+}
+
+Body::~Body() {
+	delete this->position;
+	delete this->velocity;
+	if (this->collider) {
+		delete this->collider;
+	}
+	if (this->target) {
+		delete this->target;
 	}
 }
 
@@ -38,7 +64,7 @@ void Body::setSpeed(float speed) {
 	this->speed = speed;
 }
 
-float Body::getSpeed() {
+float Body::getSpeed() const {
 	return speed;
 }
 
@@ -58,7 +84,7 @@ void Body::setPosition(const Vector2f& position) {
 }
 
 const Vector2f& Body::getPosition() {
-	return *position.get();
+	return *position;
 }
 
 void Body::setVelocity(const Vector2f& vector) {
@@ -66,30 +92,30 @@ void Body::setVelocity(const Vector2f& vector) {
 }
 
 const Vector2f& Body::getVelocity() {
-	return *velocity.get();
+	return *velocity;
 }
 
-void Body::setCollider(ColliderPtr collider) {
-	this->collider = std::move(collider);
+void Body::setCollider(Collider* collider) {
+	this->collider = collider;
 }
 
-WeakColliderPtr Body::getCollider() {
-	return WeakColliderPtr(collider);
+const Collider& Body::getCollider() {
+	return *collider;
 }
 
 bool Body::isCollidable() {
 	return (collider != nullptr);
 }
 
-void Body::setTarget(TargetPtr target) {
+void Body::setTarget(Target* target) {
 	this->target = target;
 }
 
-TargetPtr Body::getTarget() {
-	return TargetPtr(this->target);
+const Target& Body::getTarget() const {
+	return *this->target;
 }
 
-bool Body::hasTarget() {
+bool Body::hasTarget() const {
 	return (target != nullptr);
 }
 
@@ -164,7 +190,7 @@ void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& call
 }
 
 bool Collider::checkCollision(const Collider& collider) const {
-	bool collision = this->colliderShape->checkCollision(collider.colliderShape);
+	bool collision = this->colliderShape->checkCollision(*collider.colliderShape);
 	if (collision) {
 		onCollision(collider);
 		collider.onCollision(*this);
@@ -187,8 +213,8 @@ void ColliderShape::setPosition(const Vector2f& position) {
 }
 
 bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape& aabb) {
-	Vector2fPtr position = std::make_shared<Vector2f>(aabb.position->x, aabb.position->y);
-	OBBColliderShapePtr aabbToObb = std::make_shared<OBBColliderShape>(position, aabb.width, aabb.height, 0);
+	Vector2f position(aabb.position->x, aabb.position->y);
+	OBBColliderShape aabbToObb(&position, aabb.width, aabb.height, 0);
 
 	return obb.checkCollision(aabbToObb);
 }
@@ -207,11 +233,11 @@ bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderS
 
 	diff += obbPos;
 
-	Vector2fPtr circlePosPtr = std::make_shared<Vector2f>(diff);
-	Vector2fPtr obbPosPtr = std::make_shared<Vector2f>(obbPos);
+	Vector2f circlePosPtr(diff);
+	Vector2f obbPosPtr(obbPos);
 
-	AABBColliderShape aabb(obbPosPtr, obb.width, obb.height);
-	CircleColliderShape rotatedCircle(circlePosPtr, circle.radius);
+	AABBColliderShape aabb(&obbPosPtr, obb.width, obb.height);
+	CircleColliderShape rotatedCircle(&circlePosPtr, circle.radius);
 
 	return checkCollisionAABB_Circle(aabb, rotatedCircle);
 }
@@ -227,6 +253,37 @@ bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleCollid
 	bool collision((int)diff.magnitude() < circle.radius);
 
 	return collision;
+}
+
+
+bool checkCollisionAABB_Ray(const AABBColliderShape& aabb, const RayColliderShape& ray) {
+	ExtentPtr extent = aabb.getExtent();
+	
+	Vector2f dir = *ray.end - ray.position;
+	Vector2f ext(extent->x0, extent->y0);
+	Vector2f diff = *ray.position - aabb.position;
+	if (fabsf(diff.x) > ext.x && (diff.x * dir.x) >= 0.0f) return false;
+	if (fabsf(diff.y) > ext.y && (diff.y * dir.y) >= 0.0f) return false;
+
+	Vector2f f(fabsf(dir.x), fabsf(dir.y));
+	float z = dir.x * diff.y - dir.y * diff.x;
+	if (fabsf(z) > ((ext.x * f.y) + (ext.y * f.x))) return false;
+
+	return true;
+}
+bool checkCollisionCircle_Ray(const RayColliderShape& ray, const CircleColliderShape& circle) {
+	Vector2f p(ray.position->x, ray.position->y);
+	Vector2f v = *ray.position - ray.end;
+	Vector2f c(circle.position->x, circle.position->y);
+	float r = circle.radius;
+
+	v.normalize();
+	Vector2f u = c - p;
+	Vector2f u1 = v * u.dot(v);
+	Vector2f u2 = u - u1;
+	float d = u2.magnitude();
+
+	return d < r;
 }
 
 void constructManifoldAABB_Circle(const AABBColliderShape& aabb, const CircleColliderShape& circle, Manifold* manifold) {
@@ -323,12 +380,12 @@ void project(Vector2f& a, Vector2f& b, Vector2f& result) {
 	result.set(b * (a.dot(b) / b.dot(b)));
 }
 
-bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+bool AABBColliderShape::checkCollision(const ColliderShape& collider) const {
 
-	if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+	if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
 		ExtentPtr extent = getExtent();
-		ExtentPtr otherExtent = aabb->getExtent();
+		ExtentPtr otherExtent = aabb.getExtent();
 
 		bool collision(extent->x0 < otherExtent->x1
 			&& extent->x1 > otherExtent->x0
@@ -337,28 +394,33 @@ bool AABBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
 
 		return collision;
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
-		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
 
-		return checkCollisionAABB_Circle(*this, *circle);
+		return checkCollisionAABB_Circle(*this, circle);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
-		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::OBB) {
+		const OBBColliderShape& obb = (const OBBColliderShape&) collider;
 
-		return checkCollisionOBB_AABB(*obb, *this);
+		return checkCollisionOBB_AABB(obb, *this);
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+		const RayColliderShape& ray = (const RayColliderShape&) collider;
+
+		return checkCollisionAABB_Ray(*this, ray);
 	}
 
 	return false;
 }
 
-void AABBColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
+void AABBColliderShape::intersect(const ColliderShape& collider, Manifold* manifold) const {
 
-	if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+	if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
 
-		Vector2f delta = *aabb->position - *this->position;
+		Vector2f delta = *aabb.position - *this->position;
 		Vector2f halfThis((float)this->width / 2.0f, (float)this->height / 2.0f);
-		Vector2f halfAABB((float)aabb->width / 2.0f, (float)aabb->height / 2.0f);
+		Vector2f halfAABB((float)aabb.width / 2.0f, (float)aabb.height / 2.0f);
 		Vector2f penetrate(halfThis.x + halfAABB.x - abs(delta.x), halfThis.y + halfAABB.y - abs(delta.y));
 
 		if (penetrate.x <= 0 || penetrate.y <= 0) {
@@ -370,62 +432,65 @@ void AABBColliderShape::intersect(const ColliderShapePtr& collider, Manifold* ma
 			manifold->delta->x = penetrate.x * sx;
 			manifold->normal->x = sx;
 			manifold->position->x = this->position->x + (halfThis.x * sx);
-			manifold->position->y = aabb->position->y;
+			manifold->position->y = aabb.position->y;
 		}
 		else {
 			float sy = penetrate.y < 0 ? -1.0f : 1.0f;
 			manifold->delta->y = penetrate.y * sy;
 			manifold->normal->y = sy;
-			manifold->position->x = aabb->position->x;
+			manifold->position->x = aabb.position->x;
 			manifold->position->y = this->position->y + (halfThis.y * sy);
 		}
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
-		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
-		constructManifoldAABB_Circle(*this, *circle, manifold);
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
+	else if (collider.colliderType() == ColliderType::OBB) {
+		const OBBColliderShape& obb = (const OBBColliderShape&)collider;
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+		const RayColliderShape& ray = (const RayColliderShape&)collider;
 	}
 }
 
-void AABBColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
-	if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+void AABBColliderShape::sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
 
 		if (delta.x == 0 && delta.y == 0) {
-			sweep->position->set(aabb->position);
+			sweep->position->set(aabb.position);
 			this->intersect(collider, sweep->manifold.get());
 			sweep->time = 1;
 			return;
 		}
 
 		Vector2f halfThis((float)this->width / 2.0f, (float)this->height / 2.0f);
-		intersectAABBSegment(*this, *aabb->position.get(), delta, sweep->manifold.get(), (float)aabb->width / 2.0f, (float)aabb->height / 2.0f);
+		intersectAABBSegment(*this, *aabb.position.get(), delta, sweep->manifold.get(), (float)aabb.width / 2.0f, (float)aabb.height / 2.0f);
 
 		if (sweep->manifold->time < 1.0f) {
 			sweep->time = clamp(sweep->manifold->time - EPSILON, 0.0f, 1.0f);
-			sweep->position->set(aabb->position->x + delta.x * sweep->time, aabb->position->y + delta.y * sweep->time);
+			sweep->position->set(aabb.position->x + delta.x * sweep->time, aabb.position->y + delta.y * sweep->time);
 			Vector2f direction(delta);
 			direction.normalize();
 			sweep->manifold->position->set(
-				clamp(sweep->manifold->position->x + direction.x * ((float)aabb->width / 2.0f), this->position->x - halfThis.x, this->position->x + halfThis.x),
-				clamp(sweep->manifold->position->y + direction.y * ((float)aabb->height / 2.0f), this->position->y - halfThis.y, this->position->y + halfThis.y)
+				clamp(sweep->manifold->position->x + direction.x * ((float)aabb.width / 2.0f), this->position->x - halfThis.x, this->position->x + halfThis.x),
+				clamp(sweep->manifold->position->y + direction.y * ((float)aabb.height / 2.0f), this->position->y - halfThis.y, this->position->y + halfThis.y)
 			);
 		}
 		else {
-			sweep->position->set(*aabb->position + delta);
+			sweep->position->set(*aabb.position + delta);
 			sweep->time = 1.0f;
 		}
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
 		sweep->time = 1.0;
-		sweep->position->set(*collider->position + delta);
+		sweep->position->set(*collider.position + delta);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
+	else if (collider.colliderType() == ColliderType::OBB) {
 	}
 }
 
-ColliderType AABBColliderShape::colliderType() {
+ColliderType AABBColliderShape::colliderType() const {
 	return ColliderType::AABB;
 }
 
@@ -443,42 +508,47 @@ ExtentPtr AABBColliderShape::getExtent() const {
 	return extent;
 }
 
-bool CircleColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+bool CircleColliderShape::checkCollision(const ColliderShape& collider) const {
 
-	if (collider->colliderType() == ColliderType::CIRCLE) {
-		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+	if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
 
-		int rads = circle->radius + this->radius;
+		int rads = circle.radius + this->radius;
 		rads *= rads;
 
-		int dist = pow(this->position->x + circle->position->x, 2) + pow(this->position->y + circle->position->y, 2);
+		int dist = pow(this->position->x + circle.position->x, 2) + pow(this->position->y + circle.position->y, 2);
 		bool collision(rads < dist);
 
 		return collision;
 	}
-	else if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
 
-		return checkCollisionAABB_Circle(*aabb, *this);
+		return checkCollisionAABB_Circle(aabb, *this);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
-		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::OBB) {
+		const OBBColliderShape& obb = (const OBBColliderShape&)collider;
 
-		return checkCollisionOBB_Circle(*obb, *this);
+		return checkCollisionOBB_Circle(obb, *this);
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+		const RayColliderShape& ray = (const RayColliderShape&)collider;
+
+		return checkCollisionCircle_Ray(ray, *this);
 	}
 
 	return false;
 }
 
 
-void CircleColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
+void CircleColliderShape::intersect(const ColliderShape& collider, Manifold* manifold) const {
 
-	if (collider->colliderType() == ColliderType::CIRCLE) {
-		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+	if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
 
-		Vector2f norm = *circle->position - *this->position;
+		Vector2f norm = *circle.position - *this->position;
 
-		float rads = this->radius + circle->radius;
+		float rads = this->radius + circle.radius;
 		rads *= rads;
 
 		float dist = norm.magnitude();
@@ -493,29 +563,35 @@ void CircleColliderShape::intersect(const ColliderShapePtr& collider, Manifold* 
 			manifold->normal->x = 1;
 		}
 	}
-	else if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
-		constructManifoldAABB_Circle(*aabb, *this, manifold);
+	else if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
+		constructManifoldAABB_Circle(aabb, *this, manifold);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
+	else if (collider.colliderType() == ColliderType::OBB) {
 
 	}
 }
 
-void CircleColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
-	if (collider->colliderType() == ColliderType::AABB) {
+void CircleColliderShape::sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider.colliderType() == ColliderType::AABB) {
 		sweep->time = 1.0;
-		sweep->position->set(*collider->position + delta);
+		sweep->position->set(*collider.position + delta);
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
 		sweep->time = 1.0;
-		sweep->position->set(*collider->position + delta);
+		sweep->position->set(*collider.position + delta);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
+	else if (collider.colliderType() == ColliderType::OBB) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
 	}
 }
 
-ColliderType CircleColliderShape::colliderType() {
+ColliderType CircleColliderShape::colliderType() const {
 	return ColliderType::CIRCLE;
 }
 
@@ -523,36 +599,46 @@ void OBBColliderShape::setPosition(const Vector2f& position) {
 	ColliderShape::setPosition(position);
 }
 
-bool OBBColliderShape::checkCollision(const ColliderShapePtr& collider) const {
+bool OBBColliderShape::checkCollision(const ColliderShape& collider) const {
 
-	if (collider->colliderType() == ColliderType::OBB) {
-		OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(collider);
-		return this->overlapOneWay(*obb) && obb->overlapOneWay(*this);
+	if (collider.colliderType() == ColliderType::OBB) {
+		const OBBColliderShape& obb = (const OBBColliderShape&)collider;
+		return this->overlapOneWay(obb) && obb.overlapOneWay(*this);
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
-		CircleColliderShapePtr circle = dynamic_pointer_cast<CircleColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
 
-		return checkCollisionOBB_Circle(*this, *circle);
+		return checkCollisionOBB_Circle(*this, circle);
 	}
-	else if (collider->colliderType() == ColliderType::AABB) {
-		AABBColliderShapePtr aabb = dynamic_pointer_cast<AABBColliderShape>(collider);
+	else if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&) collider;
 
-		return checkCollisionOBB_AABB(*this, *aabb);
+		return checkCollisionOBB_AABB(*this, aabb);
 	}
 
 	return false;
 }
 
-void OBBColliderShape::intersect(const ColliderShapePtr& collider, Manifold* manifold) const {
+void OBBColliderShape::intersect(const ColliderShape& collider, Manifold* manifold) const {
 
 }
 
-void OBBColliderShape::sweep(const ColliderShapePtr& collider, const Vector2f& delta, Sweep* sweep) const {
-	if (collider->colliderType() == ColliderType::AABB) {
+void OBBColliderShape::sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider.colliderType() == ColliderType::AABB) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
 	}
-	else if (collider->colliderType() == ColliderType::CIRCLE) {
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
 	}
-	else if (collider->colliderType() == ColliderType::OBB) {
+	else if (collider.colliderType() == ColliderType::OBB) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
 	}
 }
 
@@ -583,7 +669,7 @@ bool OBBColliderShape::overlapOneWay(const OBBColliderShape& obb) const {
 	return true;
 }
 
-ColliderType OBBColliderShape::colliderType() {
+ColliderType OBBColliderShape::colliderType() const {
 	return ColliderType::OBB;
 }
 
@@ -614,48 +700,91 @@ void OBBColliderShape::setup() {
 	}
 }
 
+bool RayColliderShape::checkCollision(const ColliderShape& collider) const {
+	if (collider.colliderType() == ColliderType::AABB) {
+		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
+
+		return checkCollisionAABB_Ray(aabb, *this);
+	}
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		const CircleColliderShape& circle = (const CircleColliderShape&) collider;
+
+		return checkCollisionCircle_Ray(*this, circle);
+	}
+	else if (collider.colliderType() == ColliderType::OBB) {
+
+	}
+
+	return false;
+}
+
+void RayColliderShape::intersect(const ColliderShape& collider, Manifold* manifold) const {
+	
+}
+void RayColliderShape::sweep(const ColliderShape& collider, const Vector2f& delta, Sweep* sweep) const {
+	if (collider.colliderType() == ColliderType::AABB) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
+	}
+	else if (collider.colliderType() == ColliderType::CIRCLE) {
+		sweep->time = 1.0;
+		sweep->position->set(*collider.position + delta);
+	}
+	else if (collider.colliderType() == ColliderType::OBB) {
+	}
+	else if (collider.colliderType() == ColliderType::RAY) {
+
+	}
+}
+
 QuadtreeNode::QuadtreeNode(float x, float y, float width, float height) {
-	mBody.reset(GCC_NEW Body(-1, x, y, width, height));
-	mBody->setCollider(ColliderPtr(GCC_NEW Collider(GCC_NEW AABBColliderShape(std::make_shared<Vector2f>(x, y), (int) width, (int) height))));
+	mBody = GCC_NEW Body(-1, x, y, width, height);
+	mBody->setCollider(GCC_NEW Collider(GCC_NEW AABBColliderShape(GCC_NEW Vector2f(x, y), (int) width, (int) height)));
 }
 
-bool QuadtreeNode::check(BodyPtr body) {
-	return mBody->collider->checkCollision(*body->collider);
+bool QuadtreeNode::check(const Body& body) {
+	return mBody->collider->checkCollision(*body.collider);
 }
 
-void QuadtreeNode::add(BodyPtr body) {
+void QuadtreeNode::add(Body* body) {
 	bodiesContainer.emplace(body);
 }
 
-void QuadtreeNode::remove(BodyPtr body) {
-	bodiesContainer.erase(std::find(bodiesContainer.begin(), bodiesContainer.end(), body));
+void QuadtreeNode::remove(const Body& body) {
+	bodiesContainer.erase(std::find_if(bodiesContainer.begin(), bodiesContainer.end(), [body](const Body* b) { return b->id == body.id; }));
 }
 
 void QuadtreeNode::clear() {
 	bodiesContainer.clear();
 }
 
-bool QuadtreeNode::contains(BodyPtr body) {
-	return (bodiesContainer.find(body) != bodiesContainer.end());
+bool QuadtreeNode::contains(const Body& body) {
+	return (std::find_if(bodiesContainer.begin(), bodiesContainer.end(), [body](const Body* b) { return b->id == body.id; }) != bodiesContainer.end());
 }
 
-ExtentPtr QuadtreeNode::getNodeExtent() {
+ const ExtentPtr QuadtreeNode::getNodeExtent() {
 	return static_cast<AABBColliderShape>(*mBody->collider->colliderShape).getExtent();
 }
 
 Quadtree::Quadtree(float x, float y, float width, float height) {
-	mRootNode.reset(new QuadtreeNode(x, y, width, height));
-	createTree(mRootNode);
+	mRootNode = GCC_NEW QuadtreeNode(x, y, width, height);
+	createTree(this->mRootNode);
 }
 
-void Quadtree::createTree(QuadtreeNodePtr parent) {
-	ExtentPtr parentExtent = parent->getNodeExtent();
-	float width = (parentExtent->x1 - parentExtent->x0) / 2;
-	float height = (parentExtent->y1 - parentExtent->y0) / 2;
+Quadtree::~Quadtree() {
+	this->mLeaves.clear();
+	delete mRootNode;
+}
+
+void Quadtree::createTree(QuadtreeNode* parent) {
+	ExtentPtr ptr = parent->getNodeExtent();
+	const Extent& parentExtent = *ptr;
+	float width = (parentExtent.x1 - parentExtent.x0) / 2;
+	float height = (parentExtent.y1 - parentExtent.y0) / 2;
 	float widthHalf = (width / 2);
 	float heightHalf = (height / 2);
-	float x = (parentExtent->x0 + width);
-	float y = (parentExtent->y0 + height);
+	float x = (parentExtent.x0 + width);
+	float y = (parentExtent.y0 + height);
 
 	if (width < MIN_SIZE || height < MIN_SIZE) {
 		parent->leaf = true;
@@ -664,31 +793,31 @@ void Quadtree::createTree(QuadtreeNodePtr parent) {
 	}
 
 	// upper left corner
-	QuadtreeNodePtr upperLeft(GCC_NEW QuadtreeNode(x - widthHalf, y - heightHalf, width, height));
+	QuadtreeNode* upperLeft = GCC_NEW QuadtreeNode(x - widthHalf, y - heightHalf, width, height);
 	parent->pushChild(upperLeft);
 	createTree(upperLeft);
 
 	// upper right
-	QuadtreeNodePtr upperRight(GCC_NEW QuadtreeNode(x + widthHalf, y - heightHalf, width, height));
+	QuadtreeNode* upperRight = GCC_NEW QuadtreeNode(x + widthHalf, y - heightHalf, width, height);
 	parent->pushChild(upperRight);
 	createTree(upperRight);
 
 	// bottom left corner
-	QuadtreeNodePtr bottomLeft(GCC_NEW QuadtreeNode(x - widthHalf, y + heightHalf, width, height));
+	QuadtreeNode* bottomLeft = GCC_NEW QuadtreeNode(x - widthHalf, y + heightHalf, width, height);
 	parent->pushChild(bottomLeft);
 	createTree(bottomLeft);
 
 	// bottom right corner
-	QuadtreeNodePtr bottomRight(GCC_NEW QuadtreeNode(x + widthHalf, y + heightHalf, width, height));
+	QuadtreeNode* bottomRight = GCC_NEW QuadtreeNode(x + widthHalf, y + heightHalf, width, height);
 	parent->pushChild(bottomRight);
 	createTree(bottomRight);
 }
 
 void Quadtree::clear() {
-	std::stack<QuadtreeNodePtr> stack;
+	std::stack<QuadtreeNode*> stack;
 	stack.push(mRootNode);
 	while (stack.size() > 0) {
-		QuadtreeNodePtr node = stack.top();
+		QuadtreeNode* node = stack.top();
 		stack.pop();
 		node->clear();
 
@@ -698,47 +827,47 @@ void Quadtree::clear() {
 	}
 }
 
-void Quadtree::addBody(BodyPtr body) {
-	addHelper(body, mRootNode);
+void Quadtree::addBody(Body* body) {
+	addHelper(*body, *mRootNode);
 }
 
-void  Quadtree::addHelper(BodyPtr body, QuadtreeNodePtr node) {
-	if (!node->check(body)) {
+void  Quadtree::addHelper(Body& body, QuadtreeNode& node) {
+	if (!node.check(body)) {
 		return;
 	}
 
-	node->add(body);
-	if (node->leaf) {
+	node.add(&body);
+	if (node.leaf) {
 		return;
 	}
 
-	for (auto child : node->children) {
-		addHelper(body, child);
+	for (auto child : node.children) {
+		addHelper(body, *child);
 	}
 }
 
-void Quadtree::removeBody(BodyPtr body) {
-	removeHelper(body, mRootNode);
+void Quadtree::removeBody(Body& body) {
+	removeHelper(body, *mRootNode);
 }
 
-void Quadtree::removeHelper(BodyPtr body, QuadtreeNodePtr node) {
-	if (!node->contains(body)) {
+void Quadtree::removeHelper(Body& body, QuadtreeNode& node) {
+	if (!node.contains(body)) {
 		return;
 	}
 
-	node->remove(body);
-	for (auto child : node->children) {
-		removeHelper(body, child);
+	node.remove(body);
+	for (auto child : node.children) {
+		removeHelper(body, *child);
 	}
 }
 
-void Quadtree::getCollidingBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
-	std::vector<QuadtreeNodePtr> nodes;
-	std::stack<QuadtreeNodePtr> stack;
+void Quadtree::getCollidingBodies(const Body& body, BodyList bodies) {
+	std::vector<QuadtreeNode*> nodes;
+	std::stack<QuadtreeNode*> stack;
 	stack.push(mRootNode);
 
 	while (!stack.empty()) {
-		QuadtreeNodePtr node = stack.top();
+		QuadtreeNode* node = stack.top();
 		stack.pop();
 
 		if (!node->check(body)) {
@@ -750,7 +879,7 @@ void Quadtree::getCollidingBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 			continue;
 		}
 
-		for (QuadtreeNodePtr childNode : node->children) {
+		for (QuadtreeNode* childNode : node->children) {
 			stack.push(childNode);
 		}
 	}
@@ -760,24 +889,24 @@ void Quadtree::getCollidingBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 		// check against all bodies in the leaf
 		for (auto otherBody : leaf->bodiesContainer) {
 			// make sure we don't collide with ourselves.
-			if (otherBody == body) {
+			if (otherBody->id == body.id) {
 				continue;
 			}
 
-			if (otherBody->collider->checkCollision(*body->collider)) {
+			if (otherBody->collider->checkCollision(*body.collider)) {
 				bodies.push_back(otherBody);
 			}
 		}
 	}
 }
 
-void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
-	std::vector<QuadtreeNodePtr> nodes;
-	std::stack<QuadtreeNodePtr> stack;
+void Quadtree::getNeigboringBodies(const Body& body, BodyList bodies) {
+	std::vector<QuadtreeNode*> nodes;
+	std::stack<QuadtreeNode*> stack;
 	stack.push(mRootNode);
 
 	while (!stack.empty()) {
-		QuadtreeNodePtr node = stack.top();
+		QuadtreeNode* node = stack.top();
 		stack.pop();
 
 		if (!node->check(body)) {
@@ -789,7 +918,7 @@ void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 			continue;
 		}
 
-		for (QuadtreeNodePtr childNode : node->children) {
+		for (QuadtreeNode* childNode : node->children) {
 			stack.push(childNode);
 		}
 	}
@@ -799,11 +928,11 @@ void Quadtree::getNeigboringBodies(BodyPtr body, std::vector<BodyPtr>& bodies) {
 		// check against all bodies in the leaf
 		for (auto otherBody : leaf->bodiesContainer) {
 			// make sure we don't collide with ourselves.
-			if (otherBody == body) {
+			if (otherBody->id == body.id) {
 				continue;
 			}
 
-			if (std::find(bodies.begin(), bodies.end(), otherBody) == bodies.end()) {
+			if (std::find_if(bodies.begin(), bodies.end(), [body](Body* b) {return b->id == body.id; }) == bodies.end()) {
 				bodies.push_back(otherBody);
 			}
 		}
@@ -814,7 +943,7 @@ BodyTarget::BodyTarget(BodyPtr body) {
 	this->mBody = body;
 }
 
-const Vector2f& BodyTarget::getTargetPosition() {
+const Vector2f& BodyTarget::getTargetPosition() const {
 	return this->mBody->getPosition();
 }
 
@@ -822,7 +951,7 @@ PositionTarget::PositionTarget(Vector2fPtr position) {
 	this->mPosition = position;
 }
 
-const Vector2f& PositionTarget::getTargetPosition() {
+const Vector2f& PositionTarget::getTargetPosition() const {
 	return this->mPosition;
 }
 
@@ -833,7 +962,7 @@ void PhysicsComponent::setPosition(const Vector2f& position) {
 	EventManager::getInstance().pushEvent(eventData);
 }
 
-void PhysicsComponent::setCollider(ColliderPtr collider) {
+void PhysicsComponent::setCollider(Collider* collider) {
 	mBody->setCollider(collider);
 
 	EntityCollisionSetEventData* eventData = GCC_NEW EntityCollisionSetEventData(entityId, SDL_GetTicks());
@@ -884,18 +1013,18 @@ void PhysicsComponent::setTag(const string& tag) {
 	this->mBody->setTag(tag);
 }
 
-bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
-	Vector2f delta(body->getVelocity());
+bool BasicBehavior::updateBehavior(float step, Body& body, QuadtreePtr quadtree) {
+	Vector2f& delta = *body.velocity;
 
-	if (delta.x == 0 && delta.y == 0 && !body->hasTarget()) {
+	if (delta.x == 0 && delta.y == 0 && !body.hasTarget()) {
 		return false;
 	}
 
-	Vector2f position(body->getPosition());
-	if (body->hasTarget()) {
-		TargetPtr target = body->getTarget();
+	Vector2f& position = *body.position;
+	if (body.hasTarget()) {
+		const Target& target = body.getTarget();
 		
-		Vector2f targetPosition(target->getTargetPosition());
+		Vector2f targetPosition(target.getTargetPosition());
 
 		Vector2f velocityAtTarget = targetPosition - position;
 		float distance = velocityAtTarget.magnitude();
@@ -906,69 +1035,68 @@ bool BasicBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtr
 			delta.set(velocityAtTarget);
 		}
 		
-		delta *= body->getSpeed();
+		delta *= body.getSpeed();
 		delta *= step;
 
 		delta.truncate(distance);
 	}
 	else {
-		delta *= body->getSpeed() * step;
+		delta *= body.getSpeed() * step;
 	}
 
 	Vector2f newPosition;
 	this->handleCollision(delta, newPosition, body, quadtree);
 
-	if (body->hasTarget()) {
-		TargetPtr target = body->getTarget();
+	if (body.hasTarget()) {
+		const Target& target = body.getTarget();
 
-		Vector2f targetPosition = target->getTargetPosition();
+		Vector2f targetPosition = target.getTargetPosition();
 
 		Vector2f distanceVector = targetPosition - newPosition;
-		if (distanceVector.magnitude() < target->getThreshold()) {
-			body->setTarget(nullptr);
-			body->setVelocity(ZERO_VECTOR);
+		if (distanceVector.magnitude() < target.getThreshold()) {
+			body.setTarget(nullptr);
+			body.setVelocity(ZERO_VECTOR);
 		}
 	}
 
 	return true;
 }
 
-void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPtr& body, QuadtreePtr quadtree) {
+void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, Body& body, QuadtreePtr quadtree) {
 
-	Vector2f position(body->getPosition());
+	Vector2f position(body.getPosition());
 
 	// Handle overlap
-	vector<BodyPtr> bodies;
+	BodyList bodies;
 
 	// project body to potential new position
-	*body->position += delta;
-	*body->collider->colliderShape->position += delta;
+	*body.position += delta;
+	*body.collider->colliderShape->position += delta;
 	quadtree->getCollidingBodies(body, bodies);
 
 	// remove position update so we can sweep the body for collisions.
-	*body->position -= delta;
-	*body->collider->colliderShape->position -= delta;
+	*body.position -= delta;
+	*body.collider->colliderShape->position -= delta;
 	Vector2f newPosition(position + delta);
 
 	Sweep sweep;
 	sweep.time = 1.0f;
 	sweep.position->set(newPosition);
 	for (auto bod : bodies) {
-		auto bodPtr = bod;
 		Sweep currentSweep;
-		bodPtr->collider->colliderShape->sweep(body->collider->colliderShape, delta, &currentSweep);
+		bod->collider->colliderShape->sweep(*body.getCollider().colliderShape, delta, &currentSweep);
 		if (currentSweep.time < sweep.time) {
 			sweep = currentSweep;
 		}
 
 
-		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body->id, bodPtr->id, SDL_GetTicks());
+		EntityCollisionEventData* eventData = GCC_NEW EntityCollisionEventData(body.id, bod->id, SDL_GetTicks());
 		EventManager::getInstance().pushEvent(eventData);
 	}
 
 	Vector2f finalPos = *sweep.position;
 	if (sweep.time < 1.0f) {
-		Vector2f velocity(body->velocity);
+		Vector2f velocity = *body.velocity;
 		Vector2f normal(sweep.manifold->normal);
 		normal.x = abs(normal.x);
 		normal.y = abs(normal.y);
@@ -976,10 +1104,10 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 		project(velocity, normal, update);
 		velocity -= update;
 		velocity.normalize();
-		body->setVelocity(velocity);
+		body.setVelocity(velocity);
 	}
 
-	body->setPosition(finalPos);
+	body.setPosition(finalPos);
 	pos.set(finalPos);
 
 	/*
@@ -995,19 +1123,19 @@ void BasicBehavior::handleCollision(const Vector2f& delta, Vector2f& pos, BodyPt
 	*/
 }
 
-bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr quadtree) {
+bool SteeringBehavior::updateBehavior(float step, Body& body, QuadtreePtr quadtree) {
 
-	Vector2f velocity(body->getVelocity());
+	Vector2f velocity(body.getVelocity());
 
-	if (velocity.x == 0 && velocity.y == 0 && !body->hasTarget()) {
+	if (velocity.x == 0 && velocity.y == 0 && !body.hasTarget()) {
 		return false;
 	}
 
-	Vector2f position(body->getPosition());
+	Vector2f position(body.getPosition());
 
-	if (body->hasTarget()) {
-		TargetPtr target = body->getTarget();
-		Vector2f targetPosition(target->getTargetPosition());
+	if (body.hasTarget()) {
+		const Target& target = body.getTarget();
+		Vector2f targetPosition(target.getTargetPosition());
 
 		Vector2f velocityAtTarget = targetPosition - position;
 		float distance = velocityAtTarget.magnitude();
@@ -1015,7 +1143,7 @@ bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr qua
 
 		Vector2f steering = velocityAtTarget - velocity;
 		// TODO: Set a max force somewhere.
-		steering *= float(1 / body->getMass());
+		steering *= float(1 / body.getMass());
 
 		Vector2f velocityDiff = velocityAtTarget - velocity;
 		if (steering.magnitude() > 0.1f) {
@@ -1026,68 +1154,68 @@ bool SteeringBehavior::updateBehavior(float step, BodyPtr& body, QuadtreePtr qua
 			velocity.set(velocityAtTarget);
 		}
 
-		velocity *= body->getSpeed();
+		velocity *= body.getSpeed();
 		velocity *= step;
 
 		velocity.truncate(distance);
 	}
 	else {
-		velocity *= body->getSpeed();
+		velocity *= body.getSpeed();
 		velocity *= step;
 	}
 
 	Vector2f newPosition(position + velocity);
 
-	body->setPosition(newPosition);
+	body.setPosition(newPosition);
 
 	velocity.normalize();
-	body->setVelocity(velocity);
+	body.setVelocity(velocity);
 
-	if (body->hasTarget()) {
-		TargetPtr target = body->getTarget();
+	if (body.hasTarget()) {
+		const Target& target = body.getTarget();
 
-		Vector2f targetPosition = target->getTargetPosition();
+		Vector2f targetPosition = target.getTargetPosition();
 
 		Vector2f distanceVector = targetPosition - newPosition;
-		if (distanceVector.magnitude() < target->getThreshold()) {
-			body->setTarget(nullptr);
-			body->setVelocity(ZERO_VECTOR);
+		if (distanceVector.magnitude() < target.getThreshold()) {
+			body.setTarget(nullptr);
+			body.setVelocity(ZERO_VECTOR);
 		}
 	}
 
 	return true;
 }
 
-Vector2f SteeringBehavior::applySteeringToVelocity(BodyPtr& body, float step) {
+Vector2f SteeringBehavior::applySteeringToVelocity(Body& body, float step) {
 
-	Vector2f velocity = body->getVelocity();
-	velocity *= body->getSpeed();
+	Vector2f velocity = body.getVelocity();
+	velocity *= body.getSpeed();
 
-	TargetPtr target = body->getTarget();
-	Vector2f targetPosition = target->getTargetPosition();
+	const Target& target = body.getTarget();
+	Vector2f targetPosition = target.getTargetPosition();
 
-	Vector2f position = body->getPosition();
+	Vector2f position = body.getPosition();
 	Vector2f desiredVelocity = targetPosition - position;
-	desiredVelocity.truncate(body->getSpeed());
+	desiredVelocity.truncate(body.getSpeed());
 
 	Vector2f steering = desiredVelocity - velocity;
 	// TODO: Set a max force somewhere.
-	steering.truncate(body->getSpeed() / 2.0f);
-	steering *= float(1 / body->getMass());
+	steering.truncate(body.getSpeed() / 2.0f);
+	steering *= float(1 / body.getMass());
 
 	velocity += steering;
 	velocity.normalize();
 
 	// figure out what position we're at to see if we're within the threshold.
-	Vector2f calculatedVelocity(velocity * body->getSpeed());
+	Vector2f calculatedVelocity(velocity * body.getSpeed());
 	calculatedVelocity *= step;
 
 	Vector2f newPosition(position + calculatedVelocity);
 
 	Vector2f distanceVector = targetPosition - newPosition;
-	if (distanceVector.magnitude() < target->getThreshold()) {
-		body->setTarget(nullptr);
-		body->setVelocity(Vector2f());
+	if (distanceVector.magnitude() < target.getThreshold()) {
+		body.setTarget(nullptr);
+		body.setVelocity(Vector2f());
 	}
 
 	return velocity;
