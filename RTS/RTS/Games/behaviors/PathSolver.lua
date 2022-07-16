@@ -2,7 +2,7 @@
 
 PathSolver = {}
 PathSolver.new = function()
-	local self = setmetatable({}, StateMachine)
+	local self = setmetatable({}, PathSolver)
 	self.path = nil
 	self.pathIndex = -1
 	self.pathLength = 0

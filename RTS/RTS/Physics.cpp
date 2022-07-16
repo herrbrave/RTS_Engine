@@ -861,7 +861,7 @@ void Quadtree::removeHelper(Body& body, QuadtreeNode& node) {
 	}
 }
 
-void Quadtree::getCollidingBodies(const Body& body, BodyList bodies) {
+void Quadtree::getCollidingBodies(const Body& body, BodyList& bodies) {
 	std::vector<QuadtreeNode*> nodes;
 	std::stack<QuadtreeNode*> stack;
 	stack.push(mRootNode);
@@ -900,7 +900,7 @@ void Quadtree::getCollidingBodies(const Body& body, BodyList bodies) {
 	}
 }
 
-void Quadtree::getNeigboringBodies(const Body& body, BodyList bodies) {
+void Quadtree::getNeigboringBodies(const Body& body, BodyList& bodies) {
 	std::vector<QuadtreeNode*> nodes;
 	std::stack<QuadtreeNode*> stack;
 	stack.push(mRootNode);

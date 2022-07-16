@@ -539,7 +539,7 @@ void LuaScriptFactory::registerDrawable(LuaScript& script) {
 		applyDrawable(systemManager, entityId, tag, width, height, tx, ty, w, h);
 	};
 
-	script.state["setText"] = [this](string tag, int entityId, const string&text, int fontSize, Uint8 r, Uint8 g, Uint8 b) {
+	script.state["setText"] = [this](int entityId, string text, int fontSize, Uint8 r, Uint8 g, Uint8 b) {
 		applyText(systemManager, entityId, text, widgetFactory->getUIConfig()->fontTag, fontSize, r, g, b);
 	};
 
@@ -924,7 +924,7 @@ void LuaScriptFactory::registerUi(LuaScript& script) {
 		return entity->id;
 	};
 
-	script.state["setProgress"] = [this](int entityId, int progress, int maxProgress) {
+	script.state["setProgress"] = [this](int entityId, int progress, int maxProgress) { 
 		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		EntityPtr entity = entitySystem->getEntityById(entityId);
 

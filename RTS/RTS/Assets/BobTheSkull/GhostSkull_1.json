@@ -1,0 +1,140 @@
+{ "frames": [
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 16, "y": 0, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 32, "y": 0, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 0, "y": 20, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 16, "y": 20, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 32, "y": 20, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 0, "y": 40, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 16, "y": 40, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 32, "y": 40, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 0, "y": 60, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 16, "y": 60, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 32, "y": 60, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   },
+   {
+    "filename": "colt 0.ase",
+    "frame": { "x": 0, "y": 80, "w": 16, "h": 20 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 16, "h": 20 },
+    "sourceSize": { "w": 16, "h": 20 },
+    "duration": 145
+   }
+ ],
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.2.35-x64",
+  "image": "Assets/BobTheSkull/GhostSkull_1-sheet.png",
+  "format": "RGBA8888",
+  "size": { "w": 48, "h": 100 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "idle", "from": 0, "to": 0, "direction": "forward" },
+   { "name": "down", "from": 1, "to": 3, "direction": "forward" },
+   { "name": "left", "from": 4, "to": 6, "direction": "forward" },
+   { "name": "right", "from": 7, "to": 9, "direction": "forward" },
+   { "name": "up", "from": 10, "to": 12, "direction": "forward" }
+  ],
+  "layers": [
+   { "name": "Sprite Sheet", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

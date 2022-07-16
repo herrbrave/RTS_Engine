@@ -514,8 +514,8 @@ public:
 	~Quadtree();
 	void addBody(Body* body);
 	void removeBody(Body& body);
-	void getCollidingBodies(const Body& body, BodyList bodies);
-	void getNeigboringBodies(const Body& body, BodyList bodies);
+	void getCollidingBodies(const Body& body, BodyList& bodies);
+	void getNeigboringBodies(const Body& body, BodyList& bodies);
 	void clear();
 
 private:

@@ -21,6 +21,20 @@ State.new = function()
 
 	end
 
+	-- Callbacks
+
+	function self.onMessage(message, value)
+
+	end
+
+	function self.onBroadcast(message, value)
+
+	end
+
+	function self.onCollision(id)
+
+	end
+	
 	return self
 end
 
@@ -65,6 +79,24 @@ StateMachine.new = function()
 	function self.onPhysics(dt)
 		if #self.states > 0 then  
 			self.states[#self.states].onPhysics(dt)
+		end
+	end
+
+	function self.onMessage(message, value)
+		if #self.states > 0 then  
+			self.states[#self.states].onMessage(message, value)
+		end
+	end
+
+	function self.onBroadcast(message, value)
+		if #self.states > 0 then  
+			self.states[#self.states].onBroadcast(message, value)
+		end
+	end
+
+	function self.onCollision(id)
+		if #self.states > 0 then  
+			self.states[#self.states].onCollision(id)
 		end
 	end
 
