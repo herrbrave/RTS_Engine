@@ -137,18 +137,22 @@ public:
 
 class ColliderShape {
 public:
-	Vector2fPtr position;
+	Vector2f* position;
 
 	ColliderShape(Vector2f* position) {
-		this->position = Vector2fPtr(position);
+		this->position = position;
 	}
 
 	ColliderShape(const ColliderShape& colliderShape) {
-		this->position = std::make_shared<Vector2f>(colliderShape.position);
+		this->position = GCC_NEW Vector2f(*colliderShape.position);
 	}
 
 	ColliderShape(const rapidjson::Value& root) {
-		this->position = std::make_shared<Vector2f>(root["position"]);
+		this->position = GCC_NEW Vector2f(root["position"]);
+	}
+
+	virtual ~ColliderShape() {
+		delete this->position;
 	}
 
 	void serialize(Serializer& serializer) const {
@@ -246,19 +250,19 @@ public:
 	int width;
 	int height;
 	int angle;
-	Vector2fPtr corners[4];
-	Vector2fPtr axis[2];
+	Vector2f* corners[4];
+	Vector2f* axis[2];
 	float origin[2];
 
 	OBBColliderShape(Vector2f* position, int width, int height, int angle) : ColliderShape(position), 
 		corners{
-			std::make_shared<Vector2f>(0, 0),
-			std::make_shared<Vector2f>(0, 0),
-			std::make_shared<Vector2f>(0, 0),
-			std::make_shared<Vector2f>(0, 0) }, 
+			GCC_NEW Vector2f(0, 0),
+			GCC_NEW Vector2f(0, 0),
+			GCC_NEW Vector2f(0, 0),
+			GCC_NEW Vector2f(0, 0) },
 		axis{
-			std::make_shared<Vector2f>(0, 0),
-			std::make_shared<Vector2f>(0, 0) },
+			GCC_NEW Vector2f(0, 0),
+			GCC_NEW Vector2f(0, 0) },
 		origin{
 			0.0f,
 			0.0f }
@@ -272,13 +276,13 @@ public:
 
 	OBBColliderShape(const ColliderShape& colliderShape) : ColliderShape(colliderShape),
 		corners{
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0) },
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0) },
 		axis{
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0) },
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0) },
 		origin{
 		0.0f,
 		0.0f } 
@@ -293,19 +297,31 @@ public:
 
 	OBBColliderShape(const rapidjson::Value& root) : ColliderShape(root),
 		corners{
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0) },
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0) },
 		axis{
-		std::make_shared<Vector2f>(0, 0),
-		std::make_shared<Vector2f>(0, 0) },
+		GCC_NEW Vector2f(0, 0),
+		GCC_NEW Vector2f(0, 0) },
 		origin{
 		0.0f,
 		0.0f } {
 		this->width = root["width"].GetInt();
 		this->height = root["height"].GetInt();
 		this->angle = root["angle"].GetInt();
+	}
+
+	~OBBColliderShape() override {
+		for (Vector2f* ptr : this->corners) {
+			delete ptr;
+		}
+		delete[] this->corners;
+
+		for (Vector2f* ptr : this->axis) {
+			delete ptr;
+		}
+		delete[] this->axis;
 	}
 
 	void onSerialize(Serializer& serializer) const override {
@@ -364,13 +380,15 @@ public:
 
 class Collider {
 public:
-	ColliderShapePtr colliderShape;
+	ColliderShape* colliderShape;
 
 	Collider(ColliderShape* colliderShape);
 
 	Collider(const Collider& copy);
 
 	Collider(const rapidjson::Value& root);
+
+	~Collider();
 
 	void setOnCollisionCallback(std::function<void(const Collider&)>& callback);
 

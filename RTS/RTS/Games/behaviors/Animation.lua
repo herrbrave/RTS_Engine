@@ -225,21 +225,23 @@ DisplayTextAnimation.new = function(x, y, r, g, b, fontSize, text, ticks)
 	self.totalText = text
 	self.time = 0.0
 	self.endTime = ticks + 0.0
+	self.fullTextTime = math.floor(self.endTime * 0.7)
 	self.r = r
 	self.g = g
 	self.b = b
 	self.fontSize = fontSize
-	self.textObj = createPhysics(x, y, 1, 1)
-	setCircleCollision(self.textObj, 1)
 
 	function self.onPlay()
 		self.text = ""
 		self.time = 0.0
-		setLabelText(self.textObj, self.text, 25, 254, 174, 201)
+		self.textObj = createPhysics(x, y, 1, 1)
+		setLabelText(self.textObj, self.text, self.fontSize, self.r, self.g, self.b)
+		setCircleCollision(self.textObj, 1)
 	end
 
 	function self.onStop()
-		setLabelText(self.textObj, self.totalText, 25, 255, 174, 201)
+		setLabelText(self.textObj, self.totalText, self.fontSize, self.r, self.g, self.b)
+		destroyEntity(self.textObj)
 	end
 
 	function self.update(dt)
@@ -247,10 +249,14 @@ DisplayTextAnimation.new = function(x, y, r, g, b, fontSize, text, ticks)
 		if self.time > self.endTime then
 			self.stop()
 		end
+		if self.time > self.fullTextTime then
+			setLabelText(self.textObj, self.totalText, self.fontSize, self.r, self.g, self.b)
+			return
+		end
 
-		local lerp = math.floor(string.len(self.totalText) * (self.time / self.endTime))
+		local lerp = math.floor(string.len(self.totalText) * (self.time / self.fullTextTime))
 		self.text = string.sub(self.totalText, 1, math.max(lerp, 1))
-		setLabelText(self.textObj, self.text, 25, 255, 174, 201)
+		setLabelText(self.textObj, self.text, self.fontSize, self.r, self.g, self.b)
 	end
 
 	return self

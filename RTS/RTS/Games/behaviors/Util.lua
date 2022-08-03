@@ -71,7 +71,7 @@ ArrayList.new = function(copy)
 		local index = at
 		while index < self.length - 1 do
 			self.array[index] = self.array[index + 1]
-			index = index - 1
+			index = index + 1
 		end
 		self.length = self.length - 1
 

@@ -1,7 +1,7 @@
 registrar = {
 	ASSET = 0,
 	DRAWABLE = 1,
-	ENTITY = 0,
+	ENTITY = 1,
 	FACTORY = 1,
 	PHYSICS = 1,
 	ANIMATION = 1,

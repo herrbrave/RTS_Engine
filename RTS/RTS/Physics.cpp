@@ -156,18 +156,18 @@ bool Body::checkPoint(const Vector2f& point) {
 }
 
 Collider::Collider(ColliderShape* collider) {
-	this->colliderShape = ColliderShapePtr(collider);
+	this->colliderShape = collider;
 }
 
 Collider::Collider(const Collider& copy) {
 	if (copy.colliderShape->colliderType() == ColliderType::AABB) {
-		this->colliderShape = ColliderShapePtr(GCC_NEW AABBColliderShape(*copy.colliderShape));
+		this->colliderShape = GCC_NEW AABBColliderShape(*copy.colliderShape);
 	}
 	else if (copy.colliderShape->colliderType() == ColliderType::CIRCLE) {
-		this->colliderShape = ColliderShapePtr(GCC_NEW CircleColliderShape(*copy.colliderShape));
+		this->colliderShape = GCC_NEW CircleColliderShape(*copy.colliderShape);
 	}
 	else if (copy.colliderShape->colliderType() == ColliderType::OBB) {
-		this->colliderShape = ColliderShapePtr(GCC_NEW OBBColliderShape(*copy.colliderShape));
+		this->colliderShape = GCC_NEW OBBColliderShape(*copy.colliderShape);
 	}
 }
 
@@ -175,14 +175,21 @@ Collider::Collider(const rapidjson::Value& root) {
 	auto colliderType = COLLIDER_TYPE_VALUES.at(string(root["colliderType"].GetString()));
 
 	if (colliderType == ColliderType::AABB) {
-		this->colliderShape = std::make_shared<AABBColliderShape>(root["colliderShape"]);
+		this->colliderShape = GCC_NEW AABBColliderShape(root["colliderShape"]);
 	}
 	else if (colliderType == ColliderType::CIRCLE) {
-		this->colliderShape = std::make_shared<CircleColliderShape>(root["colliderShape"]);
+		this->colliderShape = GCC_NEW CircleColliderShape(root["colliderShape"]);
 	}
 	else if (colliderType == ColliderType::OBB) {
-		this->colliderShape = std::make_shared<OBBColliderShape>(root["colliderShape"]);
+		this->colliderShape = GCC_NEW OBBColliderShape(root["colliderShape"]);
+	} 
+	else {
+		this->colliderShape = nullptr;
 	}
+}
+
+Collider::~Collider() {
+	delete this->colliderShape;
 }
 
 void Collider::setOnCollisionCallback(std::function<void(const Collider&)>& callback) {
@@ -221,8 +228,8 @@ bool checkCollisionOBB_AABB(const OBBColliderShape& obb, const AABBColliderShape
 
 bool checkCollisionOBB_Circle(const OBBColliderShape& obb, const CircleColliderShape& circle) {
 
-	Vector2f circlePos(circle.position);
-	Vector2f obbPos(obb.position);
+	Vector2f circlePos(*circle.position);
+	Vector2f obbPos(*obb.position);
 
 	Vector2f diff = circlePos - obbPos;
 
@@ -248,7 +255,7 @@ bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleCollid
 
 	Vector2f clamped = clamp(diff, halfExtent * -1.0f, halfExtent);
 	Vector2f closest = *aabb.position + clamped;
-	diff = closest - circle.position;
+	diff = closest - *circle.position;
 
 	bool collision((int)diff.magnitude() < circle.radius);
 
@@ -259,9 +266,9 @@ bool checkCollisionAABB_Circle(const AABBColliderShape& aabb, const CircleCollid
 bool checkCollisionAABB_Ray(const AABBColliderShape& aabb, const RayColliderShape& ray) {
 	ExtentPtr extent = aabb.getExtent();
 	
-	Vector2f dir = *ray.end - ray.position;
+	Vector2f dir = *ray.end - *ray.position;
 	Vector2f ext(extent->x0, extent->y0);
-	Vector2f diff = *ray.position - aabb.position;
+	Vector2f diff = *ray.position - *aabb.position;
 	if (fabsf(diff.x) > ext.x && (diff.x * dir.x) >= 0.0f) return false;
 	if (fabsf(diff.y) > ext.y && (diff.y * dir.y) >= 0.0f) return false;
 
@@ -458,14 +465,14 @@ void AABBColliderShape::sweep(const ColliderShape& collider, const Vector2f& del
 		const AABBColliderShape& aabb = (const AABBColliderShape&)collider;
 
 		if (delta.x == 0 && delta.y == 0) {
-			sweep->position->set(aabb.position);
+			sweep->position->set(*aabb.position);
 			this->intersect(collider, sweep->manifold.get());
 			sweep->time = 1;
 			return;
 		}
 
 		Vector2f halfThis((float)this->width / 2.0f, (float)this->height / 2.0f);
-		intersectAABBSegment(*this, *aabb.position.get(), delta, sweep->manifold.get(), (float)aabb.width / 2.0f, (float)aabb.height / 2.0f);
+		intersectAABBSegment(*this, *aabb.position, delta, sweep->manifold.get(), (float)aabb.width / 2.0f, (float)aabb.height / 2.0f);
 
 		if (sweep->manifold->time < 1.0f) {
 			sweep->time = clamp(sweep->manifold->time - EPSILON, 0.0f, 1.0f);

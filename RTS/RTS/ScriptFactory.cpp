@@ -299,6 +299,15 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 		return *vec;
 	};
 
+	script.state["setBodySize"] = [this](int entityId, double w, double h) {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+		physicsComponent->setSize(w, h);
+	};
+
 	script.state["getScreenPosition"] = [this](int entityId) -> LuaFriendlyVector2f& {
 		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 		GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
@@ -386,6 +395,42 @@ void LuaScriptFactory::registerPhysics(LuaScript& script) {
 		}
 
 		return *ids;
+	};
+
+	script.state["checkPoint"] = [this](int entityId, int x, int y) -> bool {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+
+		if (!physicsComponent->getBody()->isCollidable()) {
+
+			int bw = physicsComponent->getWidth();
+			int bh = physicsComponent->getHeight();
+			Vector2f pos(physicsComponent->getPosition());
+			EntityPtr currentEntity = entity;
+			while (entity->parent != nullptr) {
+				physicsComponent = entity->parent->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
+				pos += physicsComponent->getPosition();
+				entity = entity->parent;
+			}
+
+			int bx = pos.x;
+			int by = pos.y;
+
+			// for debugging
+			bool a = (bx - (bw / 2)) < x;
+			bool b = x < (bx + (bw / 2));
+			bool c = (by - (bh / 2)) < y;
+			bool d = y < (by + (bh / 2));
+
+			return a && b && c && d;
+		}
+
+		Vector2f position{(float) x, (float) y};
+		AABBColliderShape point{&position, 1, 1};
+		return physicsComponent->getBody()->getCollider().checkCollision(&point);
 	};
 
 	script.state["checkCollisions"] = [this](int entityId) -> LuaFriendlyIntVector& {
@@ -629,7 +674,7 @@ void LuaScriptFactory::registerDrawable(LuaScript& script) {
 			PhysicsComponentPtr physicsComponent = entity->getComponentByType<PhysicsComponent>(ComponentType::PHYSICS_COMPONENT);
 			BodyPtr body = physicsComponent->getBody();
 			if (body->isCollidable() && body->collider->colliderShape->colliderType() == ColliderType::OBB) {
-				OBBColliderShapePtr obb = dynamic_pointer_cast<OBBColliderShape>(body->collider->colliderShape);
+				OBBColliderShape* obb = dynamic_cast<OBBColliderShape*>(body->collider->colliderShape);
 				obb->setAngle(angle);
 			}
 		}
@@ -901,6 +946,17 @@ void LuaScriptFactory::registerUi(LuaScript& script) {
 			LabelComponentPtr drawableComponent = entity->getComponentByType<LabelComponent>(ComponentType::LABEL_COMPONENT);
 
 			drawableComponent->setZOrder(order);
+		}
+	};
+
+	script.state["setPanelZOrder"] = [this](int entityId, int order) {
+		EntitySystemPtr entitySystem = systemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
+		EntityPtr entity = entitySystem->getEntityById(entityId);
+
+		if (entity->getComponents().find(ComponentType::DRAWABLE_COMPONENT) != entity->getComponents().end()) {
+			DrawableComponentPtr drawableComponent = entity->getComponentByType<DrawableComponent>(ComponentType::DRAWABLE_COMPONENT);
+			PanelDrawablePtr panelDrawable = std::static_pointer_cast<PanelDrawable>(drawableComponent->getDrawable());
+			panelDrawable->setDrawDepth(order);
 		}
 	};
 
