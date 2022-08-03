@@ -23,9 +23,9 @@ function setup()
 
 	context = {}
 
-	context.runner = RunnerState.new(context)
+	context.life = GameOfLifeState.new(context)
 	context.stateMachine = StateMachine.new()
-	context.stateMachine.pushState(context.runner)
+	context.stateMachine.pushState(context.life)
 
 	createBlankWorld(64, 48, 16, 16)
 end
