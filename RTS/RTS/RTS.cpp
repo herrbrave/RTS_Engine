@@ -26,11 +26,13 @@ void RTS::setup() {
 	mLuaScriptFactory = std::make_shared<LuaScriptFactory>(mEntityFactory, mWidgetFactory, mSystemManager);
 
 	WorldSystemPtr worldSystem = mSystemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
-	worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/BobTheSkull/level1.json"));
+	//worldSystem->addWorld(worldFactory->createWorldFromTMXMap("Assets/BobTheSkull/level1.json"));
 
 	GraphicsSystemPtr graphicsSystem = mSystemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 
 	graphicsSystem->initialize();
+
+	entity = mEntityFactory->createScriptEntity("Games/test/BlankWorldTest.lua");
 }
 
 void RTS::handleEvents() {

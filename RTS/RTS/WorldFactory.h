@@ -16,6 +16,7 @@ public:
 
 	WorldPtr createWorldFromTMXMap(const string& path);
 	WorldPtr createWorld(const string& path);
+	WorldPtr createBlankWorld(int width, int height, int tileWidth, int tileHeight);
 
 private:
 	EntityFactoryPtr entityFactory;

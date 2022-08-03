@@ -888,6 +888,11 @@ WorldPtr WorldSystem::getWorld() {
 }
 
 void WorldSystem::destroyWorld() {
+	if (world == nullptr) {
+		LOG("Empty world, nothing to destroy.2");
+		return;
+	}
+
 	EntitySystemPtr entitySystem = mSystemManager->getSystemByType<EntitySystem>(SystemType::ENTITY);
 
 	vector<unsigned int> ids;

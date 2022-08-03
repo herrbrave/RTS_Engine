@@ -6,7 +6,12 @@ WorldFactory::WorldFactory(SystemManagerPtr sys, EntityFactoryPtr entityFactory)
 			WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
 
 			worldSystem->destroyWorld();
-			worldSystem->addWorld(createWorldFromTMXMap(data.path));
+			if (data.path.size() > 0) {
+				worldSystem->addWorld(createWorldFromTMXMap(data.path));
+			}
+			else {
+				worldSystem->addWorld(createBlankWorld(data.w, data.h, data.tw, data.th));
+			}
 		});
 
 	EventListenerDelegate destroyEntityListener(destroyEntityDelegate);
@@ -136,4 +141,78 @@ WorldPtr WorldFactory::createWorld(const string& path) {
 	doc.Parse(builder.c_str());
 
 	return std::make_shared<World>((const rapidjson::Value&) doc);
+}
+
+WorldPtr WorldFactory::createBlankWorld(int w, int h, int tileWidth, int tileHeight) {
+	MapConfigPtr mapConfig = std::make_shared<MapConfig>();
+	mapConfig->mapWidth = w;
+	mapConfig->mapHeight = h;
+	mapConfig->tileset = std::make_shared<Tileset>();
+	mapConfig->tileset->tileWidth = tileWidth;
+	mapConfig->tileset->tileHeight = tileHeight;
+	mapConfig->scale = 1.0f;
+
+	MapPtr map = std::make_shared<Map>(mapConfig);
+	WorldPtr world = std::make_shared<World>();
+	world->map = map;
+
+	for (int h = 0; h < mapConfig->mapHeight; h += GRID_HEIGHT) {
+		for (int w = 0; w < mapConfig->mapWidth; w += GRID_WIDTH) {
+			GridPtr grid = std::make_shared<Grid>();
+			grid->startX = w;
+			grid->startY = h;
+			grid->columns = std::min((double)mapConfig->mapWidth, (double)w + GRID_WIDTH) - w;
+			grid->rows = std::min((double)mapConfig->mapHeight, (double)h + GRID_HEIGHT) - h;
+			grid->name = "Grid-" + std::to_string(w / GRID_WIDTH) + "," + std::to_string(h / GRID_HEIGHT);
+			grid->tileW = mapConfig->tileset->tileWidth * mapConfig->scale;
+			grid->tileH = mapConfig->tileset->tileHeight * mapConfig->scale;
+
+			for (int y = 0; y < grid->rows; y++) {
+				for (int x = 0; x < grid->columns; x++) {
+					CellPtr cell = std::make_shared<Cell>();
+					cell->x = grid->startX + x;
+					cell->y = grid->startY + y;
+
+					grid->cells.push_back(cell);
+				}
+			}
+
+			map->grids.push_back(grid);
+		}
+	}
+
+	int gridWidth = map->getGridWidth();
+	int gridHeight = map->getGridHeight();
+	int width = map->getTileWidth() * GRID_WIDTH;
+	int height = map->getTileHeight() * GRID_HEIGHT;
+
+	for (int x = 0; x < gridWidth; x++) {
+		world->grids.push_back(vector<EntityPtr>());
+	}
+
+	int gridWidthPx = map->getTileWidth() * GRID_WIDTH;
+	int gridHeightPx = map->getTileHeight() * GRID_HEIGHT;
+
+	int xoffset = (gridWidthPx / 2) - (map->getTileWidth() / 2);
+	int yoffset = (gridHeightPx / 2) - (map->getTileHeight() / 2);
+
+	for (int y = 0; y < gridHeight; y++) {
+		for (int x = 0; x < gridWidth; x++) {
+			EntityPtr entity = entityFactory->createPhysicsEntity(x * width + (width / 2), y * height + (height / 2), width, height);
+
+			GridPtr grid = map->gridAt(x * GRID_WIDTH, y * GRID_HEIGHT);
+			applyGrid(systemManager, entity->id, grid, map);
+
+			GridComponentPtr gridComponent = entity->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
+			gridComponent->gridDrawable->setDrawDepth(1);
+
+			world->grids[x].push_back(entity);
+		}
+	}
+
+	PhysicsSystemPtr physicsSystem = systemManager->getSystemByType<PhysicsSystem>(SystemType::PHYSICS);
+	physicsSystem->setWorldSize(map->getTileHeight() * map->getMapWidth(), map->getTileHeight() * map->getMapHeight());
+
+
+	return world;
 }

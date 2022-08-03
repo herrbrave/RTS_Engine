@@ -277,8 +277,13 @@ public:
 class LoadWorldData : public EventData {
 public:
 	string path;
+	int w, h, tw, th;
 
-	LoadWorldData(Uint32 timestamp, const string& path) : EventData(timestamp), path(path) {
+	LoadWorldData(Uint32 timestamp, const string& path) : EventData(timestamp), path(path), w(0), h(0), tw(0), th(0) {
+
+	}
+
+	LoadWorldData(Uint32 timestamp,  int w, int h, int tw, int th) : EventData(timestamp), path(""), w(w), h(h), tw(tw), th(th) {
 
 	}
 

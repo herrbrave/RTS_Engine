@@ -1046,6 +1046,11 @@ void LuaScriptFactory::registerWorld(LuaScript& script) {
 		EventManager::getInstance().pushEvent(eventData);
 	};
 
+	script.state["createBlankWorld"] = [this](int w, int h, int tw, int th) {
+		LoadWorldData* eventData = GCC_NEW LoadWorldData(SDL_GetTicks(), w, h, tw, th);
+		EventManager::getInstance().pushEvent(eventData);
+	};
+
 	script.state["getTileCoordinatesAtPoint"] = [this](double x, double y) -> LuaFriendlyVector2f& {
 		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
 
@@ -1105,12 +1110,14 @@ void LuaScriptFactory::registerWorld(LuaScript& script) {
 		WorldSystemPtr worldSystem = systemManager->getSystemByType<WorldSystem>(SystemType::WORLD);
 
 		WorldPtr world = worldSystem->getWorld();
+		int tilex = x / world->getMap()->getTileWidth();
+		int tiley = y / world->getMap()->getTileHeight();
 
-		if (x >= 0 && x < world->getMap()->getMapWidth() && y >= 0 && y < world->getMap()->getMapHeight()) {
+		if (tilex >= 0 && tilex < world->getMap()->getMapWidth() && tiley >= 0 && tiley < world->getMap()->getMapHeight()) {
 			GraphicsSystemPtr graphicsSystem = systemManager->getSystemByType<GraphicsSystem>(SystemType::GRAPHICS);
 			graphicsSystem->addTexture(path, path);
 
-			EntityPtr grid = world->getGridWithTileAt(x, y);
+			EntityPtr grid = world->getGridWithTileAt(tilex, tiley);
 			GridComponentPtr gridComponent = grid->getComponentByType<GridComponent>(ComponentType::GRID_COMPONENT);
 			TexturePtr texture = std::make_shared<Texture>(path, tx, ty, tw, th);
 			gridComponent->pushTextureAtPoint(Vector2f(x, y), texture);
