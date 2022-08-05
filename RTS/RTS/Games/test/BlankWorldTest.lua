@@ -24,8 +24,9 @@ function setup()
 	context = {}
 
 	context.life = GameOfLifeState.new(context)
+	context.dungeon = RandoDungeon.new(context)
 	context.stateMachine = StateMachine.new()
-	context.stateMachine.pushState(context.life)
+	context.stateMachine.pushState(context.dungeon)
 
 	createBlankWorld(64, 48, 16, 16)
 end
