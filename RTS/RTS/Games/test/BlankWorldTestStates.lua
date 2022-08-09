@@ -123,7 +123,7 @@ BSPNode.new = function(x0, y0, x1, y1)
 	function self.split() 
 		local area = self.area()
 		-- force node to be a leaf if it's under 8x8
-		if area < 64 or (area < 250 and random(2) == 0) then
+		if area < 128 or (area < 256 and random(2) == 0) then
 			self.leaf = true
 			return false
 		end
@@ -205,6 +205,7 @@ RandoDungeon.new = function(context)
 
 	function self.split(node)
 		if node.split() == false then
+			self.placeRoom(node)
 			return
 		end
 
@@ -212,76 +213,137 @@ RandoDungeon.new = function(context)
 		self.split(node.right)
 	end
 
-	function self.loadRoom(node)
-		self.grid[node.x0][node.y0] = Tiles.UPPER_LEFT_CORNER
-		local index = node.x0 + 1
-		while index < node.x1 do
-			self.grid[index][node.y0] = Tiles.TOP_WALL
-			index = index + 1
-		end
+	function self.placeRoom(node)
+		local w = node.x1 - node.x0
+		local h = node.y1 - node.y0
 
-		self.grid[node.x1][node.y0] = Tiles.UPPER_RIGHT_CORNER
-		index = node.y0 + 1
-		while index < node.y1 do
-			self.grid[node.x1][index] = Tiles.RIGHT_WALL
-			index = index + 1
-		end
+		local roomW = math.floor(w / 2) + random(math.floor(w / 2) - 2)
+		local roomH = math.floor(h / 2) + random(math.floor(h / 2) - 2)
 
-		self.grid[node.x1][node.y1] = Tiles.LOWER_RIGHT_CORNER
-		index = node.x1 - 1
-		while index > node.x0 do
-			self.grid[index][node.y1] = Tiles.BOTTOM_WALL
-			index = index - 1
-		end
+		--local x = node.x0 + 1 + random(w - roomW)
+		--local y = node.y0 + 1 + random(h - roomH)
+		--room = {
+		--	x0 = x,
+		--	y0 = y,
+		--	x1 = x + roomW,
+		--	y1 = y + roomH
+		--}
 
-		self.grid[node.x0][node.y1] = Tiles.LOWER_LEFT_CORNER
-		index = node.y1 - 1
-		while index > node.y0 do
-			self.grid[node.x0][index] = Tiles.LEFT_WALL
-			index = index - 1
-		end
+		node.room = {
+			x0 = node.x0,
+			y0 = node.y0,
+			x1 = node.x1,
+			y1 = node.y1
+		}
 
-		index = node.x0 + 1
-		while index < node.x1 do
-			local bucket = node.y0 + 1
-			while bucket < node.y1 do
-				self.grid[index][bucket] = Tiles.FLOOR
-				bucket = bucket + 1
+		print("================================ DRAWING ROOM ===================================")
+		for i=node.room.x0 + 1,node.room.x1 - 1, 1 do
+			local row = ""
+			for j=node.room.y0 + 1,node.room.y1 - 1, 1 do
+				row = row .. "{" .. i .. ", " .. j .. "}"
+				self.grid[i][j] = Tiles.FLOOR
 			end
-			index = index + 1
+			print(row)
 		end
+		print("=================================================================================")
 	end
 
 	function self.drawDungeon()
-		local index = 0
-		while index < 64 do
-			local bucket = 0
-			while bucket < 48 do
-				local cell = self.grid[index][bucket][random(#self.grid[index][bucket] + 1)]
-				pushTexture(index,bucket, "Assets/test/Sprites/Dungeon_Tileset.png", cell.x, cell.y, 16, 16)
-				bucket = bucket + 1
+		for c = 0, 63, 1 do
+			for r = 0, 47, 1 do
+				if self.grid[c][r] ~= nil then
+					local cell = self.grid[c][r][random(#self.grid[c][r] + 1)]
+					if cell ~= nil and cell.x ~= nil and cell.y ~= nil then
+						pushTexture(c,r, "Assets/test/Sprites/Dungeon_Tileset.png", cell.x, cell.y, 16, 16)
+					end
+				end
 			end
-			index = index + 1
 		end
 	end
 
 	self.initialized = false
 	function self.initialize()
 		self.generate()
+		self.rooms = ArrayList.new(nil)
 
+		-- split and place all of the walls
 		local queue = ArrayList.new(nil)
 		queue.push(self.bsp)
 		while queue.length > 0 do
 			local node = queue.pop()
 
 			if node.leaf == true then
-				self.loadRoom(node)
+				self.placeRoom(node)
+				self.rooms.push(node.room)
 			else
 				queue.push(node.left)
 				queue.push(node.right)
 			end
 		end
+
+		--sort the rooms from left to right
+		--table.sort(self.rooms, function(v1, v2) return v1.x0 < v2.x0 end)
+
+		local orderedRooms = {}
+		local index = 0
+		for i,r in ipairs(self.rooms) do
+			orderedRooms[index] = r
+			index = index + 1
+		end
+
+		index = 0
+		while index < #orderedRooms do
+			local room = orderedRooms[index]
+			local nextRoom = orderedRooms[index + 1]
+			local x0 = room.x0 + random(room.x1 - room.x0 - 2)
+			local y0 = room.y0 + random(room.y1 - room.y0 - 2)
+			local x1 = nextRoom.x0 + 1 + random(nextRoom.x1 - nextRoom.x0 - 2)
+			local y1 = nextRoom.y0 + 1 + random(nextRoom.y1 - nextRoom.y0 - 2)
+
+			print("Drawing Cooridoor from", x0, y0, "to", x1, y1)
+
+			self.drawCooridoor(x0, y0, x1, y1)
+
+			index = index + 1
+		end
+
+		local index = 0
+		while index < 64 do
+			local bucket = 0
+			local row = ""
+			while bucket < 48 do
+				if self.grid[index][bucket] ~= nil then
+					row = row .. "#"
+				else
+					row = row .. "0"
+				end
+				bucket = bucket + 1
+			end
+			index = index + 1
+			print(row)
+		end
+
 		self.drawDungeon()
+	end
+
+	function self.drawCooridoor(x0, y0, x1, y1)
+		local x = x0
+		local y = y0
+
+		while x ~= x1 and y ~= y1 do
+			if x < x1 then
+				x =  x + 1
+			elseif x > x1 then
+				x = x - 1
+			elseif y < y1 then
+				y = y + 1
+			elseif y > y1 then
+				y = y - 1
+			end
+
+			print("Adding floor at", x, y)
+			self.grid[x][y] = Tiles.FLOOR
+		end
 	end
 
 	function self.update(dt)
