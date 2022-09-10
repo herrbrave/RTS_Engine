@@ -109,9 +109,10 @@ GameOfLifeState.new = function(context)
 end
 
 BSPNode = {}
-BSPNode.new = function(x0, y0, x1, y1)
+BSPNode.new = function(parent, x0, y0, x1, y1)
 	local self = setmetatable({}, BSPNode)
 
+	self.parent = parent
 	self.x0 = x0
 	self.y0 = y0
 	self.x1 = x1
@@ -130,11 +131,11 @@ BSPNode.new = function(x0, y0, x1, y1)
 
 		-- if we're wider than tall split verticle
 		if (x1 - x0) > (y1 - y0) then
-			self.left = BSPNode.new(self.x0, self.y0, math.floor((self.x1 + self.x0) / 2), self.y1)
-			self.right = BSPNode.new(math.floor((self.x1 + self.x0) / 2) + 1, self.y0, self.x1, self.y1)
+			self.left = BSPNode.new(self, self.x0, self.y0, math.floor((self.x1 + self.x0) / 2), self.y1)
+			self.right = BSPNode.new(self, math.floor((self.x1 + self.x0) / 2) + 1, self.y0, self.x1, self.y1)
 		else
-			self.left = BSPNode.new(self.x0, self.y0, self.x1, math.floor((self.y1 + self.y0) / 2))
-			self.right = BSPNode.new(self.x0, math.floor((self.y1 + self.y0) / 2) + 1, self.x1, self.y1)
+			self.left = BSPNode.new(self, self.x0, self.y0, self.x1, math.floor((self.y1 + self.y0) / 2))
+			self.right = BSPNode.new(self, self.x0, math.floor((self.y1 + self.y0) / 2) + 1, self.x1, self.y1)
 		end
 		return true
 	end
@@ -191,7 +192,7 @@ RandoDungeon = {}
 RandoDungeon.new = function(context) 
 	local self = State.new()
 
-	self.bsp = BSPNode.new(0, 0, 63, 47)
+	self.bsp = BSPNode.new(nil, 0, 0, 63, 47)
 	self.grid = {}
 	local i = 0
 	while i < 64 do
@@ -205,7 +206,6 @@ RandoDungeon.new = function(context)
 
 	function self.split(node)
 		if node.split() == false then
-			self.placeRoom(node)
 			return
 		end
 
@@ -217,35 +217,85 @@ RandoDungeon.new = function(context)
 		local w = node.x1 - node.x0
 		local h = node.y1 - node.y0
 
-		local roomW = math.floor(w / 2) + random(math.floor(w / 2) - 2)
-		local roomH = math.floor(h / 2) + random(math.floor(h / 2) - 2)
+		local roomW = math.floor(w / 2) + random(math.floor(w / 2) - 1)
+		local roomH = math.floor(h / 2) + random(math.floor(h / 2) - 1)
 
-		--local x = node.x0 + 1 + random(w - roomW)
-		--local y = node.y0 + 1 + random(h - roomH)
-		--room = {
-		--	x0 = x,
-		--	y0 = y,
-		--	x1 = x + roomW,
-		--	y1 = y + roomH
-		--}
+		local x = node.x0 + 1 + random(w - roomW)
+		local y = node.y0 + 1 + random(h - roomH)
 
 		node.room = {
-			x0 = node.x0,
-			y0 = node.y0,
-			x1 = node.x1,
-			y1 = node.y1
+			x0 = x,
+			y0 = y,
+			x1 = x + roomW,
+			y1 = y + roomH
 		}
 
-		print("================================ DRAWING ROOM ===================================")
+		--node.room = {
+		--	x0 = node.x0,
+		--	y0 = node.y0,
+		--	x1 = node.x1,
+		--	y1 = node.y1
+		--}
+
+		self.addDoors(node.room)
+
 		for i=node.room.x0 + 1,node.room.x1 - 1, 1 do
-			local row = ""
 			for j=node.room.y0 + 1,node.room.y1 - 1, 1 do
-				row = row .. "{" .. i .. ", " .. j .. "}"
 				self.grid[i][j] = Tiles.FLOOR
 			end
-			print(row)
 		end
-		print("=================================================================================")
+	end
+
+	function self.addDoors(room)
+		room.doors = {}
+		-- top
+		room.doors[0] = {
+			x = math.floor((room.x0 + room.x1) / 2),
+			y = room.y0,
+			cooridoor = nil
+		}
+		-- right
+		room.doors[1] = {
+			x = room.x1,
+			y = math.floor((room.y0 + room.y1) / 2),
+			cooridoor = nil
+		}
+		-- bottum
+		room.doors[2] = {
+			x = math.floor((room.x0 + room.x1) / 2),
+			y = room.y1,
+			cooridoor = nil
+		}
+		-- left
+		room.doors[3] = {
+			x = room.x0,
+			y = math.floor((room.y0 + room.y1) / 2),
+			cooridoor = nil
+		}
+
+	end
+
+	function self.findClosestDoor(doors, room)
+
+		local x = math.floor((room.x1 + room.x0) / 2)
+		local y = math.floor((room.y1 + room.y0) / 2)
+		
+		return self.findClosestDoorToPoint(doors, x, y)
+	end
+
+	function self.findClosestDoorToPoint(doors, x, y)
+		local shortestDist = 10000
+		local doorIndex = 0
+		for index = 0,3,1 do
+			local door = doors[index]
+			local dist = math.sqrt((x - door.x)^2 + (y - door.y)^2)
+			if dist < shortestDist then
+				doorIndex = index
+				shortestDist = dist
+			end
+		end
+
+		return doors[doorIndex]
 	end
 
 	function self.drawDungeon()
@@ -261,10 +311,137 @@ RandoDungeon.new = function(context)
 		end
 	end
 
+	function self.checkAdjacent(n1, n2)
+		return math.abs(n1.x0 - n2.x1) == 1 or math.abs(n1.y0 - n2.y1) == 1 or math.abs(n1.x1 - n2.x0) == 1 or math.abs(n1.y1 - n1.y0) == 1
+	end
+
+	function self.findAdjacent(n1, leaf)
+		if n1 and n1.leaf then
+			if self.checkAdjacent(n1, leaf) then
+				return n1
+			else 
+				return nil
+			end
+		end
+
+		local left = self.findAdjacent(n1.left, leaf)
+		if left then
+			return left
+		end
+
+		return self.findAdjacent(n1.right, leaf)
+	end
+
+	function self.getSibling(node)
+		if node == node.parent.left then
+			return node.parent.right
+		end
+
+		return node.parent.left
+	end
+
+	function self.buildHalls(node)
+		if node.leaf then
+			if node.parent.hall == nil then
+				local sibling = self.getSibling(node)
+				if sibling.leaf == false then
+					sibling = self.findAdjacent(sibling, node)
+				end
+				if sibling then
+					node.parent.hall = self.joinAdjacentRooms(node.room, sibling.room)
+				end
+			end
+			return
+		end
+
+		self.buildHalls(node.left)
+		self.buildHalls(node.right)
+
+		if node.parent and node.parent.hall == nil then
+			local sibling = self.getSibling(node)
+			if sibling.leaf and node.hall then
+				node.parent.hall = self.joinRoomToHall(sibling.room, node.hall)
+			elseif node.hall and sibling.hall then
+				node.parent.hall = self.joinHallToHall(node.hall, sibling.hall)
+			end
+		end
+	end
+
+	function self.joinNode(node)
+		if node.left then
+			if node.left.leaf then
+				local adjacent = self.findAdjacent(node.right, node.left)
+				if adjacent then
+					node.hall = self.joinAdjacentRooms(node.left.room, adjacent.room)
+				end
+			else
+				self.joinNode(node.left)
+			end
+		end
+		if node and node.right then
+			if node.right.leaf then
+				local adjacent = self.findAdjacent(node.left, node.right)
+				if adjacent then
+					self.joinAdjacentRooms(node.right.room, adjacent.room)
+				end
+			else
+				self.joinNode(node.right) 
+			end
+		end
+	end
+
+	function self.joinAdjacentRooms(r1, r2)
+
+		local r1Door = self.findClosestDoor(r1.doors, r2)
+		local x0 = r1Door.x
+		local y0 = r1Door.y
+		local r2Door = self.findClosestDoor(r2.doors, r1)
+		local x1 = r2Door.x
+		local y1 = r2Door.y
+
+		local hall = {
+			tiles = self.drawHall(x0, y0, x1, y1),
+			r1 = r1, 
+			r2 = r2
+		}
+		print("hall", hall, hall.tiles, hall.tiles.length, hall.r1, hall.r2)
+		return hall
+	end
+
+	function self.joinRoomToHall(room, hall)
+		print("blah", room, hall, hall.tiles, hall.tiles.length)
+		local tile = hall.tiles.at(math.floor(hall.tiles.length / 2))
+		local door = self.findClosestDoorToPoint(room.doors, tile.x, tile.y)
+
+		local hall = {
+			tiles = self.drawHall(tile.x, tile.y, door.x, door.y),
+			r1 = r1, 
+			r2 = hall
+		}
+		print("hall", hall, hall.tiles, hall.tiles.length, hall.r1, hall.r2)
+		return hall
+	end
+
+	function self.joinHallToHall(h1, h2)
+		print(h1.tiles.length, h2.tiles.length)
+		print(math.max(math.floor(h1.tiles.length / 2), 0), math.max(math.floor(h2.tiles.length / 2), 0))
+		local tile1 = h1.tiles.at(math.max(math.floor(h1.tiles.length / 2), 0))
+		local tile2 = h2.tiles.at(math.max(math.floor(h2.tiles.length / 2), 0))
+
+		local hall = {
+			tiles = self.drawHall(tile1.x, tile1.y, tile2.x, tile2.y),
+			r1 = h1, 
+			r2 = h2
+		}
+		print("hall", hall, hall.tiles, hall.tiles.length, hall.r1, hall.r2)
+		return hall
+	end
+
 	self.initialized = false
 	function self.initialize()
-		self.generate()
 		self.rooms = ArrayList.new(nil)
+		self.leaves = ArrayList.new(nil)
+		self.generate()
 
 		-- split and place all of the walls
 		local queue = ArrayList.new(nil)
@@ -275,62 +452,26 @@ RandoDungeon.new = function(context)
 			if node.leaf == true then
 				self.placeRoom(node)
 				self.rooms.push(node.room)
+				self.leaves.push(node)
 			else
 				queue.push(node.left)
 				queue.push(node.right)
 			end
 		end
 
-		--sort the rooms from left to right
-		--table.sort(self.rooms, function(v1, v2) return v1.x0 < v2.x0 end)
-
-		local orderedRooms = {}
-		local index = 0
-		for i,r in ipairs(self.rooms) do
-			orderedRooms[index] = r
-			index = index + 1
-		end
-
-		index = 0
-		while index < #orderedRooms do
-			local room = orderedRooms[index]
-			local nextRoom = orderedRooms[index + 1]
-			local x0 = room.x0 + random(room.x1 - room.x0 - 2)
-			local y0 = room.y0 + random(room.y1 - room.y0 - 2)
-			local x1 = nextRoom.x0 + 1 + random(nextRoom.x1 - nextRoom.x0 - 2)
-			local y1 = nextRoom.y0 + 1 + random(nextRoom.y1 - nextRoom.y0 - 2)
-
-			print("Drawing Cooridoor from", x0, y0, "to", x1, y1)
-
-			self.drawCooridoor(x0, y0, x1, y1)
-
-			index = index + 1
-		end
-
-		local index = 0
-		while index < 64 do
-			local bucket = 0
-			local row = ""
-			while bucket < 48 do
-				if self.grid[index][bucket] ~= nil then
-					row = row .. "#"
-				else
-					row = row .. "0"
-				end
-				bucket = bucket + 1
-			end
-			index = index + 1
-			print(row)
-		end
+		--self.joinNode(self.bsp)
+		self.buildHalls(self.bsp)
 
 		self.drawDungeon()
 	end
 
-	function self.drawCooridoor(x0, y0, x1, y1)
+	function self.drawHall(x0, y0, x1, y1)
 		local x = x0
 		local y = y0
 
-		while x ~= x1 and y ~= y1 do
+		local hall = ArrayList.new(nil)
+		self.grid[x][y] = Tiles.FLOOR
+		while (x ~= x1 or y ~= y1) do
 			if x < x1 then
 				x =  x + 1
 			elseif x > x1 then
@@ -341,9 +482,14 @@ RandoDungeon.new = function(context)
 				y = y - 1
 			end
 
-			print("Adding floor at", x, y)
+			hall.push({
+				x = x,
+				y = y
+			})
 			self.grid[x][y] = Tiles.FLOOR
 		end
+
+		return hall
 	end
 
 	function self.update(dt)

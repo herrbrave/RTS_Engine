@@ -833,7 +833,7 @@ void LuaScriptFactory::registerInput(LuaScript& script, unsigned long entityId) 
 	script.state["MOUSE_BUTTON_RIGHT"] = static_cast<int>(MouseButton::RIGHT);
 
 	InputSystemPtr inputSystem = this->systemManager->getSystemByType<InputSystem>(SystemType::INPUT);
-	
+	 
 	script.state["inputState"].SetObj(
 		inputSystem->getInputState(),
 		"keyPressed", &InputState::keyPressed,

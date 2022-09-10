@@ -84,6 +84,19 @@ ArrayList.new = function(copy)
 		end
 	end
 
+	function self.sort(compare)
+		local copy = {}
+		for index=0, self.length - 1 do
+			copy[index] = self.at(index)
+		end
+
+		table.sort(copy, compare)
+		self.clear()
+		for i,v in pairs(copy) do
+			self.push(v)
+		end
+	end
+
 	function self.toString()
 		local str = "["
 
