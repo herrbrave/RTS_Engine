@@ -1,6 +1,6 @@
-include("Games/behaviors/State.lua")
 include("Games/behaviors/Animation.lua")
 include("Games/behaviors/Ui.lua")
+include("Games/test/BlankWorldGameStates.lua")
 
 GameOfLifeState = {}
 GameOfLifeState.new = function(context) 
@@ -217,8 +217,8 @@ RandoDungeon.new = function(context)
 		local w = node.x1 - node.x0
 		local h = node.y1 - node.y0
 
-		local roomW = math.floor(w / 2) + random(math.floor(w / 2) - 1)
-		local roomH = math.floor(h / 2) + random(math.floor(h / 2) - 1)
+		local roomW = math.floor(w / 2) + random(math.floor(w / 2) - 2)
+		local roomH = math.floor(h / 2) + random(math.floor(h / 2) - 2)
 
 		local x = node.x0 + 1 + random(w - roomW)
 		local y = node.y0 + 1 + random(h - roomH)
@@ -241,7 +241,10 @@ RandoDungeon.new = function(context)
 
 		for i=node.room.x0 + 1,node.room.x1 - 1, 1 do
 			for j=node.room.y0 + 1,node.room.y1 - 1, 1 do
-				self.grid[i][j] = Tiles.FLOOR
+				self.grid[i][j] = {
+					tile = Tiles.FLOOR,
+					id = nil
+				}
 			end
 		end
 	end
@@ -296,19 +299,6 @@ RandoDungeon.new = function(context)
 		end
 
 		return doors[doorIndex]
-	end
-
-	function self.drawDungeon()
-		for c = 0, 63, 1 do
-			for r = 0, 47, 1 do
-				if self.grid[c][r] ~= nil then
-					local cell = self.grid[c][r][random(#self.grid[c][r] + 1)]
-					if cell ~= nil and cell.x ~= nil and cell.y ~= nil then
-						pushTexture(c,r, "Assets/test/Sprites/Dungeon_Tileset.png", cell.x, cell.y, 16, 16)
-					end
-				end
-			end
-		end
 	end
 
 	function self.checkAdjacent(n1, n2)
@@ -367,29 +357,6 @@ RandoDungeon.new = function(context)
 		end
 	end
 
-	function self.joinNode(node)
-		if node.left then
-			if node.left.leaf then
-				local adjacent = self.findAdjacent(node.right, node.left)
-				if adjacent then
-					node.hall = self.joinAdjacentRooms(node.left.room, adjacent.room)
-				end
-			else
-				self.joinNode(node.left)
-			end
-		end
-		if node and node.right then
-			if node.right.leaf then
-				local adjacent = self.findAdjacent(node.left, node.right)
-				if adjacent then
-					self.joinAdjacentRooms(node.right.room, adjacent.room)
-				end
-			else
-				self.joinNode(node.right) 
-			end
-		end
-	end
-
 	function self.joinAdjacentRooms(r1, r2)
 
 		local r1Door = self.findClosestDoor(r1.doors, r2)
@@ -423,8 +390,6 @@ RandoDungeon.new = function(context)
 	end
 
 	function self.joinHallToHall(h1, h2)
-		print(h1.tiles.length, h2.tiles.length)
-		print(math.max(math.floor(h1.tiles.length / 2), 0), math.max(math.floor(h2.tiles.length / 2), 0))
 		local tile1 = h1.tiles.at(math.max(math.floor(h1.tiles.length / 2), 0))
 		local tile2 = h2.tiles.at(math.max(math.floor(h2.tiles.length / 2), 0))
 
@@ -433,7 +398,6 @@ RandoDungeon.new = function(context)
 			r1 = h1, 
 			r2 = h2
 		}
-		print("hall", hall, hall.tiles, hall.tiles.length, hall.r1, hall.r2)
 		return hall
 	end
 
@@ -459,10 +423,18 @@ RandoDungeon.new = function(context)
 			end
 		end
 
-		--self.joinNode(self.bsp)
 		self.buildHalls(self.bsp)
 
-		self.drawDungeon()
+		-- Throw the player in the first room
+		local playerRoom = self.rooms.at(0)
+		local px = math.floor((playerRoom.x0 + playerRoom.x1) / 2)
+		local py = math.floor((playerRoom.y0 + playerRoom.y1) / 2)
+		self.playerId = createTextured("Assets/test/Sprites/Dungeon_Character_2.png", px * 16 + 8, py * 16 + 8, 16, 16, 0, 0, 16, 16, false)
+		setZOrder(self.playerId, 50)
+		self.playerContext = {playerId = self.playerId, x = px , y = py, dungeon = self.grid}
+		self.playerState = PlayerState.new(self.playerContext)
+		self.stateMachine = StateMachine.new()
+		self.stateMachine.pushState(self.playerState)
 	end
 
 	function self.drawHall(x0, y0, x1, y1)
@@ -470,7 +442,10 @@ RandoDungeon.new = function(context)
 		local y = y0
 
 		local hall = ArrayList.new(nil)
-		self.grid[x][y] = Tiles.FLOOR
+		self.grid[x][y] = {
+			tile = Tiles.FLOOR,
+			id = nil
+		}
 		while (x ~= x1 or y ~= y1) do
 			if x < x1 then
 				x =  x + 1
@@ -486,7 +461,10 @@ RandoDungeon.new = function(context)
 				x = x,
 				y = y
 			})
-			self.grid[x][y] = Tiles.FLOOR
+			self.grid[x][y] = {
+				tile = Tiles.FLOOR,
+				id = nil
+			}
 		end
 
 		return hall
@@ -496,7 +474,13 @@ RandoDungeon.new = function(context)
 		if self.initialized == false then
 			self.initialize()
 			self.initialized = true
+		else
+			self.stateMachine.update(dt)
 		end
+	end
+
+	function onPhysics(delta)
+
 	end
 
 	return self
